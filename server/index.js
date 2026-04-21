@@ -46,11 +46,17 @@ app.use(cors({
     origin: (origin, callback) => {
         // allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) === -1) {
+        
+        // Trust any Render subdomain or localhost
+        const isRender = origin.endsWith('.onrender.com');
+        const isLocal = origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1');
+        
+        if (isRender || isLocal || allowedOrigins.indexOf(origin) !== -1) {
+            return callback(null, true);
+        } else {
             const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
             return callback(new Error(msg), false);
         }
-        return callback(null, true);
     },
     credentials: true,
 }));
@@ -83,6 +89,16 @@ app.get('/', (req, res) => {
 
 app.use(notFound);
 app.use(errorHandler);
+
+// Error Handling Middleware
+app.use((err, req, res, next) => {
+    console.error(`[SERVER ERROR] ${err.message}`);
+    console.error(err.stack);
+    res.status(500).json({ 
+        message: 'Internal Server Error', 
+        error: process.env.NODE_ENV === 'production' ? 'See server logs' : err.message 
+    });
+});
 
 const PORT = process.env.PORT || 5000;
 
