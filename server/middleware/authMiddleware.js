@@ -1,12 +1,20 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
-import { admin as firebaseAdmin } from '../config/firebaseAdmin.js';
+import { admin as firebaseAdmin, isFirebaseInitialized } from '../config/firebaseAdmin.js';
 
 export const verifyAppCheck = async (req, res, next) => {
     const appCheckToken = req.header('X-Firebase-AppCheck');
 
     // Skip verification if not enforced (useful for local development)
     const isEnforced = process.env.ENFORCE_APP_CHECK === 'true';
+
+    // Safety guard: If Firebase is not initialized, skip verification to prevent 500 error
+    if (!isFirebaseInitialized) {
+        if (isEnforced) {
+            return res.status(503).json({ message: 'Authentication service temporarily unavailable' });
+        }
+        return next();
+    }
 
     if (!appCheckToken) {
         if (isEnforced) return res.status(401).json({ message: 'App Check token missing' });

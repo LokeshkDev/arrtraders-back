@@ -5,9 +5,14 @@ import path from 'path';
 
 dotenv.config();
 
+let isFirebaseInitialized = false;
+
 const initializeFirebaseAdmin = () => {
     try {
-        if (admin.apps.length > 0) return admin.app();
+        if (admin.apps.length > 0) {
+            isFirebaseInitialized = true;
+            return admin.app();
+        }
 
         const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
         const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
@@ -37,6 +42,7 @@ const initializeFirebaseAdmin = () => {
             admin.initializeApp({
                 credential: admin.credential.cert(serviceAccount)
             });
+            isFirebaseInitialized = true;
             console.log('Firebase Admin initialized successfully.');
         } else {
             console.error('Firebase Admin could not be initialized: No credentials provided via Environment Variable or File Path.');
@@ -46,4 +52,4 @@ const initializeFirebaseAdmin = () => {
     }
 };
 
-export { admin, initializeFirebaseAdmin };
+export { admin, initializeFirebaseAdmin, isFirebaseInitialized };
