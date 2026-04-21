@@ -1,0 +1,139 @@
+/* Categories.css - Premium Desktop Polish */
+
+.categories-page-app {
+  background-color: var(--bg-organic);
+}
+
+.category-billboard {
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+}
+
+.sidebar-sticky-wrapper {
+  position: sticky;
+  top: 100px;
+  z-index: 10;
+}
+
+@media (max-width: 991px) {
+  .sidebar-sticky-wrapper {
+    height: calc(100vh - 80px); /* Full height stretching minus top header approx height */
+    overflow-y: auto;
+    top: 0;
+    /* Hide scrollbar for clean app-look */
+    scrollbar-width: none; 
+    -ms-overflow-style: none;
+  }
+  .sidebar-sticky-wrapper::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.sidebar-nav-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 14px 20px;
+  background: #fff;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  transition: var(--transition-cubic);
+  position: relative;
+  text-align: left;
+}
+
+.sidebar-nav-item .icon-wrap {
+  width: 40px;
+  height: 40px;
+  background: var(--bg-organic);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: var(--transition-cubic);
+}
+
+.sidebar-nav-item .nav-label {
+  font-weight: 600;
+  color: var(--secondary);
+  font-size: 15px;
+}
+
+.sidebar-nav-item:hover {
+  border-color: var(--primary);
+  transform: translateX(8px);
+  box-shadow: var(--shadow-sm);
+}
+
+.sidebar-nav-item:hover .icon-wrap {
+  background: var(--primary-subtle);
+  color: var(--primary);
+}
+
+.sidebar-nav-item.active {
+  background: var(--secondary);
+  border-color: var(--secondary);
+}
+
+.sidebar-nav-item.active .icon-wrap {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+}
+
+.sidebar-nav-item.active .nav-label {
+  color: #fff;
+}
+
+.active-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--primary);
+  border-radius: 50%;
+  position: absolute;
+  right: 20px;
+}
+
+.filter-pill-btn {
+  background: #fff;
+  border: 1px solid var(--border-light);
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--secondary);
+  transition: var(--transition-fast);
+}
+
+.filter-pill-btn:hover {
+  background: var(--primary-subtle);
+  border-color: var(--primary);
+}
+
+/* Heritage Footer Card */
+.heritage-footer-card {
+  transition: var(--transition-cubic);
+}
+
+.heritage-footer-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 40px 80px rgba(26, 38, 26, 0.2);
+}
+
+/* Widescreen Grid Optimization */
+@media (min-width: 1400px) {
+  .col-xxl-3 {
+    flex: 0 0 auto;
+    width: 25%;
+  }
+}
+
+@media (min-width: 1800px) {
+  /* High-density grid on ultra-wide */
+  .col-xxl-3 {
+    flex: 0 0 auto;
+    width: 20%; /* 5 columns */
+  }
+}

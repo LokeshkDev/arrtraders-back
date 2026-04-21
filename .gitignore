@@ -1,0 +1,46 @@
+# --- AR RAHMAN MASTER GITIGNORE ---
+
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Environment Files (CRITICAL SECURITY)
+.env
+.env.local
+.env.*.local
+client/.env
+server/.env
+
+# API Keys & Secrets
+server/config/serviceAccountKey.json
+*.pem
+*.key
+*.cert
+credentials.json
+
+# Build & Production Artifacts
+client/dist/
+client/build/
+server/dist/
+
+# System and IDE Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Local Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+server/logs/
+
+# Local Storage/Uploads (Optional - remove if you want to track images)
+# server/uploads/
+# server/images/

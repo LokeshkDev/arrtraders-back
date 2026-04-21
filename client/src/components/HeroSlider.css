@@ -1,0 +1,212 @@
+.side-hero-container {
+  height: 550px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  border-bottom-left-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+}
+
+.hero-slide-split {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.8s ease-in-out;
+  z-index: 1;
+}
+
+.hero-slide-split.active {
+  opacity: 1;
+  visibility: visible;
+  z-index: 2;
+}
+
+/* Texture/Plant pattern background simulation */
+.hero-slide-split::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(var(--border-color) 0.5px, transparent 0.5px);
+  background-size: 30px 30px;
+  opacity: 0.1;
+  z-index: 0;
+}
+
+.hero-split-content {
+  flex: 0 0 55%;
+  padding-left: 60px;
+  padding-right: 40px;
+  position: relative;
+  z-index: 10;
+}
+
+.hero-tag {
+  display: inline-block;
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+}
+
+.hero-main-title {
+  font-size: 58px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--dark);
+  margin-bottom: 25px;
+}
+
+.hero-subtext {
+  font-size: 18px;
+  color: var(--text-body);
+  margin-bottom: 35px;
+  max-width: 480px;
+}
+
+.hero-price-badge {
+  margin-bottom: 30px;
+}
+
+.badge-text {
+  background-color: var(--secondary);
+  color: var(--white);
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-weight: 800;
+  font-size: 13px;
+  box-shadow: 0 5px 15px rgba(255, 181, 36, 0.3);
+}
+
+.hero-split-image {
+  flex: 0 0 45%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-right: 60px;
+  position: relative;
+  z-index: 5;
+}
+
+.image-circle-bg {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: var(--white);
+  border-radius: 50%;
+  z-index: -1;
+  box-shadow: inset 0 0 50px rgba(0,0,0,0.02);
+}
+
+.hero-img {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 20px 50px rgba(0,0,0,0.1));
+  z-index: 2;
+}
+
+.floating-badge {
+  position: absolute;
+  bottom: 20%;
+  right: 15%;
+  background: var(--white);
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  z-index: 10;
+  animation: float 4s ease-in-out infinite;
+}
+
+.floating-badge .inner {
+  display: flex;
+  flex-direction: column;
+}
+
+.floating-badge strong {
+  color: var(--primary);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.floating-badge span {
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+
+/* Animations */
+.active .delay-1 { animation-delay: 0.2s; }
+.active .delay-2 { animation-delay: 0.4s; }
+.active .delay-3 { animation-delay: 0.6s; }
+.active .delay-4 { animation-delay: 0.8s; }
+
+@keyframes zoomIn {
+  from { opacity: 0; transform: scale(0.5); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.zoomIn { animation-name: zoomIn; }
+
+/* Dots */
+.hero-dots-indicator {
+  position: absolute;
+  bottom: 40px;
+  left: 60px;
+  display: flex;
+  gap: 12px;
+  z-index: 20;
+}
+
+.hero-dot {
+  width: 12px;
+  height: 4px;
+  background: rgba(0,0,0,0.1);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.hero-dot.active {
+  background: var(--primary);
+  width: 30px;
+}
+
+@media (max-width: 1200px) {
+  .hero-main-title { font-size: 42px; }
+  .hero-split-content { padding-left: 40px; }
+  .image-circle-bg { width: 300px; height: 300px; }
+}
+
+@media (max-width: 991px) {
+  .side-hero-container { height: auto; border-radius: var(--radius-md); margin-top: 30px; }
+  .hero-slide-split { position: relative; flex-direction: column; text-align: center; padding: 60px 20px; opacity: 1; visibility: visible; display: none; }
+  .hero-slide-split.active { display: flex; }
+  .hero-split-content { flex: 0 0 auto; padding: 0; }
+  .hero-split-image { flex: 0 0 auto; width: 100%; padding: 0; margin-top: 40px; }
+  .hero-dots-indicator { left: 50%; transform: translateX(-50%); bottom: 20px; }
+  .hero-subtext { margin-left: auto; margin-right: auto; }
+}
+

@@ -1,0 +1,124 @@
+.floating-actions-container {
+    position: fixed;
+    bottom: 30px;
+    left: 20px;
+    right: 20px;
+    z-index: 1050;
+    pointer-events: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.floating-btn {
+    pointer-events: auto;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    border: none;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    text-decoration: none;
+    outline: none;
+    position: relative;
+}
+
+.floating-btn:hover {
+    transform: scale(1.1) translateY(-5px);
+    color: white;
+}
+
+/* WhatsApp Button Style */
+.whatsapp-btn {
+    background: #25D366;
+    box-shadow: 0 10px 25px rgba(37, 211, 102, 0.3);
+}
+
+.whatsapp-btn:hover {
+    box-shadow: 0 15px 30px rgba(37, 211, 102, 0.4);
+}
+
+/* Call Button Style */
+.call-btn {
+    background: var(--primary);
+    box-shadow: 0 10px 25px rgba(107, 178, 82, 0.3);
+}
+
+.call-btn:hover {
+    box-shadow: 0 15px 30px rgba(107, 178, 82, 0.4);
+}
+
+/* Scroll to Top Button Style */
+.scroll-top-btn {
+    background: var(--secondary);
+    box-shadow: 0 10px 25px rgba(54, 65, 39, 0.3);
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+}
+
+.scroll-actions-right.visible .scroll-top-btn {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.scroll-top-btn:hover {
+    background: var(--primary);
+    box-shadow: 0 15px 30px rgba(107, 178, 82, 0.4);
+}
+
+/* Support Button Toggle */
+.support-toggle-btn {
+    background: var(--secondary);
+}
+
+.support-toggle-btn:hover {
+    background: var(--primary);
+    box-shadow: 0 15px 30px rgba(107, 178, 82, 0.4);
+    transform: scale(1.1);
+}
+
+/* Horizontal Expanding Actions */
+.support-actions-horizontal {
+    overflow: hidden;
+    max-width: 0;
+    opacity: 0;
+    transform: translateX(-15px);
+    pointer-events: none;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.support-actions-horizontal.open {
+    max-width: 150px;
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+.floating-btn.mini {
+    width: 42px;
+    height: 42px;
+}
+
+/* Media Queries for Mobile (Mobile Bottom Nav support) */
+@media (max-width: 768px) {
+    .floating-actions-container {
+        bottom: 90px; /* Elevated to clear bottom navigation */
+        left: 15px;
+        right: 15px;
+    }
+    
+    .floating-btn {
+        width: 45px;
+        height: 45px;
+    }
+
+    .scroll-top-btn {
+        width: 45px;
+        height: 45px;
+    }
+}

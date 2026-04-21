@@ -1,0 +1,120 @@
+/* BottomNav.css - Mobile App-Like Navigation */
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border-light);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+  z-index: 1050;
+  padding-bottom: env(safe-area-inset-bottom, 0px); /* iPhone notch support */
+}
+
+.bottom-nav-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 65px;
+}
+
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: var(--text-muted);
+  width: 20%;
+  height: 100%;
+  transition: var(--transition-fast);
+  position: relative;
+}
+
+.nav-icon {
+  margin-bottom: 4px;
+  transition: var(--transition-fast);
+  stroke-width: 1.5;
+}
+
+.bottom-nav-item span {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  font-family: 'Inter', sans-serif;
+  text-transform: uppercase;
+}
+
+/* Active State styling */
+.bottom-nav-item.active {
+  color: var(--primary);
+}
+
+.bottom-nav-item.active .nav-icon {
+  transform: translateY(-2px);
+  stroke-width: 2.2;
+}
+
+.bottom-nav-item.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 3px;
+  background-color: var(--primary);
+  border-radius: 0 0 4px 4px;
+}
+
+/* --- CENTER FLOATING CART (TILT & WAVE FIX) --- */
+.bottom-nav-cart-wrapper {
+  width: 20%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  top: -24px; /* Breaks out of the navbar height */
+  z-index: 1060;
+}
+
+.bottom-nav-cart-btn {
+  width: 64px;
+  height: 64px;
+  background-color: var(--primary);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  box-shadow: 0 4px 15px rgba(0, 184, 83, 0.4);
+  position: relative;
+  transition: var(--transition-fast);
+  border: 6px solid #fff; /* Creates the exact cutout wave illusion */
+}
+
+.bottom-nav-cart-btn:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 184, 83, 0.5);
+  color: white;
+}
+
+.bottom-cart-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background-color: var(--secondary);
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  padding: 0 2px;
+}

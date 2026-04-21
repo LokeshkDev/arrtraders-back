@@ -1,0 +1,108 @@
+.wishlist-page-wrapper {
+  background-color: var(--accent); /* Ivory base */
+  min-height: 100vh;
+}
+
+.empty-wishlist-hero {
+  min-height: 70vh;
+  background: white;
+  border-radius: var(--radius-sm);
+  margin: 2rem 0;
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  box-shadow: var(--shadow-sm);
+}
+
+.empty-wishlist-icon-wrapper {
+  position: relative;
+  display: inline-block;
+  background: var(--accent);
+  padding: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--secondary);
+}
+
+.sparkle-icon {
+  animation: sparkle-float 3s infinite ease-in-out;
+}
+
+@keyframes sparkle-float {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.8; }
+  50% { transform: translateY(-10px) scale(1.3); opacity: 1; }
+}
+
+/* ── WISHLIST CARDS ── */
+.wishlist-art-card {
+  background: white;
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: var(--radius-sm);
+  transition: var(--transition-premium);
+  position: relative;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.wishlist-art-card:hover {
+  border-color: var(--secondary);
+  box-shadow: var(--shadow-premium);
+  transform: translateY(-8px);
+}
+
+.wishlist-art-img-box {
+  background: var(--accent);
+  aspect-ratio: 1/1;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+}
+
+.hover-jewel {
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.wishlist-art-card:hover .hover-jewel {
+  transform: scale(1.1);
+}
+
+.wishlist-abs-remove {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 10;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  background: white;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  transition: var(--transition-fast);
+  cursor: pointer;
+}
+
+.wishlist-abs-remove:hover {
+  background: #fff0f0;
+  color: #ff4d4d;
+  transform: rotate(90deg);
+  border-color: #ff4d4d;
+}
+
+.badge-count-luxury {
+  background: var(--primary);
+  color: var(--secondary);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 576px) {
+  .wishlist-art-card {
+    margin-bottom: 1rem;
+  }
+}

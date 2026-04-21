@@ -1,0 +1,181 @@
+/* SideCategoryMenu.css - Organico Style */
+
+.side-category-menu {
+  position: fixed;
+  top: 0;
+  left: -350px; /* Initially hidden */
+  width: 350px;
+  height: 100vh;
+  background: #fff;
+  z-index: 2000;
+  box-shadow: 10px 0 50px rgba(0, 0, 0, 0.1);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Prevent header from scrolling away */
+}
+
+.side-category-menu.open {
+  left: 0;
+}
+
+.side-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(26, 38, 26, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 1999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.4s ease;
+}
+
+.side-menu-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.menu-header {
+  padding: 24px 30px;
+  background: #fff;
+  border-bottom: 2px solid var(--bg-organic);
+}
+
+.menu-header h3 {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 1px;
+  color: var(--secondary);
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  transition: var(--transition-fast);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-btn:hover {
+  background: var(--bg-organic);
+  color: var(--accent);
+  transform: rotate(90deg);
+}
+
+.menu-body {
+  padding: 10px 0;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar for Menu Body */
+.menu-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.menu-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.menu-body::-webkit-scrollbar-thumb {
+  background: rgba(15, 61, 46, 0.1);
+  border-radius: 10px;
+}
+
+.menu-body::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary);
+}
+
+.category-item-wrap {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.category-main-link {
+  padding: 16px 30px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  user-select: none;
+}
+
+.category-main-link:hover {
+  background: var(--bg-organic);
+}
+
+.category-main-link.active {
+  background: var(--bg-organic);
+  border-left: 4px solid var(--primary);
+}
+
+.cat-icon-box {
+  color: var(--primary);
+  opacity: 0.8;
+}
+
+.cat-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--secondary);
+}
+
+.arrow-wrap {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+/* Subcategory Animation */
+.subcategory-collapse {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0, 1, 0, 1);
+  background: #fdfdfd;
+}
+
+.subcategory-collapse.show {
+  max-height: 1000px;
+  transition: max-height 0.4s cubic-bezier(1, 0, 1, 0);
+}
+
+.sub-link {
+  font-size: 14px;
+  color: var(--text-muted);
+  transition: var(--transition-fast);
+}
+
+.sub-link:hover {
+  color: var(--primary);
+  transform: translateX(5px);
+}
+
+.sub-arrow {
+  opacity: 0;
+  transition: var(--transition-fast);
+}
+
+.sub-link:hover .sub-arrow {
+  opacity: 1;
+  transform: translateX(3px);
+}
+
+/* Custom Scrollbar for Drawer */
+.side-category-menu::-webkit-scrollbar {
+  width: 4px;
+}
+
+.side-category-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.side-category-menu::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.1);
+  border-radius: 10px;
+}

@@ -1,0 +1,258 @@
+.checkout-page-app {
+  background-color: var(--accent); /* Ivory base */
+}
+
+/* ── STEPPER ── */
+.checkout-nav-stepper {
+  position: relative;
+}
+
+.stepper-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  opacity: 0.5;
+  transition: var(--transition-fast);
+}
+
+.stepper-node.active {
+  opacity: 1;
+}
+
+.node-circle {
+  width: 48px;
+  height: 48px;
+  background: white;
+  border-radius: 50%;
+  border: 1px solid var(--secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-premium);
+  color: var(--primary);
+}
+
+.stepper-node.active .node-circle {
+  background: var(--primary);
+  color: var(--secondary);
+  transform: scale(1.1);
+  box-shadow: var(--shadow-premium);
+}
+
+.stepper-node.completed .node-circle {
+  background: var(--secondary);
+  color: var(--primary);
+}
+
+.node-label {
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: var(--primary);
+}
+
+.stepper-connector {
+  width: 80px;
+  height: 2px;
+  background: rgba(212, 175, 55, 0.2);
+  margin-top: -32px;
+}
+
+.stepper-connector.active {
+  background: var(--secondary);
+}
+
+/* ── LUXURY CARDS ── */
+.luxury-card {
+  background: white;
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: var(--radius-sm);
+  transition: var(--transition-premium);
+  box-shadow: var(--shadow-sm);
+}
+
+.luxury-card.selected {
+  border-color: var(--secondary);
+  border-width: 2px;
+  box-shadow: var(--shadow-premium);
+  transform: translateY(-4px);
+  background: white;
+}
+
+.btn-add-address-luxury {
+  background: transparent;
+  border: 1px solid var(--secondary);
+  color: var(--primary);
+  padding: 8px 24px;
+  border-radius: 40px;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  transition: var(--transition-fast);
+}
+
+.btn-add-address-luxury:hover {
+  background: var(--primary);
+  color: var(--secondary);
+  border-color: var(--primary);
+}
+
+.addr-check-ring {
+  background: var(--accent);
+  padding: 4px;
+  border-radius: 50%;
+  border: 1px solid var(--secondary);
+}
+
+/* ── FORM ELEMENTS ── */
+.luxury-input {
+  border: 1px solid rgba(15, 61, 46, 0.1);
+  background: var(--accent);
+  padding: 12px 18px;
+  border-radius: 50px;
+  font-family: var(--font-body);
+  transition: var(--transition-fast);
+}
+
+.luxury-input:focus {
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+  background: white;
+}
+
+/* ── PAYMENT ── */
+.premium-radio-input {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--secondary);
+  border-radius: 50%;
+  padding: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+  background: white;
+}
+
+.premium-radio-input.active {
+  background: var(--primary-subtle);
+  border-color: var(--primary);
+}
+
+.pay-check-inner {
+  width: 10px;
+  height: 10px;
+  background: var(--primary);
+  border-radius: 50%;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.2s ease;
+}
+
+.premium-radio-input.active .pay-check-inner {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.disabled-luxury {
+  background: rgba(27, 27, 27, 0.03);
+  border: 1px solid rgba(15, 61, 46, 0.05);
+  border-radius: var(--radius-md);
+  opacity: 0.6;
+}
+
+/* ── SUMMARY ── */
+.summary-card-luxury {
+  background: white;
+  border: 1px solid var(--secondary);
+  border-radius: var(--radius-sm);
+  padding: 30px; /* Slightly reduced to give internal items more space */
+  box-shadow: var(--shadow-premium);
+}
+
+.check-items-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px; /* INTERNAL PADDING: Prevents absolute bubbles from being clipped */
+  margin: -12px; /* COUNTER MARGIN: Keeps the container aligned but allows overflow within */
+  width: calc(100% + 24px);
+}
+
+.summary-item-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(15, 61, 46, 0.05);
+}
+
+.summary-item-price {
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  color: var(--primary);
+  font-size: 0.9rem;
+}
+
+.summary-qty-bubble {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  background: var(--secondary);
+  color: var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 800;
+  border: 2px solid white;
+  box-shadow: var(--shadow-sm);
+  z-index: 2;
+}
+
+.border-end-gold {
+  border-right: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+/* Utility */
+.border-gold-subtle {
+  border-color: rgba(212, 175, 55, 0.2) !important;
+}
+
+.border-dashed {
+  border-style: dashed !important;
+}
+
+@media (max-width: 991px) {
+  .summary-card-luxury {
+    margin-top: 3rem;
+    position: static !important;
+  }
+  .border-end-gold {
+    border-right: none;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .stepper-connector {
+    width: 30px;
+    margin-top: -28px;
+  }
+  .node-circle {
+    width: 40px;
+    height: 40px;
+  }
+}

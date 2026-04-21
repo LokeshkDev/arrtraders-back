@@ -1,0 +1,134 @@
+.product-grid-organio {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 30px;
+}
+
+.organio-product-card {
+  background: var(--white);
+  border-radius: var(--radius-md);
+  padding: 15px;
+  border: 1px solid var(--border-color);
+  transition: var(--transition);
+  position: relative;
+}
+
+.organio-product-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary);
+  transform: translateY(-5px);
+}
+
+.product-image-wrap {
+  background: var(--bg-light);
+  border-radius: var(--radius-md);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.product-image-wrap img {
+  width: 100%;
+  aspect-ratio: 1/1;
+  object-fit: contain;
+  padding: 15px;
+  transition: transform 0.5s ease;
+}
+
+.organio-product-card:hover .product-image-wrap img {
+  transform: scale(1.05);
+}
+
+.card-actions-overlay {
+  position: absolute;
+  top: 15px;
+  right: -50px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: var(--transition);
+}
+
+.organio-product-card:hover .card-actions-overlay {
+  right: 15px;
+}
+
+.overlay-btn {
+  width: 40px;
+  height: 40px;
+  background: var(--white);
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.overlay-btn:hover, .overlay-btn.active {
+  background: var(--primary);
+  color: var(--white);
+}
+
+.product-details-organio h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.product-price-organio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.current-price {
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.old-price {
+  color: #bbb;
+  text-decoration: line-through;
+  font-size: 14px;
+}
+
+.qty-refactor-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-light);
+  border-radius: var(--radius-lg);
+  padding: 5px;
+}
+
+.qty-refactor-btn button {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--white);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.qty-refactor-btn span {
+  font-weight: 700;
+}
+
+@media (max-width: 991px) {
+  .product-grid-organio {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .product-grid-organio {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,233 @@
+.product-details-page {
+  background-color: var(--accent); /* Ivory base */
+  min-height: 100vh;
+}
+
+.breadcrumb-active {
+  color: var(--secondary) !important;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.sticky-gallery-wrapper {
+  position: sticky;
+  top: 120px;
+}
+
+/* Luxury Gallery */
+.vertical-thumbnails {
+  width: 90px;
+}
+
+.thumb-item {
+  width: 90px;
+  height: 90px;
+  background: white;
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  padding: 8px;
+  border-radius: var(--radius-md);
+}
+
+.thumb-item:hover {
+  border-color: var(--secondary);
+  transform: translateX(5px);
+}
+
+.thumb-item.active-thumb {
+  border-color: var(--secondary);
+  border-width: 2px;
+  box-shadow: var(--shadow-sm);
+}
+
+.main-preview-stage {
+  height: 600px;
+  background: white;
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 50px;
+  border-radius: var(--radius-md);
+  position: relative;
+  box-shadow: var(--shadow-premium);
+}
+
+.hover-zoom-amazon {
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.main-preview-stage:hover .hover-zoom-amazon {
+  transform: scale(1.15);
+}
+
+/* Badges & Pricing */
+.badge-luxury-reserve {
+  background: white;
+  color: var(--primary);
+  border: 1px solid var(--secondary);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.price-premium {
+  font-family: var(--font-body);
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: var(--primary);
+  letter-spacing: -1px;
+}
+
+/* Weight Selection */
+.pd-weight-pill {
+  padding: 12px 28px;
+  border-radius: 30px;
+  border: 1px solid rgba(15, 61, 46, 0.1);
+  background: white;
+  color: var(--text-muted);
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  font-weight: 700;
+  transition: var(--transition-fast);
+  cursor: pointer;
+}
+
+.pd-weight-pill:hover {
+  border-color: var(--secondary);
+  color: var(--primary);
+}
+
+.pd-weight-pill.active {
+  background: var(--primary);
+  color: var(--secondary);
+  border-color: var(--secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Qty Stepper - Ivory Pill */
+.pd-qty-stepper {
+  background: #ffffff;
+  border: 1px solid var(--secondary);
+  border-radius: 50px;
+  padding: 6px;
+  width: 160px;
+  justify-content: space-between;
+}
+
+.stepper-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+}
+
+.stepper-btn:hover {
+  background: var(--primary);
+  color: var(--secondary);
+}
+
+.stepper-val {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--primary);
+}
+
+/* Add to Basket - Emerald Gold */
+.btn-add-luxury {
+  background: var(--primary);
+  color: var(--secondary);
+  border: 1px solid var(--secondary);
+  padding: 18px 32px;
+  border-radius: 40px;
+  font-weight: 800;
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: var(--transition-premium);
+}
+
+.btn-add-luxury:hover {
+  background: var(--secondary);
+  color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(212, 175, 55, 0.3);
+}
+
+.pd-wish-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 1px solid var(--secondary);
+  background: white;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+}
+
+.pd-wish-btn:hover {
+  background: var(--primary);
+  color: var(--secondary);
+}
+
+/* Tabs */
+.tab-link {
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: var(--transition-fast);
+}
+
+.tab-link.active {
+  color: var(--secondary) !important;
+}
+
+.tab-indicator {
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 3px;
+  background: var(--secondary);
+  border-radius: 4px 4px 0 0;
+}
+
+.luxury-return-box {
+  background: rgba(212, 175, 55, 0.05);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  margin-top: 8px;
+}
+
+/* Responsive */
+@media (max-width: 991px) {
+  .main-preview-stage {
+    height: 400px;
+    padding: 30px;
+  }
+}

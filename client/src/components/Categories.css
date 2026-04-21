@@ -1,0 +1,97 @@
+.categories-page-app {
+  min-height: 100vh;
+}
+
+/* 1. MOBILE HEADER */
+.category-mobile-header {
+  height: var(--mobile-header-h);
+}
+
+.back-btn-app:active, .search-btn-app:active {
+  opacity: 0.5;
+}
+
+/* 2. SIDEBAR APPS */
+.sidebar-wrapper-app {
+  background-color: var(--white);
+  min-height: calc(100vh - var(--mobile-header-h));
+  position: sticky;
+  top: var(--mobile-header-h);
+  z-index: 100;
+}
+
+@media (max-width: 991px) {
+  .sidebar-wrapper-app {
+    min-height: auto;
+    position: sticky;
+    top: var(--mobile-header-h);
+    overflow-x: auto;
+    border-bottom: 2px solid var(--gold);
+    background: #FAF8F5;
+  }
+}
+
+.sidebar-icon-btn {
+  transition: all 0.3s ease;
+  min-width: 90px;
+}
+
+.icon-orb {
+  background-color: #f0f0f0;
+  color: #888;
+}
+
+.sidebar-icon-btn.active .icon-orb {
+  background-color: var(--primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(26, 17, 10, 0.2);
+}
+
+.sidebar-icon-btn.active span {
+  color: var(--gold);
+}
+
+/* 3. FILTER PILLS */
+.filter-pill-app {
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+  color: var(--primary);
+  border-color: #eee !important;
+}
+
+.filter-pill-app:active {
+  background-color: var(--gold-light) !important;
+}
+
+/* 4. HERITAGE CARD */
+.heritage-story-card {
+  background: white !important;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+}
+
+.btn-dark-brown {
+  background-color: #2D1E16;
+  color: white;
+  border: none;
+}
+
+/* UTILITIES */
+.z-index-2 { z-index: 2; }
+.bg-light-tint { background-color: #fcfcfc; }
+
+@media (max-width: 991px) {
+  .sidebar-icon-btn span {
+    font-size: 0.55rem;
+    margin-top: 2px;
+  }
+  
+  .content-wrapper-app {
+    padding-bottom: calc(var(--mobile-nav-h) + 80px) !important;
+  }
+}
+
+.category-app-footer {
+  margin-top: 40px;
+  border-color: #f7f7f7 !important;
+}
