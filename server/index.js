@@ -107,4 +107,5 @@ const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
     console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+    console.log(`Production Robustness: NODE_ENV=${process.env.NODE_ENV}, RENDER=${!!process.env.RENDER}`);
 });
