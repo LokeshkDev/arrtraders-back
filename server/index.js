@@ -27,6 +27,9 @@ initializeFirebaseAdmin();
 
 const app = express();
 
+// Trust proxy for Render load balancer (necessary for Secure cookies)
+app.set('trust proxy', 1);
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
