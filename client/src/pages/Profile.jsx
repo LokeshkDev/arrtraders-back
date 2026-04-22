@@ -427,7 +427,7 @@ const Profile = () => {
                                 <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-end gap-3 mt-4 mt-md-0">
                                     <div>
                                         <span className="font-label extra-small fw-bold uppercase tracking-widest opacity-75 mb-1 mb-md-2 d-inline-block">ORDER SUMMARY</span>
-                                        <h3 className="font-headline m-0 fw-bold display-6 fs-3">Order #{selectedOrder._id.substring(selectedOrder._id.length - 8).toUpperCase()}</h3>
+                                        <h3 className="font-headline text-secondary m-0 fw-bold display-6 fs-3">Order #{selectedOrder._id.substring(selectedOrder._id.length - 8).toUpperCase()}</h3>
                                     </div>
                                     <div className="text-start text-md-end">
                                         <span className="font-label extra-small fw-bold uppercase tracking-widest opacity-75 mb-1 mb-md-2 d-inline-block">TOTAL VALUE</span>
@@ -490,7 +490,7 @@ const Profile = () => {
                                                 <div className="flex-grow-1">
                                                     <p className="font-headline small text-primary m-0 fw-bold d-flex align-items-center gap-2">
                                                         {item.name}
-                                                        {item.variant && <span className="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-20 rounded-pill px-2 py-1 fw-bold" style={{ fontSize: '11px' }}>📦 {item.variant}</span>}
+                                                        {item.variant && <span className="badge bg-primary bg-opacity-10 text-secondary border border-primary border-opacity-20 rounded-pill px-2 py-1 fw-bold" style={{ fontSize: '11px' }}>📦 {item.variant}</span>}
                                                     </p>
                                                     <p className="font-label extra-small text-muted m-0 uppercase tracking-wide">QUANTITY: {item.qty}</p>
                                                 </div>
