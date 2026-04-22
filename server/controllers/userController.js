@@ -1,6 +1,6 @@
 import User from '../models/User.js';
 import generateToken from '../utils/generateToken.js';
-import { admin } from '../config/firebaseAdmin.js';
+import { admin, isFirebaseInitialized } from '../config/firebaseAdmin.js';
 
 // @desc    Auth user with Google & get token
 // @route   POST /api/users/google-login
