@@ -54,7 +54,8 @@ export const googleLogin = async (req, res) => {
             email: user.email,
             phone: user.phone,
             isAdmin: user.isAdmin,
-            addresses: user.addresses
+            addresses: user.addresses,
+            token: token // Send token explicitly for header-based auth
         });
     } catch (error) {
         console.error('Google Login Backend Error:', error.message);
@@ -91,7 +92,8 @@ export const authUser = async (req, res) => {
                 email: user.email,
                 phone: user.phone,
                 isAdmin: user.isAdmin,
-                addresses: user.addresses
+                addresses: user.addresses,
+                token: token // Explicit token for header-based auth
             });
         } else {
             res.status(401).json({ message: 'Invalid email or password' });
@@ -139,7 +141,8 @@ export const registerUser = async (req, res) => {
                 email: user.email,
                 phone: user.phone,
                 isAdmin: user.isAdmin,
-                addresses: user.addresses
+                addresses: user.addresses,
+                token: token // Explicit token for header-based auth
             });
         } else {
             res.status(400).json({ message: 'Invalid user data' });

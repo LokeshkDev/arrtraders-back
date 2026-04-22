@@ -35,7 +35,13 @@ export const verifyAppCheck = async (req, res, next) => {
 export const protect = async (req, res, next) => {
     let token;
 
+    // 1. Check cookie
     token = req.cookies.jwt;
+
+    // 2. Fallback to Authorization header (Bearer token)
+    if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        token = req.headers.authorization.split(' ')[1];
+    }
 
     if (token) {
         try {

@@ -24,8 +24,10 @@ const Login = () => {
     try {
       const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/users/login`, { email, password });
 
-      const { token, ...userInfo } = data;
-      localStorage.setItem('userInfo', JSON.stringify(userInfo));
+      // Store BOTH user info and token for header-based auth
+      localStorage.setItem('userInfo', JSON.stringify(data));
+      if (data.token) localStorage.setItem('userToken', data.token);
+
       window.dispatchEvent(new Event('storage'));
       window.location.href = data.isAdmin ? '/admin' : '/';
     } catch (error) {
@@ -44,8 +46,10 @@ const Login = () => {
 
       const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/users/google-login`, { idToken });
 
-      const { token, ...userInfo } = data;
-      localStorage.setItem('userInfo', JSON.stringify(userInfo));
+      // Store BOTH user info and token for header-based auth
+      localStorage.setItem('userInfo', JSON.stringify(data));
+      if (data.token) localStorage.setItem('userToken', data.token);
+      
       window.dispatchEvent(new Event('storage'));
       window.location.href = '/'; // Social login is for customers only
     } catch (error) {
