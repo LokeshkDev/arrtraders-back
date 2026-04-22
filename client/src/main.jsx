@@ -11,21 +11,26 @@ axios.defaults.withCredentials = true;
 
 // Axios Interceptor for Firebase App Check
 axios.interceptors.request.use(async (config) => {
+    // 1. Try to add App Check Token (Optional)
     try {
-        // 1. Add App Check Token
         if (appCheck) {
             const { token } = await getToken(appCheck);
             if (token) config.headers['X-Firebase-AppCheck'] = token;
         }
+    } catch (err) {
+        console.warn("App Check skipped:", err.message);
+    }
 
-        // 2. Add Auth Token (Fix for 401 errors on subdomains)
+    // 2. Add Auth Token (Mandatory for subdomains)
+    try {
         const userToken = localStorage.getItem('userToken');
         if (userToken) {
             config.headers['Authorization'] = `Bearer ${userToken}`;
         }
     } catch (err) {
-        console.warn("Request interceptor error:", err.message);
+        console.error("Auth Token error:", err.message);
     }
+
     return config;
 }, (error) => {
     return Promise.reject(error);
