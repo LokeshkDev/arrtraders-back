@@ -6,6 +6,14 @@ import { admin } from '../config/firebaseAdmin.js';
 // @route   POST /api/users/google-login
 export const googleLogin = async (req, res) => {
     try {
+        if (!isFirebaseInitialized) {
+            console.error('Google Login Error: Firebase Admin NOT initialized. Check FIREBASE_SERVICE_ACCOUNT_JSON.');
+            return res.status(500).json({ 
+                message: 'Authentication service configuration error.',
+                debug: 'Firebase Admin not initialized'
+            });
+        }
+
         const { idToken } = req.body;
         const decodedToken = await admin.auth().verifyIdToken(idToken);
         const { email, name, picture } = decodedToken;

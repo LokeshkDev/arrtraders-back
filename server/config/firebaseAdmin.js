@@ -43,7 +43,7 @@ const initializeFirebaseAdmin = () => {
                 credential: admin.credential.cert(serviceAccount)
             });
             isFirebaseInitialized = true;
-            console.log('Firebase Admin initialized successfully.');
+            console.log('Firebase Admin initialized successfully using', serviceAccountJson ? 'Environment Variable' : 'File Path');
         } else {
             console.error('Firebase Admin could not be initialized: No credentials provided via Environment Variable or File Path.');
         }
