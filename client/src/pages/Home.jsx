@@ -418,6 +418,8 @@ const Home = () => {
       {cmsData?.showTestimonials !== false && cmsData?.testimonials?.length > 0 && (
         <Testimonials testimonials={cmsData.testimonials} />
       )}
+      {/* Bottom Spacer for Mobile Nav */}
+      <div className="pb-5 mb-5 d-lg-none"></div>
     </main>
   );
 };

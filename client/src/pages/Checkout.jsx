@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { MapPin, CreditCard, Package, ShieldCheck, Truck, ChevronRight, Phone, Home, Briefcase, Plus, CheckCircle2, ArrowLeft } from 'lucide-react';
@@ -15,6 +15,7 @@ const Checkout = () => {
     const [showNewAddressForm, setShowNewAddressForm] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState('COD');
     const [loading, setLoading] = useState(false);
+    const orderPlacedRef = useRef(false);
 
     const [newAddress, setNewAddress] = useState({
         label: 'Home', name: '', phone: '', line1: '', line2: '', city: '', state: '', pincode: '', isDefault: false
@@ -32,7 +33,7 @@ const Checkout = () => {
         } else {
             fetchAddresses();
         }
-        if (cart.length === 0) {
+        if (cart.length === 0 && !orderPlacedRef.current) {
             navigate('/cart');
         }
     }, [navigate, userInfo, cart.length]);
@@ -91,6 +92,7 @@ const Checkout = () => {
             };
 
             const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/orders`, orderData);
+            orderPlacedRef.current = true;
             clearCart();
             navigate(`/order-success/${data._id}`);
         } catch (error) {
@@ -112,14 +114,9 @@ const Checkout = () => {
                             <span className="node-label">Shipping</span>
                         </div>
                         <div className={`stepper-connector ${step >= 2 ? 'active' : ''}`}></div>
-                        <div className={`stepper-node ${step >= 2 ? 'active' : ''} ${step > 2 ? 'completed' : ''}`}>
-                            <div className="node-circle">{step > 2 ? <CheckCircle2 size={18} /> : <CreditCard size={18} />}</div>
+                        <div className={`stepper-node ${step >= 2 ? 'active' : ''}`}>
+                            <div className="node-circle"><CreditCard size={18} /></div>
                             <span className="node-label">Payment</span>
-                        </div>
-                        <div className={`stepper-connector ${step >= 3 ? 'active' : ''}`}></div>
-                        <div className={`stepper-node ${step >= 3 ? 'active' : ''}`}>
-                            <div className="node-circle"><Package size={18} /></div>
-                            <span className="node-label">Confirm</span>
                         </div>
                     </div>
                 </div>
@@ -246,7 +243,7 @@ const Checkout = () => {
                                         </div>
                                         <Truck size={32} className="text-secondary opacity-25" />
                                     </div>
-                                    
+
                                     <div className="check-pay-card disabled-luxury p-4 d-flex align-items-center gap-4">
                                         <div className="flex-shrink-0 opacity-40">
                                             <ShieldCheck size={20} className="text-muted" />
@@ -260,50 +257,29 @@ const Checkout = () => {
                                 </div>
                                 <div className="d-flex flex-column flex-md-row gap-3">
                                     <button className="cart-back-link font-heading fw-bold tracking-widest border-0 bg-transparent" onClick={() => setStep(1)}><ArrowLeft size={16} /> PREVIOUS</button>
-                                    <button className="btn-add-luxury flex-grow-1" onClick={() => setStep(3)}>REVIEW ORDER</button>
+                                    <button 
+                                        className="btn-add-luxury flex-grow-1" 
+                                        disabled={loading}
+                                        onClick={handlePlaceOrder}
+                                    >
+                                        {loading ? 'PLACING ORDER...' : (paymentMethod === 'COD' ? 'PLACE ORDER' : 'PROCEED TO PAY')}
+                                    </button>
                                 </div>
                             </div>
                         )}
 
-                        {step === 3 && (
-                            <div className="animated fadeIn">
-                                <h2 className="font-headline text-primary mb-4 border-bottom pb-4 border-gold-subtle">Review Order</h2>
-                                <div className="luxury-card p-5 mb-4 mb-lg-5">
-                                    <div className="row g-4">
-                                        <div className="col-md-6 border-end-gold">
-                                            <label className="font-heading extra-small fw-bold text-secondary uppercase tracking-widest mb-3 d-block">DELIVERY ADDRESS</label>
-                                            <p className="fw-bold font-headline text-primary mb-1 fs-5">{selectedAddress.name}</p>
-                                            <p className="small text-muted font-body m-0">{selectedAddress.line1}</p>
-                                            <p className="small text-muted font-body m-0">{selectedAddress.city}, {selectedAddress.state} - {selectedAddress.pincode}</p>
-                                        </div>
-                                        <div className="col-md-6 ps-md-4">
-                                            <label className="font-heading extra-small fw-bold text-secondary uppercase tracking-widest mb-3 d-block">PAYMENT METHOD</label>
-                                            <p className="fw-bold font-headline text-primary m-0 fs-5">{paymentMethod === 'COD' ? 'Cash on Delivery' : 'Online Payment'}</p>
-                                            <p className="small text-muted font-body mt-1">Secure and fast checkout</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <button
-                                    className="btn-add-luxury w-100 py-3 fs-5"
-                                    disabled={loading}
-                                    onClick={handlePlaceOrder}
-                                >
-                                    {loading ? 'PLACING ORDER...' : 'CONFIRM ORDER'}
-                                </button>
-                                <button className="btn btn-link text-muted w-100 mt-4 text-decoration-none font-heading extra-small tracking-widest fw-bold" onClick={() => setStep(2)}>CHANGE PAYMENT</button>
-                            </div>
-                        )}
+
                     </div>
 
                     {/* Premium Order Summary */}
                     <div className="col-lg-4">
-                        <div className="summary-card-luxury position-sticky" style={{top: '120px'}}>
+                        <div className="summary-card-luxury position-sticky" style={{ top: '120px' }}>
                             <h4 className="font-headline text-primary mb-4 border-bottom pb-3 border-gold-subtle">Order Summary</h4>
-                            
-                            <div className="check-items-scroll custom-scrollbar mb-4" style={{maxHeight: '350px'}}>
+
+                            <div className="check-items-scroll custom-scrollbar mb-4" style={{ maxHeight: '350px' }}>
                                 {cart.map((item, idx) => (
                                     <div key={idx} className="summary-item-row">
-                                        <div className="position-relative flex-shrink-0" style={{width: '65px', height: '65px'}}>
+                                        <div className="position-relative flex-shrink-0" style={{ width: '65px', height: '65px' }}>
                                             <img src={item.image?.startsWith('http') ? item.image : `${import.meta.env.VITE_API_URL}${item.image}`} className="w-100 h-100 object-fit-cover rounded-2" alt="" />
                                             <span className="summary-qty-bubble">{item.qty}</span>
                                         </div>

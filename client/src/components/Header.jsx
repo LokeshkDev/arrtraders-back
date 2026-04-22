@@ -12,6 +12,7 @@ const Header = () => {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   
   const location = useLocation();
   const cartContext = useContext(CartContext);
@@ -162,31 +163,47 @@ const Header = () => {
                   </Link>
                 </div>
 
-                {/* Mobile Hamburger Menu (Replaces Profile/Cart) */}
-                <button 
-                  className="mobile-hamburger-btn d-lg-none border-0 bg-transparent"
-                  onClick={() => setMobileHelpMenuOpen(true)}
-                >
-                  <Menu size={28} className="text-secondary" />
-                </button>
+                {/* Mobile: Search Icon + Hamburger */}
+                <div className="d-lg-none d-flex align-items-center gap-3">
+                  <button 
+                    className="mobile-search-toggle border-0 bg-transparent p-0"
+                    onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+                    aria-label="Toggle search"
+                  >
+                    <Search size={22} className="text-secondary" />
+                  </button>
+                  <button 
+                    className="mobile-hamburger-btn border-0 bg-transparent"
+                    onClick={() => setMobileHelpMenuOpen(true)}
+                  >
+                    <Menu size={28} className="text-secondary" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
           
-          {/* Mobile Search - Visible only on small screens */}
-          <div className="row d-lg-none mt-3">
-            <div className="col-12">
-               <div className="mobile-search-bar">
-                 <Search size={16} />
-                 <input 
-                   type="text"
-                   placeholder="Search..."
-                   value={searchQuery}
-                   onChange={(e) => setSearchQuery(e.target.value)}
-                 />
-               </div>
+          {/* Mobile Search - Expandable overlay */}
+          {mobileSearchOpen && (
+          <div className="mobile-search-expanded d-lg-none">
+            <div className="mobile-search-bar">
+              <Search size={16} />
+              <input 
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus
+              />
+              <button 
+                className="mobile-search-close border-0 bg-transparent p-0"
+                onClick={() => setMobileSearchOpen(false)}
+              >
+                <X size={18} className="text-muted" />
+              </button>
             </div>
           </div>
+          )}
         </div>
       </div>
 

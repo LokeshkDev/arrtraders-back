@@ -41,6 +41,7 @@ const ProductDetails = () => {
   const [qty, setQty] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
   const [shippingInfo, setShippingInfo] = useState(null);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
   
   const productId = product?._id || product?.id;
 
@@ -85,6 +86,16 @@ const ProductDetails = () => {
       } catch (e) { console.error('Shipping fetch error:', e); }
     };
     fetchShipping();
+
+    // Fetch featured products
+    const fetchFeatured = async () => {
+      try {
+        const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/products`);
+        const fp = data.filter(p => p.isFeatured).slice(0, 8);
+        setFeaturedProducts(fp);
+      } catch (e) { console.error('Featured fetch error:', e); }
+    };
+    fetchFeatured();
   }, [categorySlug, productSlug]);
 
   if (loading) return <div className="min-vh-100 d-flex align-items-center justify-content-center"><div className="spinner-border text-primary" role="status"></div></div>;
@@ -143,12 +154,7 @@ const ProductDetails = () => {
     addToCart({ ...product, price: currentPrice, weight: selectedWeight }, qty);
   };
 
-  const relatedProducts = [
-    { _id: 'p2', name: 'Medjool King', price: 1800, img: '/images/reference/product-thumb-3.png', rating: 5.0, qty: '500g' },
-    { _id: 'p3', name: 'Golden Sukkari', price: 950, img: '/images/reference/product-thumb-2.png', rating: 4.8, qty: '500g' },
-    { _id: 'p4', name: 'Premium Mabroom', price: 1100, img: '/images/reference/product-thumb-7.png', rating: 4.7, qty: '500g' },
-    { _id: 'p5', name: 'Jumbo Cashews', price: 950, img: '/images/reference/product-thumb-4.png', rating: 4.8, qty: '500g' },
-  ];
+
 
   return (
     <main className="product-details-page bg-white animate-fade-in">
@@ -222,13 +228,13 @@ const ProductDetails = () => {
                 <h1 className="display-5 font-headline mb-2 text-primary">{product.name}</h1>
                 <p className="fs-5 text-muted opacity-80 mb-4">{product.subtitle}</p>
 
-                <div className="d-flex align-items-baseline gap-3 mb-5">
+                <div className="d-flex align-items-baseline flex-wrap gap-2 gap-md-3 mb-5">
                    <span className="price-premium">₹{formattedPrice(currentPrice)}</span>
                    {hasDiscount && (
-                      <>
+                      <div className="d-flex align-items-center gap-2 mt-2 mt-md-0">
                         <span className="fs-4 text-muted text-decoration-line-through opacity-50">₹{formattedPrice(currentOriginalPrice)}</span>
-                        <span className="badge-discount px-3 py-2 ms-2">SAVE {discountPercent}%</span>
-                      </>
+                        <span className="badge-discount px-3 py-2 ms-1">SAVE {discountPercent}%</span>
+                      </div>
                    )}
                 </div>
 
@@ -273,7 +279,7 @@ const ProductDetails = () => {
                      { icon: Leaf, title: "100% Quality", sub: "No Added Preservatives" },
                      { icon: Package, title: "Secure Delivery", sub: "Vacuum Sealed Freshness" }
                    ].map((usp, i) => (
-                     <div key={i} className="col-4">
+                     <div key={i} className="col-md-4 col-4">
                           <div className="usp-item text-center">
                               <div className="usp-icon mx-auto mb-2 text-primary bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '45px', height: '45px' }}>
                                   <usp.icon size={20} className="text-secondary" />
@@ -287,7 +293,7 @@ const ProductDetails = () => {
 
                 <div className="pd-info-tabs mt-5">
                    <div className="d-flex border-bottom gap-4 mb-4">
-                      {['description', 'nutrition', 'shipping'].map(tab => (
+                      {['description', 'shipping'].map(tab => (
                          <button 
                            key={tab}
                            className={`tab-link py-2 border-0 bg-transparent fw-bold small uppercase tracking-wider position-relative ${activeTab === tab ? 'active' : 'text-muted'}`}
@@ -313,23 +319,7 @@ const ProductDetails = () => {
                             )}
                          </div>
                       )}
-                      {activeTab === 'nutrition' && product.nutrition && (
-                         <div className="anim-fade-in row g-3">
-                            {Object.entries(typeof product.nutrition === 'object' && product.nutrition !== null ? product.nutrition : {}).map(([k, v]) => (
-                               <div key={k} className="col-4">
-                                  <div className="bg-light p-3 rounded-4 text-center border">
-                                     <span className="d-block extra-small text-muted uppercase fw-bold mb-1 font-heading">{k}</span>
-                                     <span className="d-block fs-6 fw-bold text-primary">{v}</span>
-                                  </div>
-                               </div>
-                            ))}
-                         </div>
-                      )}
-                      {activeTab === 'nutrition' && (!product.nutrition || Object.keys(product.nutrition).length === 0) && (
-                         <div className="anim-fade-in py-4 text-center">
-                            <p className="text-muted fs-7 italic opacity-50">Nutritional specifications pending review for this batch.</p>
-                         </div>
-                      )}
+
                       {activeTab === 'shipping' && (
                          <div className="anim-fade-in">
                             {shippingInfo ? (
@@ -369,21 +359,22 @@ const ProductDetails = () => {
           </div>
         </div>
 
+        {featuredProducts.length > 0 && (
         <section className="mt-5 pt-5 border-top">
             <div className="d-flex justify-content-between align-items-end mb-4 mb-lg-5">
                 <div>
-                   <h2 className="display-6 font-headline mb-0 text-primary">Discover More Gems</h2>
-                   <p className="text-muted fs-6 mb-0">Related treasures from our collections.</p>
+                   <h4 className="text-secondary fw-bold mb-2 font-body uppercase extra-small" style={{ letterSpacing: '2px' }}>Handpicked For You</h4>
+                   <h2 className="display-6 font-headline mb-0 text-primary">Featured Today</h2>
                 </div>
                 <Link to="/categories" className="text-secondary fw-bold text-decoration-none d-flex align-items-center gap-2 small font-heading tracking-widest">
-                    <span className="d-none d-sm-inline">VIEW COLLECTION</span> <ArrowRight size={16} />
+                    <span className="d-none d-sm-inline">VIEW ALL</span> <ArrowRight size={16} />
                 </Link>
             </div>
 
             <div className="row g-4 g-xxl-5 d-none d-lg-flex">
-                {relatedProducts.map(p => (
+                {featuredProducts.slice(0, 4).map(p => (
                    <div key={p._id} className="col-6 col-md-3">
-                      <ProductCard product={p} />
+                      <ProductCard product={p} showFeaturedBadge={true} />
                    </div>
                 ))}
             </div>
@@ -396,14 +387,15 @@ const ProductDetails = () => {
                     pagination={{ clickable: true, dynamicBullets: true }}
                     breakpoints={{ 576: { slidesPerView: 2.2 } }}
                 >
-                    {relatedProducts.map(p => (
+                    {featuredProducts.slice(0, 8).map(p => (
                        <SwiperSlide key={p._id} className="h-auto">
-                           <ProductCard product={p} />
+                           <ProductCard product={p} showFeaturedBadge={true} />
                        </SwiperSlide>
                     ))}
                 </Swiper>
             </div>
         </section>
+        )}
       </div>
     </main>
   );

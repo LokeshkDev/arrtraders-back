@@ -7,7 +7,8 @@
   position: relative;
   height: 100%;
   box-shadow: var(--shadow-sm);
-  overflow: hidden;
+  overflow: visible;
+  width: 100%; /* Ensure it fills the grid column */
 }
 
 .universal-product-card:hover {
@@ -120,7 +121,7 @@
 
 /* --- Info Section --- */
 .card-info-container {
-  padding: 16px 18px 18px;
+  padding: 16px 18px 20px; /* Increased bottom padding */
 }
 
 .product-card-title {
@@ -180,42 +181,83 @@
   font-size: 1.35rem;
   font-weight: 800;
   color: var(--secondary-dark);
+  line-height: 1;
 }
 
-/* --- Purchase Interaction --- */
+.product-card-action-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.product-card-pricing {
+  margin-top: 4px;
+}
+
 .purchase-action {
-  margin-bottom: 4px;
+  width: 100%;
 }
 
 .btn-add-action {
-  width: 46px;
+  width: 46px; /* Compact width */
   height: 46px;
   background: var(--primary);
   color: var(--secondary);
   border: 1px solid var(--secondary);
-  border-radius: 50%;
+  border-radius: 50%; /* Rounded like desktop */
   display: flex;
   align-items: center;
   justify-content: center;
   transition: var(--transition-premium);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
 }
 
 .btn-add-action:hover {
   background: var(--secondary);
   color: var(--primary);
-  transform: scale(1.1) rotate(5deg);
+  transform: scale(1.05);
 }
 
 .persistent-qty-pill {
-  background: #ffffff;
-  border: 1px solid var(--secondary);
+  background: var(--accent, #f5f3ee);
+  border: 1px solid rgba(212, 175, 55, 0.2);
   border-radius: 50px;
-  padding: 4px;
-  display: flex;
+  padding: 3px 4px;
+  display: inline-flex;
   align-items: center;
-  box-shadow: var(--shadow-sm);
+  gap: 2px;
+  box-shadow: none;
+  height: 38px;
+  width: auto;
+}
+
+@media (min-width: 768px) {
+  .product-card-action-container {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .purchase-action {
+    width: auto;
+  }
+
+  .btn-add-action {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    justify-content: center;
+    padding-left: 0;
+    box-shadow: var(--shadow-md);
+  }
+
+  .persistent-qty-pill {
+    width: auto;
+    border-radius: 50px;
+    height: 38px;
+  }
 }
 
 .qty-btn {
@@ -223,13 +265,14 @@
   height: 30px;
   border-radius: 50%;
   border: none;
-  background: var(--accent);
+  background: rgba(255,255,255,0.8);
   color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
   transition: var(--transition-fast);
   cursor: pointer;
+  font-size: 14px;
 }
 
 .qty-btn:hover {
@@ -238,11 +281,44 @@
 }
 
 .qty-value {
-  padding: 0 12px;
+  padding: 0 8px;
   font-family: var(--font-heading);
   font-weight: 800;
   color: var(--primary);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  min-width: 20px;
+  text-align: center;
+}
+
+@media (max-width: 576px) {
+  .card-info-container {
+    padding: 12px 12px 15px; /* Tighter padding on mobile */
+  }
+
+  .current-price {
+    font-size: 1.15rem; /* Slightly smaller price */
+  }
+
+  .btn-add-action {
+    height: 40px;
+    border-radius: 8px;
+  }
+
+  .persistent-qty-pill {
+    height: 40px;
+    border-radius: 8px;
+    padding: 2px 4px;
+  }
+
+  .qty-btn {
+    width: 26px;
+    height: 26px;
+  }
+
+  .qty-value {
+    padding: 0 8px;
+    font-size: 0.8rem;
+  }
 }
 
 /* --- Mobile: always show action buttons on touch devices --- */

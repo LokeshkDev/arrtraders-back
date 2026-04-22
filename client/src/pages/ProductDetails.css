@@ -1,6 +1,13 @@
 .product-details-page {
   background-color: var(--accent); /* Ivory base */
   min-height: 100vh;
+  padding-top: 100px; /* Offset for sticky header */
+}
+
+@media (max-width: 991px) {
+  .product-details-page {
+    padding-top: 80px; /* Smaller offset for mobile header */
+  }
 }
 
 .breadcrumb-active {
@@ -118,6 +125,7 @@
   padding: 6px;
   width: 160px;
   justify-content: space-between;
+  height: 60px; /* Standardized height */
 }
 
 .stepper-btn {
@@ -150,7 +158,8 @@
   background: var(--primary);
   color: var(--secondary);
   border: 1px solid var(--secondary);
-  padding: 18px 32px;
+  padding: 0 32px; /* Removed vertical padding to use height */
+  height: 60px; /* Standardized height */
   border-radius: 40px;
   font-weight: 800;
   font-family: var(--font-heading);
@@ -204,9 +213,8 @@
 .tab-indicator {
   position: absolute;
   bottom: -1px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40px;
+  left: 0;
+  width: 100%; /* Match text width */
   height: 3px;
   background: var(--secondary);
   border-radius: 4px 4px 0 0;

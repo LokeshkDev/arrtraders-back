@@ -52,15 +52,15 @@ const Categories = () => {
       if (activeCategory === 'All') {
         matchCat = true;
       } else {
-         const activeCatObj = categories.find(c => c.name === activeCategory);
-         if (activeCatObj) {
-            const childCats = categories.filter(c => c.parent === activeCatObj._id).map(c => c.name);
-            if (p.category === activeCategory || childCats.includes(p.category)) {
-               matchCat = true;
-            }
-         } else {
-            matchCat = p.category === activeCategory;
-         }
+        const activeCatObj = categories.find(c => c.name === activeCategory);
+        if (activeCatObj) {
+          const childCats = categories.filter(c => c.parent === activeCatObj._id).map(c => c.name);
+          if (p.category === activeCategory || childCats.includes(p.category)) {
+            matchCat = true;
+          }
+        } else {
+          matchCat = p.category === activeCategory;
+        }
       }
       return matchSearch && matchCat;
     });
@@ -102,73 +102,74 @@ const Categories = () => {
 
               <ul className="list-unstyled mb-0 overflow-auto" style={{ maxHeight: '600px' }}>
                 <li className="category-accordion-item border-bottom py-2">
-                    <button
-                      className={`w-100 bg-transparent border-0 d-flex align-items-center p-2 rounded transition-all ${activeCategory === 'All' ? 'text-primary fw-bold bg-primary bg-opacity-10' : 'text-secondary hover-bg-light'}`}
-                      onClick={() => setActiveCategory('All')}
-                    >
-                      <span className="text-truncate" style={{ fontSize: '14px' }}>All Collections</span>
-                    </button>
+                  <button
+                    className={`w-100 bg-transparent border-0 d-flex align-items-center p-2 rounded transition-all ${activeCategory === 'All' ? 'text-white fw-bold bg-primary' : 'text-secondary hover-bg-light'}`}
+                    onClick={() => setActiveCategory('All')}
+                  >
+                    <span className="text-truncate" style={{ fontSize: '14px' }}>All Collections</span>
+                  </button>
                 </li>
                 <li className="category-accordion-item border-bottom py-2">
-                    <Link
-                      to="/featured"
-                      className="w-100 bg-transparent border-0 d-flex align-items-center gap-3 p-2 rounded transition-all text-secondary hover-bg-light"
-                    >
-                      <Award size={20} className="text-primary opacity-75" />
-                      <span className="text-truncate text-start fw-bold" style={{ fontSize: '14px' }}>Featured Products</span>
-                    </Link>
+                  <Link
+                    to="/featured"
+                    className="w-100 bg-transparent border-0 d-flex align-items-center gap-3 p-2 rounded transition-all text-secondary hover-bg-light"
+                  >
+                    <Award size={20} className="text-primary opacity-75" />
+                    <span className="text-truncate text-start fw-bold" style={{ fontSize: '14px' }}>Featured Products</span>
+                  </Link>
                 </li>
                 <li className="category-accordion-item border-bottom py-2">
-                    <Link
-                      to="/best-sellers"
-                      className="w-100 bg-transparent border-0 d-flex align-items-center gap-3 p-2 rounded transition-all text-secondary hover-bg-light"
-                    >
-                      <TrendingUp size={20} className="text-primary opacity-75" />
-                      <span className="text-truncate text-start fw-bold" style={{ fontSize: '14px' }}>Best Sellers</span>
-                    </Link>
+                  <Link
+                    to="/best-sellers"
+                    className="w-100 bg-transparent border-0 d-flex align-items-center gap-3 p-2 rounded transition-all text-secondary hover-bg-light"
+                  >
+                    <TrendingUp size={20} className="text-primary opacity-75" />
+                    <span className="text-truncate text-start fw-bold" style={{ fontSize: '14px' }}>Best Sellers</span>
+                  </Link>
                 </li>
                 {loading && <div className="text-center py-3"><div className="spinner-border spinner-border-sm text-primary"></div></div>}
                 {!loading && categories.filter(c => !c.parent).map(cat => {
                   const hasChildren = categories.some(c => c.parent === cat._id);
                   const isExpanded = expandedCatId === cat._id || activeCategory === cat.name || categories.some(c => c.parent === cat._id && c.name === activeCategory);
-                  
+
                   return (
-                  <React.Fragment key={cat._id}>
-                  <li className="category-accordion-item border-bottom py-2">
-                    <div className="d-flex w-100 align-items-center">
-                        <button
-                          className={`flex-grow-1 bg-transparent border-0 d-flex align-items-center gap-3 p-2 rounded transition-all ${activeCategory === cat.name && !hasChildren ? 'text-primary fw-bold bg-primary bg-opacity-10' : 'text-secondary hover-bg-light'}`}
-                          onClick={() => { setActiveCategory(cat.name); setExpandedCatId(cat._id); }}
-                        >
-                           <img src={getImageUrl(cat.image)} alt={cat.name} className="flex-shrink-0 rounded-circle object-fit-cover shadow-sm" style={{ width: '28px', height: '28px' }} />
-                           <span className="text-truncate text-start fw-bold" style={{ fontSize: '14px' }}>{cat.name}</span>
-                        </button>
-                        {hasChildren && (
+                    <React.Fragment key={cat._id}>
+                      <li className="category-accordion-item border-bottom py-2">
+                        <div className="d-flex w-100 align-items-center">
+                          <button
+                            className={`flex-grow-1 bg-transparent border-0 d-flex align-items-center gap-3 p-2 rounded transition-all ${activeCategory === cat.name && !hasChildren ? 'text-white fw-bold bg-primary' : 'text-secondary hover-bg-light'}`}
+                            onClick={() => { setActiveCategory(cat.name); setExpandedCatId(cat._id); }}
+                          >
+                            <img src={getImageUrl(cat.image)} alt={cat.name} className="flex-shrink-0 rounded-circle object-fit-cover shadow-sm" style={{ width: '28px', height: '28px' }} />
+                            <span className="text-truncate text-start fw-bold" style={{ fontSize: '14px' }}>{cat.name}</span>
+                          </button>
+                          {hasChildren && (
                             <button className="btn btn-sm btn-link text-muted p-1" onClick={() => toggleExpand(cat._id)}>
-                                {isExpanded ? <ChevronDown size={16}/> : <ChevronRight size={16}/>}
+                              {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                             </button>
-                        )}
-                    </div>
-                  </li>
-                  {hasChildren && isExpanded && categories.filter(c => c.parent === cat._id).map(child => (
-                      <li key={child._id} className="category-accordion-item border-bottom py-1 ps-5 bg-light bg-opacity-50">
-                        <button
-                          className={`w-100 bg-transparent border-0 d-flex align-items-center gap-3 p-2 rounded transition-all ${activeCategory === child.name ? 'text-primary fw-bold bg-primary bg-opacity-10' : 'text-muted hover-bg-light'}`}
-                          onClick={() => setActiveCategory(child.name)}
-                        >
-                           <span className="text-truncate text-start" style={{ fontSize: '13px' }}>↳ {child.name}</span>
-                        </button>
+                          )}
+                        </div>
                       </li>
-                  ))}
-                  </React.Fragment>
-                )})}
+                      {hasChildren && isExpanded && categories.filter(c => c.parent === cat._id).map(child => (
+                        <li key={child._id} className="category-accordion-item border-bottom py-1 ps-5 bg-light bg-opacity-50">
+                          <button
+                            className={`w-100 bg-transparent border-0 d-flex align-items-center gap-3 p-2 rounded transition-all ${activeCategory === child.name ? 'text-white fw-bold bg-primary' : 'text-muted hover-bg-light'}`}
+                            onClick={() => setActiveCategory(child.name)}
+                          >
+                            <span className="text-truncate text-start" style={{ fontSize: '13px' }}>↳ {child.name}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </React.Fragment>
+                  )
+                })}
               </ul>
             </div>
           </aside>
 
           {/* Main Content Area */}
           <div className="col-12 col-lg-9">
-            
+
             {/* MOBILE ONLY: Search and Horizontal Tabs */}
             <div className="d-block d-lg-none">
               <div className="search-box-premium mb-4 position-relative">
@@ -183,26 +184,26 @@ const Categories = () => {
               </div>
 
               <div className="d-flex overflow-auto gap-2 mb-4 pb-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                <button 
+                <button
                   className={`btn flex-shrink-0 rounded-pill px-4 ${activeCategory === 'All' ? 'btn-primary' : 'btn-outline-secondary bg-white'}`}
                   onClick={() => setActiveCategory('All')}
                 >
                   All Collections
                 </button>
                 <Link to="/featured" className="btn flex-shrink-0 rounded-pill px-4 btn-outline-secondary bg-white d-flex align-items-center gap-2">
-                    <Award size={18} /> Featured
+                  <Award size={18} /> Featured
                 </Link>
                 <Link to="/best-sellers" className="btn flex-shrink-0 rounded-pill px-4 btn-outline-secondary bg-white d-flex align-items-center gap-2">
-                    <TrendingUp size={18} /> Best Sellers
+                  <TrendingUp size={18} /> Best Sellers
                 </Link>
                 {loading && <div className="spinner-border spinner-border-sm text-primary align-self-center ms-3"></div>}
                 {!loading && categories.filter(c => !c.parent).map(cat => (
-                  <button 
+                  <button
                     key={cat._id}
                     className={`btn flex-shrink-0 rounded-pill px-4 d-flex align-items-center gap-2 ${activeCategory === cat.name || categories.some(c => c.parent === cat._id && c.name === activeCategory) ? 'btn-primary shadow-sm' : 'btn-outline-secondary bg-white'}`}
                     onClick={() => setActiveCategory(cat.name)}
                   >
-                    <img src={getImageUrl(cat.image)} alt={cat.name} className="rounded-circle object-fit-cover shadow-sm" style={{width: '20px', height: '20px'}} />
+                    <img src={getImageUrl(cat.image)} alt={cat.name} className="rounded-circle object-fit-cover shadow-sm" style={{ width: '20px', height: '20px' }} />
                     {cat.name}
                   </button>
                 ))}
@@ -210,33 +211,33 @@ const Categories = () => {
 
               {/* Mobile Sub-category Row */}
               {activeCategory !== 'All' && (() => {
-                  const activeCatObj = categories.find(c => c.name === activeCategory);
-                  const activeParentId = activeCatObj?.parent || activeCatObj?._id;
-                  const children = categories.filter(c => c.parent === activeParentId);
-                  
-                  if (children.length > 0) {
-                      const parentCatName = categories.find(c => c._id === activeParentId)?.name;
-                      return (
-                           <div className="d-flex overflow-auto gap-2 mb-4 pb-2 border-bottom" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', marginTop: '-15px' }}>
-                                <button
-                                    className={`btn flex-shrink-0 rounded-pill px-3 py-1 font-label extra-small ${activeCategory === parentCatName ? 'btn-secondary text-white' : 'btn-outline-secondary bg-white text-muted border-opacity-50'}`}
-                                    onClick={() => setActiveCategory(parentCatName)}
-                                >
-                                    All in {parentCatName}
-                                </button>
-                                {children.map(child => (
-                                    <button 
-                                        key={child._id}
-                                        className={`btn flex-shrink-0 rounded-pill px-3 py-1 font-label extra-small ${activeCategory === child.name ? 'btn-secondary text-white shadow-sm' : 'btn-outline-secondary bg-white text-muted border-opacity-50'}`}
-                                        onClick={() => setActiveCategory(child.name)}
-                                    >
-                                        {child.name}
-                                    </button>
-                                ))}
-                           </div>
-                      )
-                  }
-                  return null;
+                const activeCatObj = categories.find(c => c.name === activeCategory);
+                const activeParentId = activeCatObj?.parent || activeCatObj?._id;
+                const children = categories.filter(c => c.parent === activeParentId);
+
+                if (children.length > 0) {
+                  const parentCatName = categories.find(c => c._id === activeParentId)?.name;
+                  return (
+                    <div className="d-flex overflow-auto gap-2 mb-4 pb-2 border-bottom" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', marginTop: '-15px' }}>
+                      <button
+                        className={`btn flex-shrink-0 rounded-pill px-3 py-1 font-label extra-small ${activeCategory === parentCatName ? 'btn-secondary text-white' : 'btn-outline-secondary bg-white text-muted border-opacity-50'}`}
+                        onClick={() => setActiveCategory(parentCatName)}
+                      >
+                        All in {parentCatName}
+                      </button>
+                      {children.map(child => (
+                        <button
+                          key={child._id}
+                          className={`btn flex-shrink-0 rounded-pill px-3 py-1 font-label extra-small ${activeCategory === child.name ? 'btn-secondary text-white shadow-sm' : 'btn-outline-secondary bg-white text-muted border-opacity-50'}`}
+                          onClick={() => setActiveCategory(child.name)}
+                        >
+                          {child.name}
+                        </button>
+                      ))}
+                    </div>
+                  )
+                }
+                return null;
               })()}
             </div>
 
@@ -246,8 +247,8 @@ const Categories = () => {
               </div>
               <div className="d-flex align-items-center gap-2">
                 <span className="small text-muted d-none d-md-inline">Sort by:</span>
-                <select 
-                  className="form-select form-select-sm rounded-pill px-3 shadow-sm" 
+                <select
+                  className="form-select form-select-sm rounded-pill px-3 shadow-sm"
                   style={{ minWidth: '150px' }}
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value)}
@@ -295,17 +296,18 @@ const Categories = () => {
 
         {/* Heritage Story - Mobile/Tab Full Width */}
         <div className="mt-4 p-4 p-md-5 rounded-4 shadow-premium text-white position-relative overflow-hidden d-block d-lg-none mx-n2 mx-md-0 mb-4" style={{ background: 'var(--secondary)' }}>
-            <div className="position-absolute top-0 end-0 opacity-10 p-3 mt-n4 me-n4">
-               <Award size={150} />
-            </div>
-            <div className="position-relative" style={{ zIndex: 2 }}>
-               <h2 className="h3 fw-bold font-headline mb-3">Our Quality Story</h2>
-               <p className="mb-4 small opacity-75 font-body">
-                 Sourced from the best organic farms, AR Rahman Dates and Nuts brings you high-quality products for your health.
-               </p>
-               <Link to="/about" className="btn btn-primary rounded-pill px-4 py-2 small fw-bold"> Learn More <ArrowRight size={16} className="ms-1" /></Link>
-            </div>
+          <div className="position-absolute top-0 end-0 opacity-10 p-3 mt-n4 me-n4">
+            <Award size={150} />
+          </div>
+          <div className="position-relative" style={{ zIndex: 2 }}>
+            <h2 className="h3 fw-bold font-headline mb-3">Our Quality Story</h2>
+            <p className="mb-4 small opacity-75 font-body">
+              Sourced from the best organic farms, AR Rahman Dates and Nuts brings you high-quality products for your health.
+            </p>
+            <Link to="/about" className="btn btn-primary rounded-pill px-4 py-2 small fw-bold"> Learn More <ArrowRight size={16} className="ms-1" /></Link>
+          </div>
         </div>
+        <div className="pb-5 mb-5 d-lg-none"></div> {/* Spacer for mobile bottom nav */}
       </div>
     </main>
   );

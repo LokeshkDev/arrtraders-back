@@ -61,12 +61,12 @@ const Cart = () => {
                                     <div className="cart-item-img-container rounded-2 overflow-hidden shadow-sm">
                                         <img src={item.img || item.image} alt={item.name} className="w-100 h-100 object-fit-cover" />
                                     </div>
-                                    
+
                                     <div className="flex-grow-1 d-flex flex-column">
                                         <div className="d-flex justify-content-between align-items-start mb-1">
                                             <h5 className="font-headline text-primary m-0 fw-bold fs-4">{item.name}</h5>
-                                            <button 
-                                                onClick={() => removeFromCart(item._id, item.weight)} 
+                                            <button
+                                                onClick={() => removeFromCart(item._id, item.weight)}
                                                 className="cart-remove-btn"
                                                 title="Remove item"
                                             >
@@ -74,7 +74,7 @@ const Cart = () => {
                                             </button>
                                         </div>
                                         <div className="sku-tag font-label text-secondary mb-3 small tracking-widest uppercase fw-bold">{item.weight || 'Standard'}</div>
-                                        
+
                                         <div className="mt-auto d-flex justify-content-between align-items-center">
                                             <div className="pd-qty-stepper d-flex align-items-center">
                                                 <button onClick={() => updateQty(item._id, item.weight, -1)} className="stepper-btn"><Minus size={16} /></button>
@@ -94,9 +94,9 @@ const Cart = () => {
 
                     {/* Order Details Sidebar */}
                     <div className="col-lg-4">
-                        <div className="summary-card-luxury position-sticky" style={{top: '120px'}}>
+                        <div className="summary-card-luxury position-sticky" style={{ top: '120px' }}>
                             <h4 className="font-headline text-primary mb-4 text-center border-bottom pb-3 border-gold-subtle">Order Summary</h4>
-                            
+
                             <div className="summary-details-stack d-flex flex-column gap-3 mb-4">
                                 <div className="d-flex justify-content-between font-body text-primary">
                                     <span>Subtotal</span>
@@ -119,12 +119,12 @@ const Cart = () => {
                             </div>
 
                             <div className="border-top pt-4 d-flex justify-content-between align-items-center mb-5 border-gold-subtle">
-                                <span className="font-headline fs-6 text-primary">Total Amount</span>
+                                <span className="font-headline fs-5 text-secondary">Total Amount</span>
                                 <span className="font-headline fs-2 text-secondary fw-bold">₹{subtotal > 1999 ? subtotal : total}</span>
                             </div>
 
-                            <button 
-                                onClick={() => navigate('/checkout')} 
+                            <button
+                                onClick={() => navigate('/checkout')}
                                 className="btn-add-luxury w-100 d-flex align-items-center justify-content-center gap-2"
                             >
                                 <CreditCard size={18} />

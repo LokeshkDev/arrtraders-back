@@ -107,11 +107,14 @@
 /* Media Queries for Mobile (Mobile Bottom Nav support) */
 @media (max-width: 768px) {
     .floating-actions-container {
-        bottom: 90px; /* Elevated to clear bottom navigation */
+        bottom: 70px;
+        /* Elevated further to clear bottom navigation and safe areas */
         left: 15px;
         right: 15px;
+        z-index: 2005;
+        /* Between BottomNav and CartBtn */
     }
-    
+
     .floating-btn {
         width: 45px;
         height: 45px;
