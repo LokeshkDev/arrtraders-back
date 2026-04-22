@@ -1,12 +1,13 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Trash2, Minus, Plus, ShoppingBag, ArrowLeft, ShieldCheck, CreditCard, Truck, ChevronRight } from 'lucide-react';
+import { Trash2, Minus, Plus, ShoppingBag, ArrowLeft, ShieldCheck, CreditCard, Truck, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { CartContext } from '../context/CartContext';
 import './Cart.css';
 
 const Cart = () => {
     const { cart, removeFromCart, updateQty, getCartTotal } = useContext(CartContext);
     const navigate = useNavigate();
+    const [showDetails, setShowDetails] = useState(false);
 
     const deliveryCharge = 50;
     const subtotal = getCartTotal();
@@ -97,7 +98,7 @@ const Cart = () => {
                         <div className="summary-card-luxury position-sticky" style={{ top: '120px' }}>
                             <h4 className="font-headline text-primary mb-4 text-center border-bottom pb-3 border-gold-subtle">Order Summary</h4>
 
-                            <div className="summary-details-stack d-flex flex-column gap-3 mb-4">
+                            <div className={`summary-details-stack d-flex flex-column gap-3 mb-4 ${showDetails ? 'show-on-mobile' : 'hide-on-mobile'}`}>
                                 <div className="d-flex justify-content-between font-body text-primary">
                                     <span>Subtotal</span>
                                     <span className="fw-bold">₹{subtotal}</span>
@@ -118,8 +119,16 @@ const Cart = () => {
                                 )}
                             </div>
 
-                            <div className="border-top pt-4 d-flex justify-content-between align-items-center mb-5 border-gold-subtle">
-                                <span className="font-headline fs-5 text-secondary">Total Amount</span>
+                            <div 
+                                className="border-top pt-4 d-flex justify-content-between align-items-center mb-5 border-gold-subtle summary-total-clickable"
+                                onClick={() => setShowDetails(!showDetails)}
+                            >
+                                <div className="d-flex align-items-center gap-2">
+                                    <span className="font-headline fs-5 text-secondary">Total Amount</span>
+                                    <div className="mobile-only-chevron text-secondary">
+                                        {showDetails ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                    </div>
+                                </div>
                                 <span className="font-headline fs-2 text-secondary fw-bold">₹{subtotal > 1999 ? subtotal : total}</span>
                             </div>
 

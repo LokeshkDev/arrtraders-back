@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, googleProvider } from '../firebase';
 import { signInWithPopup } from 'firebase/auth';
+import axios from 'axios';
 import './Login.css';
 
 const Login = () => {
@@ -21,27 +22,15 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ email, password }),
-      });
+      const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/users/login`, { email, password });
 
-      const data = await response.json();
-      if (response.ok) {
-        const { token, ...userInfo } = data;
-        localStorage.setItem('userInfo', JSON.stringify(userInfo));
-        window.dispatchEvent(new Event('storage'));
-        window.location.href = data.isAdmin ? '/admin' : '/';
-      } else {
-        alert(data.message || 'Login failed');
-      }
+      const { token, ...userInfo } = data;
+      localStorage.setItem('userInfo', JSON.stringify(userInfo));
+      window.dispatchEvent(new Event('storage'));
+      window.location.href = data.isAdmin ? '/admin' : '/';
     } catch (error) {
       console.error('Login error:', error);
-      alert('An error occurred during login');
+      alert(error.response?.data?.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -53,28 +42,17 @@ const Login = () => {
       const result = await signInWithPopup(auth, googleProvider);
       const idToken = await result.user.getIdToken();
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/google-login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ idToken }),
-      });
+      const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/users/google-login`, { idToken });
 
-      const data = await response.json();
-      if (response.ok) {
-        const { token, ...userInfo } = data;
-        localStorage.setItem('userInfo', JSON.stringify(userInfo));
-        window.dispatchEvent(new Event('storage'));
-        window.location.href = '/'; // Social login is for customers only
-      } else {
-        alert(data.message || 'Google login failed');
-      }
+      const { token, ...userInfo } = data;
+      localStorage.setItem('userInfo', JSON.stringify(userInfo));
+      window.dispatchEvent(new Event('storage'));
+      window.location.href = '/'; // Social login is for customers only
     } catch (error) {
       console.error('Google Auth Error:', error);
       if (error.code !== 'auth/popup-closed-by-user') {
-        alert('An error occurred during Google registration');
+        const errorMsg = error.response?.data?.message || 'An error occurred during Google registration';
+        alert(errorMsg);
       }
     } finally {
       setLoading(false);

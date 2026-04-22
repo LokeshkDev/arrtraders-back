@@ -50,7 +50,10 @@ export const googleLogin = async (req, res) => {
         });
     } catch (error) {
         console.error('Google Login Backend Error:', error.message);
-        res.status(401).json({ message: 'Invalid Google token or verification failed' });
+        res.status(401).json({ 
+            message: 'Invalid Google token or verification failed',
+            details: process.env.NODE_ENV === 'production' ? undefined : error.message 
+        });
     }
 };
 

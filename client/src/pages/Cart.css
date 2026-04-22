@@ -100,6 +100,19 @@
   font-size: 0.7rem;
 }
 
+.mobile-only-chevron {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .summary-details-stack.hide-on-mobile {
+    max-height: none !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    margin-bottom: 1.5rem !important;
+  }
+}
+
 /* ── RESPONSIVENESS ── */
 @media (max-width: 991px) {
   .summary-card-luxury {
@@ -284,8 +297,34 @@
 
   .summary-details-stack {
     gap: 8px !important;
-    margin-bottom: 12px !important;
+    margin-bottom: 0 !important;
     font-size: 0.85rem;
+    transition: all 0.3s ease-in-out;
+    overflow: hidden;
+  }
+
+  .summary-details-stack.hide-on-mobile {
+    max-height: 0;
+    opacity: 0;
+    margin-bottom: 0 !important;
+    pointer-events: none;
+  }
+
+  .summary-details-stack.show-on-mobile {
+    max-height: 200px;
+    opacity: 1;
+    margin-bottom: 12px !important;
+    padding-bottom: 8px;
+  }
+
+  .mobile-only-chevron {
+    display: flex;
+    align-items: center;
+    transition: transform 0.3s ease;
+  }
+
+  .summary-total-clickable {
+    cursor: pointer;
   }
 
   .free-shipping-promo {
