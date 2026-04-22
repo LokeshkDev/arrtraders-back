@@ -156,7 +156,8 @@ a:hover {
   border-color: var(--primary);
 }
 
-.form-control:focus, .form-select:focus {
+.form-control:focus,
+.form-select:focus {
   border-color: var(--secondary);
   box-shadow: 0 0 0 0.25rem rgba(212, 175, 55, 0.25);
   outline: none;
@@ -185,13 +186,15 @@ a:hover {
   color: var(--primary);
 }
 
-.btn-primary:active, .btn-primary:focus {
+.btn-primary:active,
+.btn-primary:focus {
   background-color: var(--primary-dark) !important;
   border-color: var(--secondary) !important;
   box-shadow: 0 0 0 0.25rem rgba(212, 175, 55, 0.25) !important;
 }
 
-.btn-check:focus + .btn-primary, .btn-primary:focus {
+.btn-check:focus+.btn-primary,
+.btn-primary:focus {
   box-shadow: 0 0 0 0.25rem rgba(212, 175, 55, 0.25) !important;
 }
 
@@ -211,11 +214,15 @@ a:hover {
 }
 
 /* Hard Overrides for Bootstrap Primary Blue (#0d6efd) */
-.text-primary, .link-primary, .btn-link {
+.text-primary,
+.link-primary,
+.btn-link {
   color: var(--primary) !important;
 }
 
-.text-primary:hover, .link-primary:hover, .btn-link:hover {
+.text-primary:hover,
+.link-primary:hover,
+.btn-link:hover {
   color: var(--secondary) !important;
 }
 
@@ -227,7 +234,8 @@ a:hover {
   border-color: var(--primary) !important;
 }
 
-.nav-pills .nav-link.active, .nav-tabs .nav-link.active {
+.nav-pills .nav-link.active,
+.nav-tabs .nav-link.active {
   background-color: var(--primary) !important;
   color: var(--secondary) !important;
 }
@@ -235,7 +243,7 @@ a:hover {
 /* Custom Utilities */
 .padding-large {
   padding-top: 100px;
-  padding-bottom: 100px;
+  padding-bottom: 0;
 }
 
 .padding-medium {

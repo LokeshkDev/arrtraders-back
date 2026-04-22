@@ -381,3 +381,69 @@
     font-weight: 800;
   }
 }
+
+/* Product Slider Navigation */
+.product-slider-container {
+  padding: 0 50px; /* Space for buttons */
+}
+
+@media (max-width: 991px) {
+  .product-slider-container {
+    padding: 0;
+  }
+}
+
+.slider-nav-btn {
+  width: 44px;
+  height: 44px;
+  background: white;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  color: var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.slider-nav-btn:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  box-shadow: 0 8px 20px rgba(26, 38, 26, 0.15);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.slider-nav-btn.swiper-button-disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Pagination Overrides for Product Swiper */
+.product-swiper .swiper-pagination {
+  position: relative !important;
+  bottom: 0 !important;
+  margin-top: 30px;
+  display: flex !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+.product-swiper .swiper-pagination-bullet {
+  width: 8px !important;
+  height: 8px !important;
+  background: var(--primary) !important;
+  opacity: 0.2 !important;
+  margin: 0 !important;
+  transition: all 0.3s ease !important;
+}
+
+.product-swiper .swiper-pagination-bullet-active {
+  width: 24px !important;
+  border-radius: 4px !important;
+  opacity: 1 !important;
+}

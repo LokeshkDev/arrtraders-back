@@ -5,7 +5,7 @@ import { Autoplay, EffectFade, Navigation, Pagination } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import DOMPurify from 'dompurify';
 import { CartContext } from '../context/CartContext';
-import { ArrowRight, ShoppingCart, Heart, Eye, TrendingUp, Star, ShieldCheck, Truck, RefreshCcw, Clock } from 'lucide-react';
+import { ArrowRight, ShoppingCart, Heart, Eye, TrendingUp, Star, ShieldCheck, Truck, RefreshCcw, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import Testimonials from '../components/Testimonials';
 
@@ -239,7 +239,7 @@ const Home = () => {
 
       {/* Category Grid - fit to screen */}
       {(cmsData?.showCategories !== false) && (
-        <section className="padding-large category-section-refined">
+        <section className="padding-large category-section-refined" style={{ paddingBottom: "80px" }}>
           <div className="container-lg">
             <div className="text-center mb-5 pb-3">
               <h2 className="display-5 fw-bold mb-3 font-headline">Explore categories</h2>
@@ -266,7 +266,7 @@ const Home = () => {
         <section className="padding-large bg-light bg-opacity-30 border-top border-bottom">
           <div className="container-lg">
             <div className="d-flex justify-content-between align-items-end mb-5 align-items-end flex-lg-row flex-column">
-               <div>
+              <div>
                 <h4 className="text-secondary fw-bold mb-2 font-body uppercase extra-small" style={{ letterSpacing: '2px' }}>Handpicked For You</h4>
                 <h2 className="display-5 fw-bold font-headline mb-0 text-dark">Featured Today</h2>
               </div>
@@ -275,20 +275,22 @@ const Home = () => {
               </Link>
             </div>
 
-            <div className="row g-4 d-none d-lg-flex">
-              {featuredProducts.map(product => (
-                <div key={product._id} className="col-lg-3 col-md-6">
-                  <ProductCard product={product} showFeaturedBadge={true} />
-                </div>
-              ))}
-            </div>
-
-            {/* Mobile Swiper for Featured */}
-            <div className="d-lg-none product-swiper-wrap pb-4">
+            <div className="product-slider-container position-relative">
               <Swiper
-                modules={[]}
+                modules={[Navigation, Pagination]}
+                navigation={{
+                  nextEl: '.featured-next',
+                  prevEl: '.featured-prev',
+                }}
+                pagination={{ clickable: true }}
                 slidesPerView={1.4}
                 spaceBetween={20}
+                breakpoints={{
+                  576: { slidesPerView: 2.2, spaceBetween: 20 },
+                  992: { slidesPerView: 3, spaceBetween: 25 },
+                  1200: { slidesPerView: 4, spaceBetween: 30 }
+                }}
+                className="product-swiper pb-5"
               >
                 {featuredProducts.map(product => (
                   <SwiperSlide key={product._id} className="h-auto">
@@ -296,6 +298,14 @@ const Home = () => {
                   </SwiperSlide>
                 ))}
               </Swiper>
+
+              {/* Custom Navigation */}
+              <button className="slider-nav-btn featured-prev position-absolute start-0 translate-middle-y top-50 d-none d-lg-flex">
+                <ChevronLeft size={24} />
+              </button>
+              <button className="slider-nav-btn featured-next position-absolute end-0 translate-middle-y top-50 d-none d-lg-flex">
+                <ChevronRight size={24} />
+              </button>
             </div>
           </div>
         </section>
@@ -323,20 +333,22 @@ const Home = () => {
                 </div>
               </div>
 
-              <div className="row g-4 d-none d-lg-flex">
-                {flashSaleProducts.map(product => (
-                  <div key={product._id} className="col-lg-3 col-md-6">
-                    <ProductCard product={product} />
-                  </div>
-                ))}
-              </div>
-
-              {/* Mobile Swiper for Flash Sale */}
-              <div className="d-lg-none product-swiper-wrap pb-2">
+              <div className="product-slider-container position-relative">
                 <Swiper
-                  modules={[]}
+                  modules={[Navigation, Pagination]}
+                  navigation={{
+                    nextEl: '.flash-next',
+                    prevEl: '.flash-prev',
+                  }}
+                  pagination={{ clickable: true }}
                   slidesPerView={1.4}
                   spaceBetween={20}
+                  breakpoints={{
+                    576: { slidesPerView: 2.2, spaceBetween: 20 },
+                    992: { slidesPerView: 3, spaceBetween: 25 },
+                    1200: { slidesPerView: 4, spaceBetween: 30 }
+                  }}
+                  className="product-swiper pb-5"
                 >
                   {flashSaleProducts.map(product => (
                     <SwiperSlide key={product._id} className="h-auto">
@@ -344,6 +356,14 @@ const Home = () => {
                     </SwiperSlide>
                   ))}
                 </Swiper>
+
+                {/* Custom Navigation */}
+                <button className="slider-nav-btn flash-prev position-absolute start-0 translate-middle-y top-50 d-none d-lg-flex">
+                  <ChevronLeft size={24} />
+                </button>
+                <button className="slider-nav-btn flash-next position-absolute end-0 translate-middle-y top-50 d-none d-lg-flex">
+                  <ChevronRight size={24} />
+                </button>
               </div>
             </div>
           </div>
@@ -355,7 +375,7 @@ const Home = () => {
         <section className="padding-large bg-white shadow-inner">
           <div className="container-lg">
             <div className="d-flex justify-content-between align-items-end mb-5 flex-lg-row flex-column">
-               <div>
+              <div>
                 <h4 className="text-primary fw-bold mb-2 font-body">FRESH FROM HARVEST</h4>
                 <h2 className="display-5 fw-bold font-headline mb-0 text-dark">Best Selling Products</h2>
               </div>
@@ -364,23 +384,22 @@ const Home = () => {
               </Link>
             </div>
 
-            <div className="row g-4 g-xxl-5 d-none d-lg-flex">
-              {bestSellers.map((product) => (
-                <div key={product._id} className="col-lg-3 col-md-6">
-                  <ProductCard product={product} showBestSellerBadge={true} />
-                </div>
-              ))}
-            </div>
-
-            {/* Mobile Swiper for Best Sellers */}
-            <div className="d-lg-none product-swiper-wrap pb-4">
+            <div className="product-slider-container position-relative">
               <Swiper
-                modules={[]}
+                modules={[Navigation, Pagination]}
+                navigation={{
+                  nextEl: '.best-next',
+                  prevEl: '.best-prev',
+                }}
+                pagination={{ clickable: true }}
                 slidesPerView={1.4}
                 spaceBetween={20}
                 breakpoints={{
-                  576: { slidesPerView: 2.2 }
+                  576: { slidesPerView: 2.2, spaceBetween: 20 },
+                  992: { slidesPerView: 3, spaceBetween: 25 },
+                  1200: { slidesPerView: 4, spaceBetween: 30 }
                 }}
+                className="product-swiper pb-5"
               >
                 {bestSellers.map((product) => (
                   <SwiperSlide key={product._id} className="h-auto">
@@ -388,6 +407,14 @@ const Home = () => {
                   </SwiperSlide>
                 ))}
               </Swiper>
+
+              {/* Custom Navigation */}
+              <button className="slider-nav-btn best-prev position-absolute start-0 translate-middle-y top-50 d-none d-lg-flex">
+                <ChevronLeft size={24} />
+              </button>
+              <button className="slider-nav-btn best-next position-absolute end-0 translate-middle-y top-50 d-none d-lg-flex">
+                <ChevronRight size={24} />
+              </button>
             </div>
           </div>
         </section>
@@ -398,16 +425,16 @@ const Home = () => {
         <section className="py-2 py-lg-5">
           <div className="container-lg">
             <div className="row g-4 g-lg-5">
-              {experienceBanners.map((banner, i) => (                 <div key={i} className="col-lg-10 offset-lg-1">
-                  <div className="experience-card rounded-5 overflow-hidden shadow-premium position-relative h-100 group" style={{ minHeight: '450px' }}>
-                    <img src={banner.img} alt={banner.title} className="w-100 h-100 object-fit-cover position-absolute top-0 start-0 transition-all group-hover-scale" loading="lazy" />
-                    <div className="experience-content position-absolute bottom-0 start-0 p-4 p-md-5 text-white w-100" style={{ background: 'linear-gradient(transparent, rgba(26, 38, 26, 0.95))', zIndex: 2 }}>
-                      <h4 className="fw-bold fs-3 fs-md-2 mb-2 mb-md-3" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(banner.title) }}></h4>
-                      <p className="opacity-75 mb-3 mb-md-4 small font-body">{banner.text}</p>
-                      <Link to={banner.btnLink || "/categories"} className={`btn btn-${banner.btnStyle || 'primary'} rounded-pill px-4 py-2 py-md-3 small ${banner.btnStyle === 'light' ? 'text-primary fw-bold' : ''}`}> {banner.btnText} </Link>
-                    </div>
+              {experienceBanners.map((banner, i) => (<div key={i} className="col-lg-10 offset-lg-1">
+                <div className="experience-card rounded-5 overflow-hidden shadow-premium position-relative h-100 group" style={{ minHeight: '450px' }}>
+                  <img src={banner.img} alt={banner.title} className="w-100 h-100 object-fit-cover position-absolute top-0 start-0 transition-all group-hover-scale" loading="lazy" />
+                  <div className="experience-content position-absolute bottom-0 start-0 p-4 p-md-5 text-white w-100" style={{ background: 'linear-gradient(transparent, rgba(26, 38, 26, 0.95))', zIndex: 2 }}>
+                    <h4 className="fw-bold fs-3 fs-md-2 mb-2 mb-md-3" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(banner.title) }}></h4>
+                    <p className="opacity-75 mb-3 mb-md-4 small font-body">{banner.text}</p>
+                    <Link to={banner.btnLink || "/categories"} className={`btn btn-${banner.btnStyle || 'primary'} rounded-pill px-4 py-2 py-md-3 small ${banner.btnStyle === 'light' ? 'text-primary fw-bold' : ''}`}> {banner.btnText} </Link>
                   </div>
                 </div>
+              </div>
               ))}
             </div>
           </div>

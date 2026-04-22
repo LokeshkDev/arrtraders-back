@@ -5,10 +5,12 @@
   border: 1px solid rgba(212, 175, 55, 0.12);
   transition: var(--transition-premium);
   position: relative;
-  height: 100%;
+  height: 100%; /* Changed from 82% to 100% */
+  display: flex;
+  flex-direction: column;
   box-shadow: var(--shadow-sm);
   overflow: visible;
-  width: 100%; /* Ensure it fills the grid column */
+  width: 100%;
 }
 
 .universal-product-card:hover {
@@ -41,13 +43,16 @@
 }
 
 /* --- Premium Badges: Background adapts to text width --- */
-.badge-best-seller, .badge-featured, .badge-discount, .product-card-badge {
+.badge-best-seller,
+.badge-featured,
+.badge-discount,
+.product-card-badge {
   font-family: var(--font-heading);
   font-size: 10px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
   border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   display: inline-block;
   width: auto;
   white-space: nowrap;
@@ -102,7 +107,7 @@
   align-items: center;
   justify-content: center;
   transition: var(--transition-fast);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
   cursor: pointer;
   backdrop-filter: blur(4px);
 }
@@ -121,7 +126,10 @@
 
 /* --- Info Section --- */
 .card-info-container {
-  padding: 16px 18px 20px; /* Increased bottom padding */
+  padding: 16px 18px 20px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .product-card-title {
@@ -188,6 +196,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  margin-top: auto; /* Push to bottom */
 }
 
 .product-card-pricing {
@@ -199,12 +208,14 @@
 }
 
 .btn-add-action {
-  width: 46px; /* Compact width */
+  width: 46px;
+  /* Compact width */
   height: 46px;
   background: var(--primary);
   color: var(--secondary);
   border: 1px solid var(--secondary);
-  border-radius: 50%; /* Rounded like desktop */
+  border-radius: 50%;
+  /* Rounded like desktop */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -265,7 +276,7 @@
   height: 30px;
   border-radius: 50%;
   border: none;
-  background: rgba(255,255,255,0.8);
+  background: rgba(255, 255, 255, 0.8);
   color: var(--primary);
   display: flex;
   align-items: center;
@@ -292,11 +303,13 @@
 
 @media (max-width: 576px) {
   .card-info-container {
-    padding: 12px 12px 15px; /* Tighter padding on mobile */
+    padding: 12px 12px 15px;
+    /* Tighter padding on mobile */
   }
 
   .current-price {
-    font-size: 1.15rem; /* Slightly smaller price */
+    font-size: 1.15rem;
+    /* Slightly smaller price */
   }
 
   .btn-add-action {
