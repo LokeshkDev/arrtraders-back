@@ -8,15 +8,27 @@ const Cart = () => {
     const { cart, removeFromCart, updateQty, getCartTotal } = useContext(CartContext);
     const navigate = useNavigate();
     const [showDetails, setShowDetails] = useState(false);
+    const [freeShippingThreshold, setFreeShippingThreshold] = useState(1999);
+    const [deliveryChargeAmount, setDeliveryChargeAmount] = useState(50);
 
-    const deliveryCharge = 50;
     const subtotal = getCartTotal();
+    const deliveryCharge = subtotal > freeShippingThreshold ? 0 : deliveryChargeAmount;
     const total = subtotal + (subtotal > 0 ? deliveryCharge : 0);
 
     // Hide global floating cart bar on this page
     useEffect(() => {
         const floatingBar = document.querySelector('.floating-cart-bar-wrapper');
         if (floatingBar) floatingBar.style.display = 'none';
+
+        const fetchShippingSettings = async () => {
+            try {
+                const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/cms/homepage`);
+                if (data.freeShippingThreshold !== undefined) setFreeShippingThreshold(data.freeShippingThreshold);
+                if (data.deliveryCharge !== undefined) setDeliveryChargeAmount(data.deliveryCharge);
+            } catch (e) { console.error('Failed to fetch shipping settings'); }
+        };
+        fetchShippingSettings();
+
         return () => {
             if (floatingBar) floatingBar.style.display = 'block';
         };
@@ -108,13 +120,13 @@ const Cart = () => {
                                         <span>Shipping</span>
                                         <Truck size={14} className="text-secondary" />
                                     </div>
-                                    <span className={subtotal > 1999 ? "fw-bold text-success" : "fw-bold text-secondary"}>
-                                        {subtotal > 1999 ? 'FREE' : `₹${deliveryCharge}`}
+                                    <span className={subtotal > freeShippingThreshold ? "fw-bold text-success" : "fw-bold text-secondary"}>
+                                        {subtotal > freeShippingThreshold ? 'FREE' : `₹${deliveryCharge}`}
                                     </span>
                                 </div>
-                                {subtotal > 0 && subtotal <= 1999 && (
+                                {subtotal > 0 && subtotal <= freeShippingThreshold && (
                                     <div className="free-shipping-promo p-3 rounded-3 small">
-                                        Add ₹{1999 - subtotal} more for <span className="text-secondary fw-bold">Free Shipping</span>.
+                                        Add ₹{freeShippingThreshold - subtotal} more for <span className="text-secondary fw-bold">Free Shipping</span>.
                                     </div>
                                 )}
                             </div>
@@ -129,7 +141,7 @@ const Cart = () => {
                                         {showDetails ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                                     </div>
                                 </div>
-                                <span className="font-headline fs-2 text-secondary fw-bold">₹{subtotal > 1999 ? subtotal : total}</span>
+                                <span className="font-headline fs-2 text-secondary fw-bold">₹{(subtotal > freeShippingThreshold ? subtotal : total).toLocaleString()}</span>
                             </div>
 
                             <button

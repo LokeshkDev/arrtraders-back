@@ -1,5 +1,5 @@
-import Product from '../models/Product.js';
-import Category from '../models/Category.js';
+import Product from '../models/sql/Product.js';
+import Category from '../models/sql/Category.js';
 
 // Helper to create URL-friendly slugs
 const createSlug = (text) => {
@@ -9,33 +9,37 @@ const createSlug = (text) => {
         .replace(/ +/g, '-');
 };
 
-// @desc    Migrate existing data to include slugs
-// @route   POST /api/products/migrate-slugs
-export const migrateSlugs = async (req, res) => {
-    try {
-        const products = await Product.find({ slug: { $exists: false } });
-        const categories = await Category.find({ slug: { $exists: false } });
-
-        const productPromises = products.map(p => {
-            p.slug = createSlug(p.name);
-            return p.save();
-        });
-
-        const categoryPromises = categories.map(c => {
-            c.slug = createSlug(c.name);
-            return c.save();
-        });
-
-        await Promise.all([...productPromises, ...categoryPromises]);
-
-        res.json({ 
-            message: 'Migration complete', 
-            productsMigrated: products.length,
-            categoriesMigrated: categories.length
-        });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+// Helper to format ID for responses and parse JSON fields
+const parseJson = (val) => {
+    if (typeof val === 'string') {
+        try { return JSON.parse(val); } catch (e) { return val; }
     }
+    return val;
+};
+
+const formatResponse = (data) => {
+    if (Array.isArray(data)) {
+        return data.map(item => {
+            const json = item.toJSON();
+            const formatted = { ...json, _id: json.id };
+            if (formatted.availableWeights) formatted.availableWeights = parseJson(formatted.availableWeights);
+            if (formatted.nutrition) formatted.nutrition = parseJson(formatted.nutrition);
+            if (formatted.images) formatted.images = parseJson(formatted.images);
+            return formatted;
+        });
+    }
+    const json = data.toJSON();
+    const formatted = { ...json, _id: json.id };
+    if (formatted.availableWeights) formatted.availableWeights = parseJson(formatted.availableWeights);
+    if (formatted.nutrition) formatted.nutrition = parseJson(formatted.nutrition);
+    if (formatted.images) formatted.images = parseJson(formatted.images);
+    return formatted;
+};
+
+const generateMongoId = () => {
+    return Math.floor(Date.now() / 1000).toString(16) + 'xxxxxxxxxxxxxxxx'.replace(/[x]/g, () => {
+        return (Math.random() * 16 | 0).toString(16);
+    }).toLowerCase();
 };
 
 // @desc    Fetch single product by slug
@@ -43,10 +47,21 @@ export const migrateSlugs = async (req, res) => {
 export const getProductBySlug = async (req, res) => {
     try {
         const { productSlug } = req.params;
-        const product = await Product.findOne({ slug: productSlug });
+        const product = await Product.findOne({ 
+            where: { 
+                slug: productSlug,
+                isActive: true 
+            } 
+        });
         
         if (product) {
-            res.json(product);
+            // Check if category is active
+            const category = await Category.findOne({ where: { name: product.category } });
+            if (category && category.isActive) {
+                res.json(formatResponse(product));
+            } else {
+                res.status(404).json({ message: 'Product belongs to an inactive category' });
+            }
         } else {
             res.status(404).json({ message: 'Product not found' });
         }
@@ -59,8 +74,25 @@ export const getProductBySlug = async (req, res) => {
 // @route   GET /api/products
 export const getProducts = async (req, res) => {
     try {
-        const products = await Product.find({});
-        res.json(products);
+        const isAdminRequest = req.query.admin === 'true';
+        let products;
+        
+        if (isAdminRequest) {
+            products = await Product.findAll({});
+        } else {
+            // Fetch active categories first to ensure we only show products from active categories
+            const activeCategories = await Category.findAll({ where: { isActive: true } });
+            const activeCategoryNames = activeCategories.map(c => c.name);
+            
+            products = await Product.findAll({ 
+                where: { 
+                    isActive: true,
+                    category: activeCategoryNames
+                } 
+            });
+        }
+        
+        res.json(formatResponse(products));
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -70,9 +102,9 @@ export const getProducts = async (req, res) => {
 // @route   GET /api/products/:id
 export const getProductById = async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id);
+        const product = await Product.findByPk(req.params.id);
         if (product) {
-            res.json(product);
+            res.json(formatResponse(product));
         } else {
             res.status(404).json({ message: 'Product not found' });
         }
@@ -88,7 +120,7 @@ export const createProduct = async (req, res) => {
         const { 
             name, description, price, originalPrice, category, flashSale, 
             discount, isBestSeller, isTopRated, isFeatured, stock, 
-            color, weight, unit, availableWeights, nutrition 
+            color, weight, unit, availableWeights, nutrition, isActive 
         } = req.body;
         
         let images = [];
@@ -98,40 +130,35 @@ export const createProduct = async (req, res) => {
             images = await Promise.all(uploadPromises);
         }
         
-        // Finalize image array and set primary
         const finalImages = images.slice(0, 5);
         let image = finalImages.length > 0 ? finalImages[0] : req.body.image;
         
-        // If frontend specified a main image from the body (URL)
         if (req.body.primaryImage && finalImages.includes(req.body.primaryImage)) {
             image = req.body.primaryImage;
         }
 
-        // Handle stringified options from multipart form
         let weightsArr = [];
         if (availableWeights) {
             try {
-                // Try parsing as JSON for the new structured data [{value, price}]
                 weightsArr = typeof availableWeights === 'string' 
                     ? JSON.parse(availableWeights) 
                     : availableWeights;
             } catch (e) {
-                // Fallback for legacy comma-separated strings
                 weightsArr = typeof availableWeights === 'string'
                     ? availableWeights.split(',').map(w => ({ value: w.trim(), price: price || 0 })).filter(w => w.value !== '')
                     : availableWeights;
             }
         }
 
-        // Parse nutrition JSON
-        let nutritionMap = undefined;
+        let nutritionMap = {};
         if (nutrition) {
             try {
                 nutritionMap = typeof nutrition === 'string' ? JSON.parse(nutrition) : nutrition;
-            } catch (e) { nutritionMap = undefined; }
+            } catch (e) { nutritionMap = {}; }
         }
 
-        const product = new Product({
+        const product = await Product.create({
+            id: generateMongoId(),
             name, 
             slug: createSlug(name),
             description, price, originalPrice, category, image,
@@ -141,54 +168,23 @@ export const createProduct = async (req, res) => {
             isBestSeller: String(isBestSeller) === 'true',
             isTopRated: String(isTopRated) === 'true',
             isFeatured: String(isFeatured) === 'true',
+            isActive: isActive !== undefined ? String(isActive) === 'true' : true,
             stock,
             color, weight, unit, availableWeights: weightsArr,
             nutrition: nutritionMap
         });
 
-        const createdProduct = await product.save();
-        res.status(201).json(createdProduct);
+        res.status(201).json(formatResponse(product));
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-// @desc    Bulk migrate single image field to images array
-export const migrateGallery = async (req, res) => {
-    try {
-        const products = await Product.find({ 
-            $or: [
-                { images: { $exists: false } },
-                { images: { $size: 0 } }
-            ],
-            image: { $exists: true, $ne: '' }
-        });
-
-        const promises = products.map(p => {
-            p.images = [p.image];
-            return p.save();
-        });
-
-        await Promise.all(promises);
-        
-        if (res) {
-            res.json({ message: 'Gallery migration complete', count: products.length });
-        } else {
-            console.log(`Gallery migration complete: ${products.length} products updated.`);
-        }
-    } catch (error) {
-        if (res) res.status(500).json({ message: error.message });
-    }
-};
-
-// Run migration automatically if this file is imported (once)
-migrateGallery().catch(err => console.error('Auto migration failed:', err));
-
 // @desc    Update a product
 // @route   PUT /api/products/:id
 export const updateProduct = async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id);
+        const product = await Product.findByPk(req.params.id);
 
         if (product) {
             if (req.body.name && req.body.name !== product.name) {
@@ -204,6 +200,7 @@ export const updateProduct = async (req, res) => {
             product.isBestSeller = req.body.isBestSeller !== undefined ? String(req.body.isBestSeller) === 'true' : product.isBestSeller;
             product.isTopRated = req.body.isTopRated !== undefined ? String(req.body.isTopRated) === 'true' : product.isTopRated;
             product.isFeatured = req.body.isFeatured !== undefined ? String(req.body.isFeatured) === 'true' : product.isFeatured;
+            product.isActive = req.body.isActive !== undefined ? String(req.body.isActive) === 'true' : product.isActive;
             product.stock = req.body.stock || product.stock;
             product.color = req.body.color || product.color;
             product.weight = req.body.weight || product.weight;
@@ -221,7 +218,6 @@ export const updateProduct = async (req, res) => {
                 }
             }
 
-            // Handle nutrition
             if (req.body.nutrition !== undefined) {
                 try {
                     product.nutrition = typeof req.body.nutrition === 'string' 
@@ -240,7 +236,6 @@ export const updateProduct = async (req, res) => {
                     newlyUploaded = await Promise.all(uploadPromises);
                 }
 
-                // Combine correctly. If frontend marked a new upload as primary, it should be first.
                 const isNewPrimary = req.body.primaryIsNew === 'true';
                 const combined = isNewPrimary 
                     ? [...newlyUploaded, ...existingImages].slice(0, 5)
@@ -256,7 +251,7 @@ export const updateProduct = async (req, res) => {
             }
 
             const updatedProduct = await product.save();
-            res.json(updatedProduct);
+            res.json(formatResponse(updatedProduct));
         } else {
             res.status(404).json({ message: 'Product not found' });
         }
@@ -269,9 +264,9 @@ export const updateProduct = async (req, res) => {
 // @route   DELETE /api/products/:id
 export const deleteProduct = async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id);
+        const product = await Product.findByPk(req.params.id);
         if (product) {
-            await product.deleteOne();
+            await product.destroy();
             res.json({ message: 'Product removed' });
         } else {
             res.status(404).json({ message: 'Product not found' });
@@ -293,6 +288,7 @@ export const createMultipleProducts = async (req, res) => {
 
         const formattedProducts = products.map(p => ({
             ...p,
+            id: generateMongoId(),
             slug: createSlug(p.name),
             flashSale: Boolean(p.flashSale),
             isBestSeller: Boolean(p.isBestSeller),
@@ -300,8 +296,8 @@ export const createMultipleProducts = async (req, res) => {
             availableWeights: Array.isArray(p.availableWeights) ? p.availableWeights : []
         }));
 
-        const createdProducts = await Product.insertMany(formattedProducts);
-        res.status(201).json(createdProducts);
+        const createdProducts = await Product.bulkCreate(formattedProducts);
+        res.status(201).json(formatResponse(createdProducts));
     } catch (error) {
         res.status(500).json({ message: 'Bulk upload failed: ' + error.message });
     }

@@ -1,21 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Phone, Mail, MapPin, Send, Clock, MessageSquare } from 'lucide-react';
 
 const Contact = () => {
-  const [content] = useState({
-    title: 'Get In Touch',
-    subtitle: 'We would love to hear from you.',
-    phone: '+91 98765 43210',
-    email: 'info@arrahmandates.com',
-    address: 'Alwarpet, Chennai, Tamil Nadu'
-  });
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/cms/pages/contact`);
+        setData(data);
+      } catch (error) {
+        console.error('Fetch error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) return <div className="min-vh-100 d-flex align-items-center justify-content-center bg-surface"><div className="spinner-border text-primary"></div></div>;
+
+  const content = data?.content || {};
 
   return (
     <main className="pt-5 mt-5 bg-surface" style={{ minHeight: '80vh', paddingBottom: '5rem' }}>
+      {/* Banner Section */}
+      {data?.bannerImage && (
+        <section className="container-fluid px-0 position-relative overflow-hidden" style={{ height: '300px' }}>
+          <img src={data.bannerImage} className="w-100 h-100 object-fit-cover opacity-50" alt="Contact Us" />
+          <div className="position-absolute top-50 start-50 translate-middle text-center w-100">
+             <h1 className="display-4 font-headline text-primary mb-0 fw-bold">Contact Us</h1>
+          </div>
+        </section>
+      )}
+
       <section className="container-lg px-4 py-5" style={{ maxWidth: '1100px' }}>
         <div className="text-center mb-5 mt-4">
           <span className="text-secondary text-uppercase font-label fw-bold small mb-2 d-inline-block ls-lg">Connect With Us</span>
-          <h1 className="display-4 font-headline text-primary mb-3">{content.subtitle}</h1>
+          <h1 className="display-4 font-headline text-primary mb-3">{content.subtitle || "We would love to hear from you."}</h1>
           <div className="bg-secondary mx-auto mb-5" style={{ width: '60px', height: '3px' }}></div>
         </div>
 
@@ -35,7 +59,7 @@ const Contact = () => {
                   <div>
                     <h6 className="font-label text-primary fw-bold mb-1 text-uppercase ls-sm">Call Support</h6>
                     <p className="text-primary opacity-75 mb-0 fw-medium font-body fs-5">{content.phone}</p>
-                    <span className="text-muted extra-small">Mon-Sat: 10:00 AM - 8:00 PM</span>
+                    <span className="text-muted extra-small">{content.hours || "Mon-Sat: 10:00 AM - 8:00 PM"}</span>
                   </div>
                 </div>
 
@@ -67,7 +91,7 @@ const Contact = () => {
                   <Clock size={18} />
                   <span className="font-label fw-bold small text-uppercase ls-sm">Business Hours</span>
                 </div>
-                <p className="font-body text-muted mb-0 small">Sunday: Closed for artisanal preparation.</p>
+                <p className="font-body text-muted mb-0 small">{content.hours || "Mon-Sat: 10:00 AM - 8:00 PM"}</p>
               </div>
             </div>
           </div>

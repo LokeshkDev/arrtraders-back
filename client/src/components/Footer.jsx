@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin } from 'lucide-react';
 import './Footer.css';
 
 const Footer = () => {
@@ -9,7 +8,7 @@ const Footer = () => {
       <div className="container-lg">
         <div className="row g-5">
           {/* Brand Column */}
-          <div className="col-lg-4 col-md-6">
+          <div className="col-lg-3 col-md-6">
             <address className="footer-contact-info mb-4">
               <h1 className="footer-brand-title fs-3 mb-2">AR Rahman <span>Dates</span></h1>
               <p className="footer-brand-text mb-4">
@@ -54,14 +53,21 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Newsletter / Contact */}
-          <div className="col-lg-4 col-md-6">
-            <h4 className="footer-section-heading">Join Our Newsletter</h4>
-            <p className="footer-brand-text mb-3">Subscribe to get updates on new arrivals and special offers.</p>
-            <form className="newsletter-form" onSubmit={(e) => e.preventDefault()}>
-              <input type="email" className="footer-email-input" placeholder="Your Email Address" required />
-              <button type="submit" className="footer-subscribe-btn">Subscribe Now</button>
-            </form>
+          {/* SEO Categories */}
+          <div className="col-lg-5 col-md-6">
+            <h4 className="footer-section-heading">Shop Premium Categories</h4>
+            <nav aria-label="Premium product categories">
+              <ul className="footer-links-list footer-category-grid">
+                <li><Link to="/categories?selected=Premium Dates" className="footer-nav-link">Premium Dates Online</Link></li>
+                <li><Link to="/categories?selected=Medjool Dates" className="footer-nav-link">Medjool Dates</Link></li>
+                <li><Link to="/categories?selected=Ajwa Dates" className="footer-nav-link">Ajwa Dates</Link></li>
+                <li><Link to="/categories?selected=Dry Fruits" className="footer-nav-link">Dry Fruits</Link></li>
+                <li><Link to="/categories?selected=Exotic Nuts" className="footer-nav-link">Exotic Nuts</Link></li>
+                <li><Link to="/categories?selected=Gift Hampers" className="footer-nav-link">Dates Gift Hampers</Link></li>
+                <li><Link to="/categories?selected=Wellness Mix" className="footer-nav-link">Healthy Snack Mixes</Link></li>
+                <li><Link to="/categories?selected=Organic Honey" className="footer-nav-link">Organic Honey</Link></li>
+              </ul>
+            </nav>
           </div>
         </div>
 

@@ -88,7 +88,9 @@ const homePageSchema = mongoose.Schema({
     showFlashSale: { type: Boolean, default: true },
     showExperience: { type: Boolean, default: true },
     showTestimonials: { type: Boolean, default: true },
-    flashSaleEndTime: { type: Date }
+    flashSaleEndTime: { type: Date },
+    freeShippingThreshold: { type: Number, default: 1999 },
+    deliveryCharge: { type: Number, default: 50 }
 }, { timestamps: true });
 
 const HomePage = mongoose.model('HomePage', homePageSchema);

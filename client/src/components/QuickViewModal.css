@@ -284,14 +284,121 @@
 
 @media (max-width: 576px) {
   .qv-modal-overlay {
-    padding: 10px;
+    align-items: flex-end;
+    padding: 0;
+    background: rgba(8, 20, 16, 0.62);
+    z-index: 20000;
   }
+
+  .qv-modal-container {
+    width: 100%;
+    max-width: none;
+    max-height: min(88dvh, 760px);
+    border-radius: 28px 28px 0 0;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    margin: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .qv-modal-container::before {
+    content: '';
+    position: sticky;
+    top: 9px;
+    left: 50%;
+    display: block;
+    width: 44px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(15, 61, 46, 0.22);
+    transform: translateX(-50%);
+    z-index: 12;
+    margin-bottom: 5px;
+  }
+
+  .qv-close-btn {
+    top: 14px;
+    right: 14px;
+    width: 34px;
+    height: 34px;
+    z-index: 20;
+  }
+
+  .qv-image-pane {
+    min-height: 230px;
+  }
+
+  .qv-product-img {
+    max-height: 230px;
+    padding: 22px;
+  }
+
   .qv-details-pane {
-    padding: 1.5rem !important;
+    padding: 1.15rem !important;
+    padding-bottom: 0 !important;
   }
+
+  .qv-title {
+    font-size: 1.25rem;
+  }
+
+  .qv-description {
+    margin-bottom: 1.35rem !important;
+    font-size: 0.9rem;
+    line-height: 1.55 !important;
+  }
+
+  .qv-weight-selector {
+    margin-bottom: 1.25rem !important;
+  }
+
+  .qv-weight-selector .d-flex {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .qv-weight-selector .d-flex::-webkit-scrollbar {
+    display: none;
+  }
+
   .qv-weight-pill {
+    flex: 0 0 72px;
+    width: 72px;
     padding: 8px 16px;
     font-size: 0.8rem;
+    text-align: center;
+  }
+
+  .qv-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 11;
+    margin: 0 -1.15rem;
+    padding: 0.85rem 1.15rem calc(0.85rem + env(safe-area-inset-bottom, 0px)) !important;
+    background: rgba(255,255,255,0.97);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(15,61,46,0.08);
+  }
+
+  .qv-btn-add {
+    min-height: 48px;
+    padding: 0.75rem 1rem;
+    font-size: 0.78rem;
+  }
+
+  .qv-btn-wishlist {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+  }
+
+  .qv-refined-qty-control {
+    width: 160px;
+  }
+
+  .qv-trust-footer {
+    padding-bottom: 1rem;
   }
 }
 

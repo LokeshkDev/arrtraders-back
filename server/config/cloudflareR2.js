@@ -27,10 +27,13 @@ export const uploadToR2 = async (fileBuffer, originalName, folder = 'hero') => {
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
     if (imageExtensions.includes(extension)) {
         try {
-            // Resize if too large and convert to WebP for best compression
+            // Convert to WebP with high compression effort and optimized quality
             const optimized = await sharp(fileBuffer)
-                .resize({ width: 1920, withoutEnlargement: true }) // Prevent stretching smaller images
-                .webp({ quality: 80 }) // High quality but small footprint
+                .webp({ 
+                    quality: 75, // Optimized for size vs quality
+                    effort: 6,   // Maximum compression effort
+                    smartSubsample: true
+                }) 
                 .toBuffer();
             
             finalBuffer = optimized;

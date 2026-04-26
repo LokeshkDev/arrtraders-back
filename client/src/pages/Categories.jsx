@@ -7,7 +7,8 @@ import {
   ChevronRight,
   ChevronDown,
   Award,
-  TrendingUp
+  TrendingUp,
+  Clock
 } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { ShopContext } from '../context/ShopContext';
@@ -74,7 +75,27 @@ const Categories = () => {
     }
 
     return result;
-  }, [activeCategory, searchQuery, products, sortOption]);
+  }, [activeCategory, searchQuery, products, sortOption, categories]);
+
+  const promoProducts = useMemo(() => {
+    const dataSource = products && products.length > 0 ? products : ALL_PRODUCTS;
+    const flashSaleItems = dataSource.filter(p => p.flashSale).slice(0, 4);
+    const bestSellerItems = dataSource.filter(p => p.isBestSeller || p.badge === 'BEST SELLER').slice(0, 4);
+    const fallbackItems = dataSource.slice(0, 4);
+
+    if (flashSaleItems.length > 0) {
+      return { title: 'Flash Sale Picks', eyebrow: 'Limited-time value', icon: Clock, items: flashSaleItems, badge: 'flash' };
+    }
+
+    return {
+      title: 'Best Selling Products',
+      eyebrow: 'Customer favourites',
+      icon: TrendingUp,
+      items: bestSellerItems.length > 0 ? bestSellerItems : fallbackItems,
+      badge: 'best'
+    };
+  }, [products]);
+  const PromoIcon = promoProducts.icon;
 
   return (
     <main className="categories-page-app animate-fade-in">
@@ -183,28 +204,28 @@ const Categories = () => {
                 />
               </div>
 
-              <div className="d-flex overflow-auto gap-2 mb-4 pb-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              <div className="mobile-category-tabs d-flex overflow-auto gap-2 mb-4 pb-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 <button
-                  className={`btn flex-shrink-0 rounded-pill px-4 ${activeCategory === 'All' ? 'btn-primary' : 'btn-outline-secondary bg-white'}`}
+                  className={`btn mobile-cat-tab flex-shrink-0 rounded-pill ${activeCategory === 'All' ? 'btn-primary' : 'btn-outline-secondary bg-white'}`}
                   onClick={() => setActiveCategory('All')}
                 >
-                  All Collections
+                  <span>All Collections</span>
                 </button>
-                <Link to="/featured" className="btn flex-shrink-0 rounded-pill px-4 btn-outline-secondary bg-white d-flex align-items-center gap-2">
-                  <Award size={18} /> Featured
+                <Link to="/featured" className="btn mobile-cat-tab flex-shrink-0 rounded-pill btn-outline-secondary bg-white d-flex align-items-center gap-2">
+                  <Award size={14} /> <span>Featured</span>
                 </Link>
-                <Link to="/best-sellers" className="btn flex-shrink-0 rounded-pill px-4 btn-outline-secondary bg-white d-flex align-items-center gap-2">
-                  <TrendingUp size={18} /> Best Sellers
+                <Link to="/best-sellers" className="btn mobile-cat-tab flex-shrink-0 rounded-pill btn-outline-secondary bg-white d-flex align-items-center gap-2">
+                  <TrendingUp size={14} /> <span>Best Sellers</span>
                 </Link>
                 {loading && <div className="spinner-border spinner-border-sm text-primary align-self-center ms-3"></div>}
                 {!loading && categories.filter(c => !c.parent).map(cat => (
                   <button
                     key={cat._id}
-                    className={`btn flex-shrink-0 rounded-pill px-4 d-flex align-items-center gap-2 ${activeCategory === cat.name || categories.some(c => c.parent === cat._id && c.name === activeCategory) ? 'btn-primary shadow-sm' : 'btn-outline-secondary bg-white'}`}
+                    className={`btn mobile-cat-tab flex-shrink-0 rounded-pill d-flex align-items-center gap-2 ${activeCategory === cat.name || categories.some(c => c.parent === cat._id && c.name === activeCategory) ? 'btn-primary shadow-sm' : 'btn-outline-secondary bg-white'}`}
                     onClick={() => setActiveCategory(cat.name)}
                   >
-                    <img src={getImageUrl(cat.image)} alt={cat.name} className="rounded-circle object-fit-cover shadow-sm" style={{ width: '20px', height: '20px' }} />
-                    {cat.name}
+                    <img src={getImageUrl(cat.image)} alt={cat.name} className="rounded-circle object-fit-cover shadow-sm" />
+                    <span>{cat.name}</span>
                   </button>
                 ))}
               </div>
@@ -218,20 +239,20 @@ const Categories = () => {
                 if (children.length > 0) {
                   const parentCatName = categories.find(c => c._id === activeParentId)?.name;
                   return (
-                    <div className="d-flex overflow-auto gap-2 mb-4 pb-2 border-bottom" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', marginTop: '-15px' }}>
+                    <div className="mobile-subcategory-tabs d-flex overflow-auto gap-2 mb-4 pb-2 border-bottom" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', marginTop: '-15px' }}>
                       <button
-                        className={`btn flex-shrink-0 rounded-pill px-3 py-1 font-label extra-small ${activeCategory === parentCatName ? 'btn-secondary text-white' : 'btn-outline-secondary bg-white text-muted border-opacity-50'}`}
+                        className={`btn mobile-subcat-tab flex-shrink-0 rounded-pill font-label extra-small ${activeCategory === parentCatName ? 'btn-secondary text-white' : 'btn-outline-secondary bg-white text-muted border-opacity-50'}`}
                         onClick={() => setActiveCategory(parentCatName)}
                       >
-                        All in {parentCatName}
+                        <span>All in {parentCatName}</span>
                       </button>
                       {children.map(child => (
                         <button
                           key={child._id}
-                          className={`btn flex-shrink-0 rounded-pill px-3 py-1 font-label extra-small ${activeCategory === child.name ? 'btn-secondary text-white shadow-sm' : 'btn-outline-secondary bg-white text-muted border-opacity-50'}`}
+                          className={`btn mobile-subcat-tab flex-shrink-0 rounded-pill font-label extra-small ${activeCategory === child.name ? 'btn-secondary text-white shadow-sm' : 'btn-outline-secondary bg-white text-muted border-opacity-50'}`}
                           onClick={() => setActiveCategory(child.name)}
                         >
-                          {child.name}
+                          <span>{child.name}</span>
                         </button>
                       ))}
                     </div>
@@ -278,33 +299,28 @@ const Categories = () => {
               </div>
             )}
 
-            {/* Heritage Story - Desktop Only */}
-            <div className="mt-5 p-5 rounded-5 shadow-premium text-white position-relative overflow-hidden d-none d-lg-block" style={{ background: 'var(--secondary)' }}>
-              <div className="position-absolute top-0 end-0 opacity-10 p-5 mt-n5 me-n5">
-                <Award size={200} />
-              </div>
-              <div className="position-relative" style={{ maxWidth: '600px', zIndex: 2 }}>
-                <h2 className="display-6 fw-bold font-headline mb-4">Our Quality Story</h2>
-                <p className="mb-4 fs-6 opacity-75 font-body">
-                  Sourced from the best organic farms, AR Rahman Dates and Nuts brings you high-quality products for your health and taste.
-                </p>
-                <Link to="/about" className="btn btn-primary rounded-pill px-5 py-3"> Learn More <ArrowRight size={18} className="ms-2" /></Link>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Heritage Story - Mobile/Tab Full Width */}
-        <div className="mt-4 p-4 p-md-5 rounded-4 shadow-premium text-white position-relative overflow-hidden d-block d-lg-none mx-n2 mx-md-0 mb-4" style={{ background: 'var(--secondary)' }}>
-          <div className="position-absolute top-0 end-0 opacity-10 p-3 mt-n4 me-n4">
-            <Award size={150} />
-          </div>
-          <div className="position-relative" style={{ zIndex: 2 }}>
-            <h2 className="h3 fw-bold font-headline mb-3">Our Quality Story</h2>
-            <p className="mb-4 small opacity-75 font-body">
-              Sourced from the best organic farms, AR Rahman Dates and Nuts brings you high-quality products for your health.
-            </p>
-            <Link to="/about" className="btn btn-primary rounded-pill px-4 py-2 small fw-bold"> Learn More <ArrowRight size={16} className="ms-1" /></Link>
+            {promoProducts.items.length > 0 && (
+              <section className="category-promo-section mt-5">
+                <div className="d-flex justify-content-between align-items-end gap-3 mb-4 flex-wrap">
+                  <div>
+                    <div className="category-promo-eyebrow">
+                      <PromoIcon size={14} /> {promoProducts.eyebrow}
+                    </div>
+                    <h2 className="font-headline text-primary fw-bold mb-0">{promoProducts.title}</h2>
+                  </div>
+                  <Link to={promoProducts.badge === 'flash' ? '/categories' : '/best-sellers'} className="btn btn-outline-primary rounded-pill px-4 py-2 small fw-bold">
+                    View All <ArrowRight size={15} className="ms-1" />
+                  </Link>
+                </div>
+                <div className="row g-2 g-md-4">
+                  {promoProducts.items.map(product => (
+                    <div key={product._id || product.id} className="col-6 col-md-4 col-xl-3">
+                      <ProductCard product={product} showBestSellerBadge={promoProducts.badge === 'best'} />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         </div>
         <div className="pb-5 mb-5 d-lg-none"></div> {/* Spacer for mobile bottom nav */}

@@ -1,6 +1,31 @@
-import User from '../models/User.js';
+import User from '../models/sql/User.js';
+import Product from '../models/sql/Product.js';
 import generateToken from '../utils/generateToken.js';
 import { admin, isFirebaseInitialized } from '../config/firebaseAdmin.js';
+
+// Helper to format Mongo-like ID if needed for new users
+const generateMongoId = () => {
+    return Math.floor(Date.now() / 1000).toString(16) + 'xxxxxxxxxxxxxxxx'.replace(/[x]/g, () => {
+        return (Math.random() * 16 | 0).toString(16);
+    }).toLowerCase();
+};
+
+// Helper to format ID for responses and parse JSON fields
+const parseJson = (val) => {
+    if (typeof val === 'string') {
+        try { return JSON.parse(val); } catch (e) { return val; }
+    }
+    return val;
+};
+
+const formatResponse = (data) => {
+    if (!data) return null;
+    const json = data.toJSON ? data.toJSON() : data;
+    const formatted = { ...json, _id: json.id || json._id };
+    if (formatted.addresses) formatted.addresses = parseJson(formatted.addresses);
+    if (formatted.wishlist) formatted.wishlist = parseJson(formatted.wishlist);
+    return formatted;
+};
 
 // @desc    Auth user with Google & get token
 // @route   POST /api/users/google-login
@@ -18,7 +43,7 @@ export const googleLogin = async (req, res) => {
         const decodedToken = await admin.auth().verifyIdToken(idToken);
         const { email, name, picture } = decodedToken;
 
-        let user = await User.findOne({ email: email.toLowerCase() });
+        let user = await User.findOne({ where: { email: email.toLowerCase() } });
 
         if (user) {
             // Restriction: Only customers can use social login (if user is admin, block them)
@@ -30,6 +55,7 @@ export const googleLogin = async (req, res) => {
         } else {
             // Create new customer user
             user = await User.create({
+                id: generateMongoId(),
                 name: name || 'Google User',
                 email: email.toLowerCase(),
                 password: Math.random().toString(36).slice(-16), // Dummy password for oauth users
@@ -38,7 +64,7 @@ export const googleLogin = async (req, res) => {
             });
         }
 
-        const token = generateToken(user._id);
+        const token = generateToken(user.id);
         const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
 
         res.cookie('jwt', token, {
@@ -49,7 +75,7 @@ export const googleLogin = async (req, res) => {
         });
 
         res.json({
-            _id: user._id,
+            _id: user.id,
             name: user.name,
             email: user.email,
             phone: user.phone,
@@ -73,10 +99,10 @@ export const authUser = async (req, res) => {
         const { email, password } = req.body;
         const normalizedEmail = email.trim().toLowerCase();
         const trimmedPassword = password.trim();
-        const user = await User.findOne({ email: normalizedEmail });
+        const user = await User.findOne({ where: { email: normalizedEmail } });
 
         if (user && (await user.matchPassword(trimmedPassword))) {
-            const token = generateToken(user._id);
+            const token = generateToken(user.id);
             const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
 
             res.cookie('jwt', token, {
@@ -86,13 +112,9 @@ export const authUser = async (req, res) => {
                 maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
             });
 
+            const formattedUser = formatResponse(user);
             res.json({
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                phone: user.phone,
-                isAdmin: user.isAdmin,
-                addresses: user.addresses,
+                ...formattedUser,
                 token: token // Explicit token for header-based auth
             });
         } else {
@@ -109,7 +131,7 @@ export const registerUser = async (req, res) => {
     try {
         const { name, email, password, phone, isAdmin } = req.body;
         const normalizedEmail = email.trim().toLowerCase();
-        const userExists = await User.findOne({ email: normalizedEmail });
+        const userExists = await User.findOne({ where: { email: normalizedEmail } });
 
         if (userExists) {
             res.status(400).json({ message: 'User already exists' });
@@ -117,6 +139,7 @@ export const registerUser = async (req, res) => {
         }
 
         const user = await User.create({
+            id: generateMongoId(),
             name: name.trim(),
             email: normalizedEmail,
             password,
@@ -125,7 +148,7 @@ export const registerUser = async (req, res) => {
         });
 
         if (user) {
-            const token = generateToken(user._id);
+            const token = generateToken(user.id);
             const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
 
             res.cookie('jwt', token, {
@@ -136,7 +159,7 @@ export const registerUser = async (req, res) => {
             });
 
             res.status(201).json({
-                _id: user._id,
+                _id: user.id,
                 name: user.name,
                 email: user.email,
                 phone: user.phone,
@@ -156,17 +179,21 @@ export const registerUser = async (req, res) => {
 // @route   GET /api/users/profile
 export const getUserProfile = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id).populate('wishlist');
+        const user = await User.findByPk(req.user.id || req.user._id);
         if (user) {
+            // Manual population of wishlist
+            const userData = user.toJSON();
+            const wishlistIds = parseJson(userData.wishlist) || [];
+            
+            let wishlist = [];
+            if (wishlistIds.length > 0) {
+                wishlist = await Product.findAll({ where: { id: wishlistIds } });
+            }
+
+            const formattedUser = formatResponse(user);
             res.json({
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                phone: user.phone,
-                isAdmin: user.isAdmin,
-                addresses: user.addresses,
-                wishlist: user.wishlist,
-                createdAt: user.createdAt,
+                ...formattedUser,
+                wishlist: wishlist.map(p => ({ ...p.toJSON(), _id: p.id }))
             });
         } else {
             res.status(404).json({ message: 'User not found' });
@@ -180,7 +207,7 @@ export const getUserProfile = async (req, res) => {
 // @route   PUT /api/users/profile
 export const updateUserProfile = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id);
+        const user = await User.findByPk(req.user.id || req.user._id);
         if (user) {
             user.name = req.body.name || user.name;
             user.email = req.body.email ? req.body.email.trim().toLowerCase() : user.email;
@@ -189,7 +216,7 @@ export const updateUserProfile = async (req, res) => {
                 user.password = req.body.password;
             }
             const updatedUser = await user.save();
-            const token = generateToken(updatedUser._id);
+            const token = generateToken(updatedUser.id);
             const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
 
             res.cookie('jwt', token, {
@@ -200,7 +227,7 @@ export const updateUserProfile = async (req, res) => {
             });
 
             res.json({
-                _id: updatedUser._id,
+                _id: updatedUser.id,
                 name: updatedUser.name,
                 email: updatedUser.email,
                 phone: updatedUser.phone,
@@ -219,21 +246,28 @@ export const updateUserProfile = async (req, res) => {
 // @route   POST /api/users/address
 export const addAddress = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id);
+        const user = await User.findByPk(req.user.id || req.user._id);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
         const { label, name, phone, line1, line2, city, state, pincode, isDefault } = req.body;
         
-        // If this is default, unset others
+        let addresses = [...(user.addresses || [])];
+
         if (isDefault) {
-            user.addresses.forEach(a => a.isDefault = false);
+            addresses.forEach(a => a.isDefault = false);
         }
-        // If first address, make it default
-        if (user.addresses.length === 0) {
+        if (addresses.length === 0) {
             req.body.isDefault = true;
         }
 
-        user.addresses.push({ label, name, phone, line1, line2, city, state, pincode, isDefault: isDefault || user.addresses.length === 0 });
+        const newAddress = { 
+            _id: generateMongoId(), 
+            label, name, phone, line1, line2, city, state, pincode, 
+            isDefault: isDefault || addresses.length === 0 
+        };
+
+        addresses.push(newAddress);
+        user.addresses = addresses;
         await user.save();
         res.status(201).json(user.addresses);
     } catch (error) {
@@ -245,17 +279,20 @@ export const addAddress = async (req, res) => {
 // @route   PUT /api/users/address/:addressId
 export const updateAddress = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id);
+        const user = await User.findByPk(req.user.id || req.user._id);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        const address = user.addresses.id(req.params.addressId);
-        if (!address) return res.status(404).json({ message: 'Address not found' });
+        let addresses = [...(user.addresses || [])];
+        const addressIdx = addresses.findIndex(a => a._id === req.params.addressId);
+        
+        if (addressIdx === -1) return res.status(404).json({ message: 'Address not found' });
 
         if (req.body.isDefault) {
-            user.addresses.forEach(a => a.isDefault = false);
+            addresses.forEach(a => a.isDefault = false);
         }
 
-        Object.assign(address, req.body);
+        addresses[addressIdx] = { ...addresses[addressIdx], ...req.body };
+        user.addresses = addresses;
         await user.save();
         res.json(user.addresses);
     } catch (error) {
@@ -267,10 +304,10 @@ export const updateAddress = async (req, res) => {
 // @route   DELETE /api/users/address/:addressId
 export const deleteAddress = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id);
+        const user = await User.findByPk(req.user.id || req.user._id);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        user.addresses = user.addresses.filter(a => a._id.toString() !== req.params.addressId);
+        user.addresses = (user.addresses || []).filter(a => a._id !== req.params.addressId);
         await user.save();
         res.json(user.addresses);
     } catch (error) {
@@ -282,16 +319,20 @@ export const deleteAddress = async (req, res) => {
 // @route   POST /api/users/wishlist
 export const toggleWishlist = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id);
+        const user = await User.findByPk(req.user.id || req.user._id);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
         const { productId } = req.body;
-        const idx = user.wishlist.indexOf(productId);
+        let wishlist = [...(user.wishlist || [])];
+        const idx = wishlist.indexOf(productId);
+        
         if (idx > -1) {
-            user.wishlist.splice(idx, 1);
+            wishlist.splice(idx, 1);
         } else {
-            user.wishlist.push(productId);
+            wishlist.push(productId);
         }
+        
+        user.wishlist = wishlist;
         await user.save();
         res.json(user.wishlist);
     } catch (error) {
@@ -303,8 +344,11 @@ export const toggleWishlist = async (req, res) => {
 // @route   GET /api/users
 export const getUsers = async (req, res) => {
     try {
-        const users = await User.find({}).select('-password');
-        res.json(users);
+        const users = await User.findAll({
+            attributes: { exclude: ['password'] }
+        });
+        const formattedUsers = users.map(u => ({ ...u.toJSON(), _id: u.id }));
+        res.json(formattedUsers);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -314,7 +358,7 @@ export const getUsers = async (req, res) => {
 // @route   PUT /api/users/:id
 export const updateUser = async (req, res) => {
     try {
-        const user = await User.findById(req.params.id);
+        const user = await User.findByPk(req.params.id);
         if (user) {
             user.name = req.body.name || user.name;
             user.email = req.body.email ? req.body.email.trim().toLowerCase() : user.email;
@@ -322,7 +366,7 @@ export const updateUser = async (req, res) => {
             user.isAdmin = req.body.isAdmin !== undefined ? req.body.isAdmin : user.isAdmin;
             const updatedUser = await user.save();
             res.json({
-                _id: updatedUser._id,
+                _id: updatedUser.id,
                 name: updatedUser.name,
                 email: updatedUser.email,
                 phone: updatedUser.phone,
@@ -340,7 +384,7 @@ export const updateUser = async (req, res) => {
 // @route   PUT /api/users/:id/reset-password
 export const resetUserPassword = async (req, res) => {
     try {
-        const user = await User.findById(req.params.id);
+        const user = await User.findByPk(req.params.id);
         if (user) {
             user.password = req.body.password;
             await user.save();
@@ -357,9 +401,9 @@ export const resetUserPassword = async (req, res) => {
 // @route   DELETE /api/users/:id
 export const deleteUser = async (req, res) => {
     try {
-        const user = await User.findById(req.params.id);
+        const user = await User.findByPk(req.params.id);
         if (user) {
-            await user.deleteOne();
+            await user.destroy();
             res.json({ message: 'User removed' });
         } else {
             res.status(404).json({ message: 'User not found' });
@@ -373,11 +417,16 @@ export const deleteUser = async (req, res) => {
 // @route   GET /api/users/stats
 export const getDashboardStats = async (req, res) => {
     try {
-        const totalUsers = await User.countDocuments({});
-        const adminUsers = await User.countDocuments({ isAdmin: true });
+        const totalUsers = await User.count();
+        const adminUsers = await User.count({ where: { isAdmin: true } });
         const customerUsers = totalUsers - adminUsers;
-        const recentUsers = await User.find({}).sort({ createdAt: -1 }).limit(5).select('-password');
-        res.json({ totalUsers, adminUsers, customerUsers, recentUsers });
+        const recentUsers = await User.findAll({
+            limit: 5,
+            order: [['createdAt', 'DESC']],
+            attributes: { exclude: ['password'] }
+        });
+        const formattedRecent = recentUsers.map(u => ({ ...u.toJSON(), _id: u.id }));
+        res.json({ totalUsers, adminUsers, customerUsers, recentUsers: formattedRecent });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

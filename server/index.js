@@ -6,7 +6,7 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { fileURLToPath } from 'url';
-import connectDB from './config/db.js';
+import { connectMySQL } from './config/mysql.js';
 import { initializeFirebaseAdmin } from './config/firebaseAdmin.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 import { verifyAppCheck } from './middleware/authMiddleware.js';
@@ -16,11 +16,13 @@ import productRoutes from './routes/productRoutes.js';
 import cmsRoutes from './routes/cmsRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
+import couponRoutes from './routes/couponRoutes.js';
+import './models/sql/index.js'; // Ensure models are registered for sync
 
 dotenv.config();
 
 // Connect to Database
-connectDB();
+connectMySQL();
 
 // Initialize Firebase Admin
 initializeFirebaseAdmin();
@@ -84,6 +86,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/cms', cmsRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/coupons', couponRoutes);
 
 // Root route
 app.get('/', (req, res) => {

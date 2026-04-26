@@ -163,8 +163,10 @@ const Profile = () => {
                                     </div>
                                     <button className="monogram-camera shadow-sm border-0"><Camera size={14} /></button>
                                 </div>
-                                <h5 className="font-headline text-primary mb-1">{user?.name}</h5>
-                                <p className="font-body text-muted small m-0">{user?.email}</p>
+                                <div className="prof-identity-copy">
+                                    <h5 className="font-headline text-primary mb-1">{user?.name}</h5>
+                                    <p className="font-body text-muted small m-0">{user?.email}</p>
+                                </div>
                             </div>
 
                             <nav className="prof-sidebar-nav p-2">
@@ -417,8 +419,8 @@ const Profile = () => {
 
                 {/* Premium Manifest Modal */}
                 {showOrderModal && selectedOrder && (
-                    <div className="art-modal-overlay d-flex align-items-center justify-content-center">
-                        <div className="art-modal-content bg-white p-0 rounded-5 shadow-premium animated fadeInUp overflow-hidden" style={{ maxWidth: '800px', width: '95%', maxHeight: '90vh' }}>
+                    <div className="art-modal-overlay order-modal-overlay d-flex align-items-center justify-content-center">
+                        <div className="art-modal-content order-manifest-modal bg-white p-0 rounded-5 shadow-premium animated fadeInUp overflow-hidden" style={{ maxWidth: '800px', width: '95%', maxHeight: '90vh' }}>
                             {/* Custom Modal Header */}
                             <div className="manifest-modal-head bg-primary p-4 p-md-5 text-white position-relative">
                                 <button className="art-modal-close border-0 bg-transparent text-white opacity-75 position-absolute top-0 end-0 m-3 m-md-4" onClick={() => setShowOrderModal(false)}>

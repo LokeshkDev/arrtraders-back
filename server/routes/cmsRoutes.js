@@ -4,7 +4,8 @@ import {
     getNews, createNews, deleteNews,
     getGallery, createGallery, deleteGallery,
     getHomePageCMS, updateHomePageCMS,
-    uploadHeroBgImage
+    uploadHeroBgImage,
+    getPages, getPageBySlug, updatePage, uploadPageImage
 } from '../controllers/cmsController.js';
 import upload, { memoryUpload } from '../config/multer.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
@@ -31,5 +32,11 @@ router.delete('/news/:id', protect, admin, deleteNews);
 router.get('/gallery', getGallery);
 router.post('/gallery', protect, admin, memoryUpload.single('image'), createGallery);
 router.delete('/gallery/:id', protect, admin, deleteGallery);
+
+// Pages
+router.get('/pages', getPages);
+router.get('/pages/:slug', getPageBySlug);
+router.put('/pages/:slug', protect, admin, memoryUpload.single('image'), updatePage);
+router.post('/pages/upload', protect, admin, memoryUpload.single('image'), uploadPageImage);
 
 export default router;

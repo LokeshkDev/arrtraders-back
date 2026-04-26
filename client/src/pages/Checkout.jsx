@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { MapPin, CreditCard, Package, ShieldCheck, Truck, ChevronRight, Phone, Home, Briefcase, Plus, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { MapPin, CreditCard, Package, ShieldCheck, Truck, ChevronRight, Phone, Home, Briefcase, Plus, CheckCircle2, ArrowLeft, Ticket, X, Loader2 } from 'lucide-react';
 import { CartContext } from '../context/CartContext';
 import './Checkout.css';
 
@@ -17,13 +17,25 @@ const Checkout = () => {
     const [loading, setLoading] = useState(false);
     const orderPlacedRef = useRef(false);
 
+    // CMS-driven shipping settings
+    const [freeShippingThreshold, setFreeShippingThreshold] = useState(1999);
+    const [deliveryChargeAmount, setDeliveryChargeAmount] = useState(50);
+    const [cmsPromos, setCmsPromos] = useState([]);
+
+    // Coupon state
+    const [couponCode, setCouponCode] = useState('');
+    const [couponApplied, setCouponApplied] = useState(null); // { code, discount, message }
+    const [couponError, setCouponError] = useState('');
+    const [couponLoading, setCouponLoading] = useState(false);
+
     const [newAddress, setNewAddress] = useState({
         label: 'Home', name: '', phone: '', line1: '', line2: '', city: '', state: '', pincode: '', isDefault: false
     });
 
-    const deliveryCharge = 50;
     const subtotal = getCartTotal();
-    const total = subtotal + (subtotal > 1999 ? 0 : deliveryCharge);
+    const deliveryCharge = subtotal > freeShippingThreshold ? 0 : deliveryChargeAmount;
+    const discount = couponApplied ? couponApplied.discount : 0;
+    const total = subtotal + deliveryCharge - discount;
 
     const userInfo = JSON.parse(localStorage.getItem('userInfo'));
 
@@ -37,6 +49,19 @@ const Checkout = () => {
             navigate('/cart');
         }
     }, [navigate, userInfo, cart.length]);
+
+    // Fetch CMS settings for dynamic shipping and promos
+    useEffect(() => {
+        const fetchShippingSettings = async () => {
+            try {
+                const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/cms/homepage`);
+                if (data.freeShippingThreshold !== undefined) setFreeShippingThreshold(data.freeShippingThreshold);
+                if (data.deliveryCharge !== undefined) setDeliveryChargeAmount(data.deliveryCharge);
+                if (data.promos) setCmsPromos(data.promos.filter(p => p.code)); // Only show ones with codes
+            } catch (e) { console.error('Failed to fetch shipping settings'); }
+        };
+        fetchShippingSettings();
+    }, []);
 
     const fetchAddresses = async () => {
         try {
@@ -66,6 +91,31 @@ const Checkout = () => {
         }
     };
 
+    // Coupon handlers
+    const handleApplyCoupon = async () => {
+        if (!couponCode.trim()) return;
+        setCouponLoading(true);
+        setCouponError('');
+        setCouponApplied(null);
+        try {
+            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/coupons/validate`, {
+                code: couponCode.trim(),
+                cartTotal: subtotal
+            });
+            setCouponApplied({ code: data.code, discount: data.discount, message: data.message });
+        } catch (error) {
+            setCouponError(error.response?.data?.message || 'Invalid coupon code');
+        } finally {
+            setCouponLoading(false);
+        }
+    };
+
+    const handleRemoveCoupon = () => {
+        setCouponApplied(null);
+        setCouponCode('');
+        setCouponError('');
+    };
+
     const handlePlaceOrder = async () => {
         if (!selectedAddress) return alert('Please select a delivery address');
 
@@ -86,9 +136,10 @@ const Checkout = () => {
                 shippingAddress: selectedAddress,
                 paymentMethod,
                 itemsPrice: subtotal,
-                deliveryPrice: subtotal > 1999 ? 0 : deliveryCharge,
-                discountAmount: 0,
-                totalPrice: total
+                deliveryPrice: deliveryCharge,
+                discountAmount: discount,
+                totalPrice: total,
+                couponCode: couponApplied?.code || null
             };
 
             const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/orders`, orderData);
@@ -295,20 +346,95 @@ const Checkout = () => {
                             <div className="summary-details-stack d-flex flex-column gap-3 pt-2">
                                 <div className="d-flex justify-content-between font-body text-primary">
                                     <span>Subtotal</span>
-                                    <span className="fw-bold">₹{subtotal}</span>
+                                    <span className="fw-bold">₹{subtotal.toLocaleString()}</span>
                                 </div>
+
+                                {/* Coupon Section */}
+                                <div className="coupon-section mt-2 pb-3 border-bottom border-gold-subtle">
+                                    <label className="extra-small text-muted fw-bold mb-2 d-block uppercase tracking-widest font-heading">Apply Coupon</label>
+                                    {!couponApplied ? (
+                                        <div className="d-flex gap-2">
+                                            <div className="position-relative flex-grow-1">
+                                                <Ticket className="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted opacity-50" size={16} />
+                                                <input 
+                                                    type="text" 
+                                                    className="form-control rounded-pill ps-5 py-2 extra-small font-label border-gold-subtle shadow-none" 
+                                                    placeholder="Enter code..." 
+                                                    value={couponCode}
+                                                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                                                    onKeyPress={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                                                />
+                                            </div>
+                                            <button 
+                                                id="apply-coupon-btn"
+                                                className="btn btn-primary rounded-pill px-4 py-2 extra-small fw-bold border-0 shadow-sm transition-all"
+                                                onClick={handleApplyCoupon}
+                                                disabled={couponLoading || !couponCode}
+                                            >
+                                                {couponLoading ? <Loader2 size={14} className="animate-spin" /> : 'APPLY'}
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="applied-coupon-pill d-flex align-items-center justify-content-between bg-success bg-opacity-10 border border-success border-opacity-20 rounded-pill px-3 py-2">
+                                            <div className="d-flex align-items-center gap-2">
+                                                <CheckCircle2 size={16} className="text-success" />
+                                                <span className="extra-small fw-bold text-success font-headline">{couponApplied.code} Applied!</span>
+                                            </div>
+                                            <button className="btn btn-link text-danger p-0 border-0 shadow-none d-flex align-items-center" onClick={handleRemoveCoupon}>
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    )}
+                                    {couponError && <p className="text-danger extra-small fw-bold mt-2 mb-0 font-label">{couponError}</p>}
+                                    {couponApplied?.message && <p className="text-success extra-small fw-bold mt-2 mb-0 font-label">{couponApplied.message}</p>}
+
+                                    {/* Available CMS Promos */}
+                                    {cmsPromos.length > 0 && !couponApplied && (
+                                        <div className="mt-3">
+                                            <p className="extra-small text-muted fw-bold mb-2 uppercase font-heading opacity-75">Available Offers:</p>
+                                            <div className="d-flex flex-wrap gap-2">
+                                                {cmsPromos.map((p, idx) => (
+                                                    <div 
+                                                        key={idx} 
+                                                        className="available-promo-tag"
+                                                        onClick={() => {
+                                                            setCouponCode(p.code);
+                                                            // Auto apply
+                                                            setTimeout(() => {
+                                                                const btn = document.getElementById('apply-coupon-btn');
+                                                                if (btn) btn.click();
+                                                            }, 100);
+                                                        }}
+                                                    >
+                                                        <Ticket size={12} />
+                                                        <span>{p.code}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
                                 <div className="d-flex justify-content-between font-body text-primary">
                                     <div className="d-flex align-items-center gap-2">
                                         <span>Shipping & Handling</span>
                                         <Truck size={14} className="text-secondary" />
                                     </div>
-                                    <span className={subtotal > 1999 ? "fw-bold text-success" : "fw-bold text-secondary"}>
-                                        {subtotal > 1999 ? 'FREE' : `₹${deliveryCharge}`}
+                                    <span className={subtotal > freeShippingThreshold ? "fw-bold text-success" : "fw-bold text-secondary"}>
+                                        {subtotal > freeShippingThreshold ? 'FREE' : `₹${deliveryCharge}`}
                                     </span>
                                 </div>
+
+                                {discount > 0 && (
+                                    <div className="d-flex justify-content-between font-body text-success fw-bold animate-fade-in">
+                                        <span>Coupon Discount</span>
+                                        <span>- ₹{discount.toLocaleString()}</span>
+                                    </div>
+                                )}
+
                                 <div className="d-flex justify-content-between align-items-center pt-4 border-top border-gold-subtle mt-2">
                                     <span className="font-headline fs-5 text-primary">Grand Total</span>
-                                    <span className="font-headline fs-2 text-secondary fw-bold">₹{total}</span>
+                                    <span className="font-headline fs-2 text-secondary fw-bold">₹{total.toLocaleString()}</span>
                                 </div>
                             </div>
 

@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+import User from '../models/sql/User.js';
 import { admin as firebaseAdmin, isFirebaseInitialized } from '../config/firebaseAdmin.js';
 
 export const verifyAppCheck = async (req, res, next) => {
@@ -46,10 +46,33 @@ export const protect = async (req, res, next) => {
     if (token) {
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            req.user = await User.findById(decoded.id).select('-password');
-            if (!req.user) {
+            // Sequelize uses findByPk for primary key lookup
+            const user = await User.findByPk(decoded.id, {
+                attributes: { exclude: ['password'] }
+            });
+
+            if (!user) {
                 return res.status(401).json({ message: 'Not authorized, user not found' });
             }
+
+            // Set req.user and alias _id for compatibility
+            const userData = user.toJSON();
+            
+            // Parse JSON fields
+            const parseJson = (val) => {
+                if (typeof val === 'string') {
+                    try { return JSON.parse(val); } catch (e) { return val; }
+                }
+                return val;
+            };
+
+            req.user = {
+                ...userData,
+                _id: user.id,
+                addresses: parseJson(userData.addresses),
+                wishlist: parseJson(userData.wishlist)
+            };
+
             return next();
         } catch (error) {
             console.error('JWT Verification Error:', error);

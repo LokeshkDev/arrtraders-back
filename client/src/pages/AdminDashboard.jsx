@@ -50,14 +50,25 @@ import {
     MessageSquare,
     Quote,
     User,
-    MousePointerClick
+    MousePointerClick,
+    Ticket,
+    ChevronLeft,
+    FileText
 } from 'lucide-react';
 import './AdminDashboard.css';
+import PagesCMS from '../components/PagesCMS.jsx';
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('Overview');
     const [userInfo, setUserInfo] = useState(JSON.parse(localStorage.getItem('userInfo')));
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(localStorage.getItem('adminSidebarCollapsed') === 'true');
+
+    const toggleCollapse = () => {
+        const newState = !isCollapsed;
+        setIsCollapsed(newState);
+        localStorage.setItem('adminSidebarCollapsed', newState);
+    };
 
     // New Order Notification State
     const [orders, setOrders] = useState([]);
@@ -109,7 +120,7 @@ const AdminDashboard = () => {
 
     useEffect(() => {
         if (!userInfo || !userInfo.isAdmin) {
-            window.location.href = '/login';
+            window.location.href = '/login?redirect=/admin';
             return;
         }
 
@@ -133,20 +144,37 @@ const AdminDashboard = () => {
         { id: 'Orders', icon: ShoppingBag },
         { id: 'Products', icon: Package },
         { id: 'Customers', icon: Users },
+        { id: 'Coupons', icon: Ticket },
         { id: 'Website', icon: FileEdit },
+        { id: 'Pages', icon: FileText },
         { id: 'Highlights', icon: Star }
     ];
+
+    if (!userInfo || !userInfo.isAdmin) {
+        return (
+            <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+                <div className="text-center">
+                    <div className="spinner-border text-primary mb-3" role="status"></div>
+                    <p className="font-label small text-muted fw-bold uppercase">Redirecting to secure login...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="admin-layout">
             {/* Sidebar */}
-            <aside className={`admin-sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
+            <aside className={`admin-sidebar ${sidebarOpen ? 'sidebar-open' : ''} ${isCollapsed ? 'collapsed' : ''}`}>
                 <div className="admin-sidebar-brand">
                     <h1 className="font-headline d-flex align-items-center gap-2">
-                        <Package size={24} className="text-secondary" />
-                        AR <span>RAHMAN</span>
+                        <Package size={24} className="text-secondary flex-shrink-0" />
+                        <span className="brand-text">AR <span>RAHMAN</span></span>
                     </h1>
-                    <p className="extra-small opacity-50 uppercase tracking-widest font-label mt-1">Global Marketplace Control</p>
+                    <p className="extra-small opacity-50 uppercase tracking-widest font-label mt-1 brand-subtext">Global Marketplace Control</p>
+                    
+                    <button className="sidebar-toggle-btn d-none d-lg-flex" onClick={toggleCollapse}>
+                        {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+                    </button>
                 </div>
                 <nav className="admin-nav">
                     <ul className="admin-nav-list">
@@ -158,8 +186,9 @@ const AdminDashboard = () => {
                                     <button
                                         onClick={() => { setActiveTab(item.id); setSidebarOpen(false); }}
                                         className={`admin-nav-btn ${isActive ? 'active' : ''}`}
+                                        title={isCollapsed ? item.id : ''}
                                     >
-                                        <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+                                        <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className="flex-shrink-0" />
                                         <span className="nav-label">{item.id}</span>
                                     </button>
                                 </li>
@@ -169,14 +198,14 @@ const AdminDashboard = () => {
                 </nav>
                 <div className="admin-sidebar-footer">
                     <div className="admin-user-profile bg-white bg-opacity-5 p-3 rounded-4 mx-3 mb-4 border border-white border-opacity-10 shadow-sm transition-all hover-bg-opacity-10">
-                        <div className="d-flex align-items-center gap-3">
-                            <div className="admin-user-avatar shadow-premium bg-secondary text-primary d-flex align-items-center justify-content-center fw-bold font-headline" style={{ width: '48px', height: '48px', borderRadius: '50%', fontSize: '20px' }}>
+                        <div className="d-flex align-items-center gap-3 profile-inner">
+                            <div className="admin-user-avatar shadow-premium bg-secondary text-primary d-flex align-items-center justify-content-center fw-bold font-headline flex-shrink-0" style={{ width: '40px', height: '40px', borderRadius: '50%', fontSize: '18px' }}>
                                 {userInfo?.name?.charAt(0) || 'A'}
                             </div>
-                            <div className="flex-grow-1 overflow-hidden">
+                            <div className="flex-grow-1 overflow-hidden profile-info">
                                 <p className="admin-label text-white fw-bold mb-0 text-truncate font-headline small">{userInfo?.name || 'Administrator'}</p>
                                 <div className="d-flex align-items-center gap-1 opacity-75 extra-small font-label mt-1 text-accent fw-bold uppercase" style={{ letterSpacing: '0.5px' }}>
-                                    <div className="rounded-circle bg-success shadow-sm" style={{ width: 6, height: 6 }}></div> Status: Online
+                                    <div className="rounded-circle bg-success shadow-sm" style={{ width: 6, height: 6 }}></div> Online
                                 </div>
                             </div>
                         </div>
@@ -222,7 +251,9 @@ const AdminDashboard = () => {
                     {activeTab === 'Orders' && <OrdersTab orders={orders} fetchOrders={fetchOrders} soundEnabled={soundEnabled} setSoundEnabled={setSoundEnabled} />}
                     {activeTab === 'Products' && <ProductsTab />}
                     {activeTab === 'Customers' && <CustomersTab />}
+                    {activeTab === 'Coupons' && <CouponsTab />}
                     {activeTab === 'Website' && <CMSContentTab />}
+                    {activeTab === 'Pages' && <PagesCMS />}
                     {activeTab === 'Highlights' && <HighlightsTab />}
                 </div>
 
@@ -432,7 +463,7 @@ const ProductsTab = () => {
         name: '', description: '', category: '', price: '', originalPrice: '',
         flashSale: false, discount: '', stock: '', isBestSeller: false,
         isTopRated: false, isFeatured: false, color: '', weight: '',
-        unit: 'gram', availableWeights: [], nutrition: {}
+        unit: 'gram', availableWeights: [], nutrition: {}, isActive: true
     });
     const [nutritionKey, setNutritionKey] = useState('');
     const [nutritionVal, setNutritionVal] = useState('');
@@ -441,18 +472,19 @@ const ProductsTab = () => {
     const [varOriginalPrice, setVarOriginalPrice] = useState('');
     const [editId, setEditId] = useState(null);
     const [files, setFiles] = useState([]); // Multiple Files Support
+    const [catFile, setCatFile] = useState(null); // Single File for Category
     const [showBulkImport, setShowBulkImport] = useState(false); // Integrated Bulk Import Toggle
 
     // Category Edit State
-    const [catForm, setCatForm] = useState({ name: '', description: '', image: '', parent: '' });
+    const [catForm, setCatForm] = useState({ name: '', description: '', image: '', parent: '', isActive: true });
     const [editCatId, setEditCatId] = useState(null);
 
     const fetchData = async () => {
         try {
             setLoading(true);
             const [prodRes, catRes] = await Promise.all([
-                axios.get(`${import.meta.env.VITE_API_URL}/api/products`),
-                axios.get(`${import.meta.env.VITE_API_URL}/api/cms/categories`)
+                axios.get(`${import.meta.env.VITE_API_URL}/api/products?admin=true`),
+                axios.get(`${import.meta.env.VITE_API_URL}/api/cms/categories?admin=true`)
             ]);
             setProducts(prodRes.data);
             setCategories(catRes.data);
@@ -480,7 +512,13 @@ const ProductsTab = () => {
     };
 
     const handleEditCategory = (cat) => {
-        setCatForm({ name: cat.name, description: cat.description || '', image: cat.image, parent: cat.parent || '' });
+        setCatForm({ 
+            name: cat.name, 
+            description: cat.description || '', 
+            image: cat.image, 
+            parent: cat.parent || '',
+            isActive: cat.isActive !== undefined ? cat.isActive : true
+        });
         setEditCatId(cat._id);
         setView('editCategory');
     };
@@ -492,13 +530,17 @@ const ProductsTab = () => {
             formData.append('name', catForm.name);
             formData.append('description', catForm.description);
             formData.append('parent', catForm.parent);
-            if (file) formData.append('image', file);
+            formData.append('isActive', catForm.isActive);
+            if (catFile) formData.append('image', catFile);
 
             await axios.post(`${import.meta.env.VITE_API_URL}/api/cms/categories`, formData);
             setView('list');
             fetchData();
-            setFile(null);
-        } catch (error) { alert('Category creation failed.'); }
+            setCatFile(null);
+        } catch (error) {
+            console.error(error);
+            alert('Category creation failed: ' + (error.response?.data?.message || error.message));
+        }
     };
 
     const handleUpdateCategory = async (e) => {
@@ -508,13 +550,17 @@ const ProductsTab = () => {
             formData.append('name', catForm.name);
             formData.append('description', catForm.description);
             formData.append('parent', catForm.parent);
-            if (file) formData.append('image', file);
+            formData.append('isActive', catForm.isActive);
+            if (catFile) formData.append('image', catFile);
 
             await axios.put(`${import.meta.env.VITE_API_URL}/api/cms/categories/${editCatId}`, formData);
             setView('list');
             fetchData();
-            setFile(null);
-        } catch (error) { alert('Category update failed.'); }
+            setCatFile(null);
+        } catch (error) {
+            console.error(error);
+            alert('Category update failed: ' + (error.response?.data?.message || error.message));
+        }
     };
 
     const normalizeWeight = (value, unit) => {
@@ -934,6 +980,10 @@ const ProductsTab = () => {
                                     <input className="form-check-input border-primary shadow-none" style={{ transform: 'scale(1.1)' }} type="checkbox" id="featured" checked={prodForm.isFeatured} onChange={e => setProdForm({ ...prodForm, isFeatured: e.target.checked })} />
                                     <label className="form-check-label extra-small fw-bold text-primary" htmlFor="featured">FRONT PAGE FEATURED</label>
                                 </div>
+                                <div className="form-check form-switch d-flex align-items-center gap-3">
+                                    <input className="form-check-input border-success shadow-none" style={{ transform: 'scale(1.1)' }} type="checkbox" id="activeStatus" checked={prodForm.isActive} onChange={e => setProdForm({ ...prodForm, isActive: e.target.checked })} />
+                                    <label className="form-check-label extra-small fw-bold text-success" htmlFor="activeStatus">PRODUCT ACTIVE</label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -978,7 +1028,15 @@ const ProductsTab = () => {
                         </div>
                         <div className="col-12">
                             <label className="admin-label-sm fw-bold mb-2 text-muted uppercase extra-small font-label">Thumbnail Image</label>
-                            <input type="file" className="form-control rounded-4 border-opacity-25 shadow-sm" {...(view === 'addCategory' ? { required: true } : {})} onChange={e => setFile(e.target.files[0])} accept="image/*" />
+                            <input type="file" className="form-control rounded-4 border-opacity-25 shadow-sm" {...(view === 'addCategory' ? { required: true } : {})} onChange={e => setCatFile(e.target.files[0])} accept="image/*" />
+                        </div>
+                        <div className="col-12 mt-4">
+                            <div className="bg-light p-3 rounded-4 border border-opacity-10">
+                                <div className="form-check form-switch d-flex align-items-center gap-3">
+                                    <input className="form-check-input border-success shadow-none" style={{ transform: 'scale(1.1)' }} type="checkbox" id="catActiveStatus" checked={catForm.isActive} onChange={e => setCatForm({ ...catForm, isActive: e.target.checked })} />
+                                    <label className="form-check-label extra-small fw-bold text-success" htmlFor="catActiveStatus">CATEGORY ACTIVE / VISIBLE IN MENU</label>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <hr className="my-5 opacity-10" />
@@ -1014,7 +1072,8 @@ const ProductsTab = () => {
                     </button>
                     <button
                         onClick={() => {
-                            setCatForm({ name: '', description: '', image: '', parent: '' });
+                            setCatForm({ name: '', description: '', image: '', parent: '', isActive: true });
+                            setCatFile(null);
                             setView('addCategory');
                         }}
                         className="btn btn-white border rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2 font-label extra-small py-2 px-4 shadow-sm"
@@ -1105,6 +1164,23 @@ const ProductsTab = () => {
                                                     <ChevronDown size={22} className={`transition-all ${isOpen ? 'rotate-180 text-white' : 'text-muted'}`} />
                                                 </button>
                                                 <div className="d-flex gap-2 ms-3 border-start ps-4 border-opacity-10">
+                                                    <div className="form-check form-switch me-2 d-flex align-items-center" title="Toggle Category Visibility">
+                                                        <input 
+                                                            className="form-check-input cursor-pointer shadow-none border-success" 
+                                                            type="checkbox" 
+                                                            checked={cat.isActive !== false} 
+                                                            onChange={async (e) => {
+                                                                const newStatus = e.target.checked;
+                                                                try {
+                                                                    const formData = new FormData();
+                                                                    formData.append('name', cat.name);
+                                                                    formData.append('isActive', newStatus);
+                                                                    await axios.put(`${import.meta.env.VITE_API_URL}/api/cms/categories/${cat._id}`, formData);
+                                                                    fetchData();
+                                                                } catch (err) { alert('Status update failed'); }
+                                                            }}
+                                                        />
+                                                    </div>
                                                     <button className="btn btn-sm btn-white border rounded-pill p-3 shadow-sm hover-bg-primary hover-text-white transition-all" onClick={() => handleEditCategory(cat)}> <Edit size={16} /> </button>
                                                     <button className="btn btn-sm btn-white border text-danger rounded-pill p-3 shadow-sm hover-bg-danger hover-text-white transition-all" onClick={() => handleDeleteCategory(cat._id)}> <Trash size={16} /> </button>
                                                 </div>
@@ -1146,6 +1222,7 @@ const ProductsTab = () => {
                                                                 <th className="ps-4 py-3">Digital Asset / Name</th>
                                                                 <th>Price / Val</th>
                                                                 <th>Warehouse Inventory</th>
+                                                                <th className="text-center">Status</th>
                                                                 <th className="text-center">Control</th>
                                                             </tr>
                                                         </thead>
@@ -1173,10 +1250,34 @@ const ProductsTab = () => {
                                                                         </div>
                                                                     </td>
                                                                     <td className="text-center">
+                                                                        <div className="form-check form-switch d-inline-block" title="Toggle Product Visibility">
+                                                                            <input 
+                                                                                className="form-check-input cursor-pointer shadow-none border-success" 
+                                                                                type="checkbox" 
+                                                                                checked={prod.isActive !== false} 
+                                                                                onChange={async (e) => {
+                                                                                    const newStatus = e.target.checked;
+                                                                                    try {
+                                                                                        const formData = new FormData();
+                                                                                        formData.append('name', prod.name);
+                                                                                        formData.append('isActive', newStatus);
+                                                                                        await axios.put(`${import.meta.env.VITE_API_URL}/api/products/${prod._id}`, formData);
+                                                                                        fetchData();
+                                                                                    } catch (err) { alert('Status update failed'); }
+                                                                                }}
+                                                                            />
+                                                                        </div>
+                                                                    </td>
+                                                                    <td className="text-center">
                                                                         <div className="d-flex justify-content-center gap-2">
                                                                             <button className="btn btn-sm btn-white border shadow-sm p-3 rounded-pill hover-bg-primary hover-text-white transition-all" onClick={() => {
                                                                                 const nutritionObj = prod.nutrition ? (typeof prod.nutrition === 'object' && !(prod.nutrition instanceof Map) ? prod.nutrition : Object.fromEntries(prod.nutrition)) : {};
-                                                                                setProdForm({ ...prod, availableWeights: Array.isArray(prod.availableWeights) ? prod.availableWeights : (prod.availableWeights ? prod.availableWeights.split(',').map(w => w.trim()) : []), nutrition: nutritionObj });
+                                                                                setProdForm({ 
+                                                                                    ...prod, 
+                                                                                    availableWeights: Array.isArray(prod.availableWeights) ? prod.availableWeights : (prod.availableWeights ? prod.availableWeights.split(',').map(w => w.trim()) : []), 
+                                                                                    nutrition: nutritionObj,
+                                                                                    isActive: prod.isActive !== undefined ? prod.isActive : true 
+                                                                                });
                                                                                 setEditId(prod._id);
                                                                                 setView('editProduct');
                                                                             }}><Edit size={16} className="text-primary" /></button>
@@ -1202,8 +1303,14 @@ const ProductsTab = () => {
 
 const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled }) => {
     const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState('All');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [showModal, setShowModal] = useState(false);
+
+    // Reset page when filters change
+    useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter]);
 
     const updateOrderStatus = async (id, status) => {
         try {
@@ -1329,31 +1436,45 @@ const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled }) 
         doc.save(`AR_Rahman_Invoice_${order._id.substring(order._id.length - 8).toUpperCase()}.pdf`);
     };
 
-    if (orders.length === 0) return <div className="p-5 text-center text-muted animate-pulse bg-white border rounded-4 shadow-sm"><ShoppingCart className="mx-auto mb-3 opacity-15" size={64} /> No orders found in the registry.</div>;
+    const filtered = orders.filter(o => {
+        const matchesSearch = o._id.toLowerCase().includes(searchQuery.toLowerCase()) || o.shippingAddress?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesStatus = statusFilter === 'All' ? true : (o.status || 'Processing') === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
 
-    const filtered = orders.filter(o => o._id.toLowerCase().includes(searchQuery.toLowerCase()) || o.shippingAddress?.name?.toLowerCase().includes(searchQuery.toLowerCase()));
+    const paginatedOrders = filtered.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+    const totalPages = Math.ceil(filtered.length / rowsPerPage);
+
+    const orderStats = {
+        total: orders.length,
+        processing: orders.filter(o => (o.status || 'Processing') === 'Processing').length,
+        shipped: orders.filter(o => o.status === 'Shipped').length,
+        delivered: orders.filter(o => o.status === 'Delivered').length,
+        cancelled: orders.filter(o => o.status === 'Cancelled').length,
+        revenue: orders.reduce((sum, o) => sum + (Number(o.totalPrice) || 0), 0)
+    };
 
     return (
-        <div className="container-fluid p-0 animate-fade-in">
-            <div className="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
+        <div className="container-fluid p-0 animate-fade-in admin-orders-screen">
+            <div className="admin-page-toolbar">
                 <div>
                     <div className="d-flex align-items-center gap-2 mb-2">
-                        <div className="bg-primary bg-opacity-10 text-secondary rounded-pill px-3 py-1 extra-small fw-bold border border-primary border-opacity-20 d-flex align-items-center gap-1 font-label">
-                            <ShoppingCart size={12} /> FULFILLMENT CENTER
+                        <div className="admin-chip">
+                            <ShoppingCart size={12} /> Order ERP
                         </div>
                         <button
                             onClick={() => setSoundEnabled(!soundEnabled)}
-                            className={`rounded-pill px-3 py-1 extra-small fw-bold border d-flex align-items-center gap-1 font-label transition-all ${soundEnabled ? 'bg-success bg-opacity-10 text-success border-success border-opacity-20' : 'bg-danger bg-opacity-10 text-danger border-danger border-opacity-20'}`}
+                            className={`admin-sound-toggle ${soundEnabled ? 'sound-on' : 'sound-off'}`}
                             title={soundEnabled ? 'Disable Order Sound' : 'Enable Order Sound'}
                         >
                             {soundEnabled ? <Bell size={12} /> : <BellOff size={12} />}
                             {soundEnabled ? 'SOUND ON' : 'SOUND MUTED'}
                         </button>
                     </div>
-                    <h2 className="font-headline fs-2 text-primary m-0 fw-bold">Active Logistics</h2>
-                    <p className="font-body text-muted small mt-1">Real-time tracking of customer transitions and shipments.</p>
+                    <h2 className="font-headline fs-2 text-primary m-0 fw-bold">Orders Management</h2>
+                    {/* <p className="font-body text-muted small mt-1 mb-0">ERP-style fulfillment table for customer orders, payment status and shipment updates.</p> */}
                 </div>
-                <div className="bg-white border rounded-pill px-4 py-2 flex-grow-1 d-flex align-items-center shadow-sm max-w-500 border border-opacity-10 border-primary transition-all focus-within-shadow-md">
+                <div className="admin-order-search">
                     <Search size={16} className="text-muted" />
                     <input
                         type="text"
@@ -1365,52 +1486,88 @@ const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled }) 
                 </div>
             </div>
 
-            <div className="bg-white rounded-5 shadow-sm overflow-hidden border border-opacity-50">
-                <div className="table-responsive">
-                    <table className="table table-hover align-middle mb-0">
-                        <thead className="bg-light border-bottom border-opacity-10">
-                            <tr className="extra-small text-muted uppercase fw-bold font-label" style={{ letterSpacing: '2px' }}>
-                                <th className="ps-4 py-3">Tracking ID / Date</th>
-                                <th>Recipient Contact</th>
-                                <th>Aggregate Val</th>
-                                <th>Logistics Phase</th>
-                                <th className="text-center">Executive Control</th>
+            <div className="admin-order-stats">
+                <div className={`admin-order-stat-card cursor-pointer ${statusFilter === 'All' ? 'border-primary bg-primary bg-opacity-10 shadow-sm' : ''}`} style={{ cursor: 'pointer' }} onClick={() => setStatusFilter('All')}>
+                    <span>Total Orders</span><strong>{orderStats.total}</strong>
+                </div>
+                <div className={`admin-order-stat-card cursor-pointer ${statusFilter === 'Processing' ? 'border-primary bg-primary bg-opacity-10 shadow-sm' : ''}`} style={{ cursor: 'pointer' }} onClick={() => setStatusFilter('Processing')}>
+                    <span>Processing</span><strong>{orderStats.processing}</strong>
+                </div>
+                <div className={`admin-order-stat-card cursor-pointer ${statusFilter === 'Shipped' ? 'border-primary bg-primary bg-opacity-10 shadow-sm' : ''}`} style={{ cursor: 'pointer' }} onClick={() => setStatusFilter('Shipped')}>
+                    <span>Shipped</span><strong>{orderStats.shipped}</strong>
+                </div>
+                <div className={`admin-order-stat-card cursor-pointer ${statusFilter === 'Delivered' ? 'border-primary bg-primary bg-opacity-10 shadow-sm' : ''}`} style={{ cursor: 'pointer' }} onClick={() => setStatusFilter('Delivered')}>
+                    <span>Delivered</span><strong>{orderStats.delivered}</strong>
+                </div>
+                <div className={`admin-order-stat-card cursor-pointer ${statusFilter === 'Cancelled' ? 'border-primary bg-primary bg-opacity-10 shadow-sm' : ''}`} style={{ cursor: 'pointer' }} onClick={() => setStatusFilter('Cancelled')}>
+                    <span>Cancelled</span><strong>{orderStats.cancelled}</strong>
+                </div>
+                <div className="admin-order-stat-card"><span>Revenue</span><strong>₹{orderStats.revenue.toLocaleString()}</strong></div>
+            </div>
+
+            <div className="admin-erp-panel">
+                <div className="admin-erp-table-wrap">
+                    <table className="admin-erp-table">
+                        <thead>
+                            <tr>
+                                <th>Order</th>
+                                <th>Customer</th>
+                                <th>Items</th>
+                                <th>Payment</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th className="text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filtered.length === 0 ? (
-                                <tr><td colSpan="5" className="text-center py-5 text-muted fw-bold opacity-50 italic">No shipment records found in current registry.</td></tr>
-                            ) : filtered.map(order => (
+                                <tr><td colSpan="8" className="admin-empty-cell">No order records found.</td></tr>
+                            ) : paginatedOrders.map(order => (
                                 <tr key={order._id}>
-                                    <td className="ps-4 py-4">
-                                        <div className="fw-bold text-primary fs-7">#{order._id.substring(0, 10).toUpperCase()}</div>
-                                        <div className="text-muted extra-small d-flex align-items-center gap-1 mt-1 font-label fw-bold"> <Calendar size={10} /> REGISTERED: {new Date(order.createdAt).toLocaleDateString()}</div>
+                                    <td>
+                                        <div className="admin-order-id">#{order._id.substring(order._id.length - 8).toUpperCase()}</div>
+                                        <div className="admin-muted-line">ID: {order._id.substring(0, 10)}</div>
                                     </td>
                                     <td>
-                                        <div className="fw-bold fs-7">{order.shippingAddress?.name || 'Authorized Customer'}</div>
-                                        <div className="text-muted extra-small fw-bold opacity-75">{order.shippingAddress?.city?.toUpperCase()} LOGISTICS HUB</div>
+                                        <div className="admin-customer-name">{order.shippingAddress?.name || 'Customer'}</div>
+                                        <div className="admin-muted-line">{order.shippingAddress?.phone || 'No phone'} / {order.shippingAddress?.city || 'No city'}</div>
                                     </td>
-                                    <td><span className="fw-bold text-secondary fs-6">₹{order.totalPrice.toLocaleString()}</span></td>
+                                    <td>
+                                        <div className="admin-cell-strong">{order.orderItems?.length || 0} SKU</div>
+                                        <div className="admin-muted-line">{order.orderItems?.reduce((sum, item) => sum + (item.qty || 0), 0) || 0} units</div>
+                                    </td>
+                                    <td>
+                                        <span className={`admin-payment-pill ${order.isPaid ? 'paid' : 'pending'}`}>{order.paymentMethod === 'COD' ? 'COD' : (order.paymentMethod || 'ONLINE')}</span>
+                                        <div className="admin-muted-line mt-1">{order.isPaid ? 'Paid' : 'Pending'}</div>
+                                    </td>
+                                    <td><div className="admin-total-value">Rs. {Number(order.totalPrice || 0).toLocaleString()}</div></td>
                                     <td>
                                         <select
-                                            className="form-select form-select-sm rounded-pill px-3 fs-9 fw-bold border-opacity-25 shadow-sm transition-all py-2"
+                                            className="admin-status-select"
                                             value={order.status || 'Processing'}
                                             onChange={(e) => updateOrderStatus(order._id, e.target.value)}
-                                            style={{ minWidth: '130px' }}
                                         >
-                                            <option value="Processing">PROCESSING</option>
-                                            <option value="Shipped">SHIPPED / IN TRANSIT</option>
-                                            <option value="Delivered">DELIVERED / SETTLED</option>
-                                            <option value="Cancelled">VOID / CANCELLED</option>
+                                            <option value="Processing">Processing</option>
+                                            <option value="Shipped">Shipped</option>
+                                            <option value="Delivered">Delivered</option>
+                                            <option value="Cancelled">Cancelled</option>
                                         </select>
                                     </td>
-                                    <td className="text-center">
-                                        <div className="d-flex justify-content-center gap-2">
-                                            <button className="btn btn-sm btn-white border shadow-sm rounded-pill p-3 hover-bg-primary hover-text-white transition-all" onClick={() => { setSelectedOrder(order); setShowModal(true); }}>
-                                                <Eye size={16} className="text-primary" />
+                                    <td>
+                                        <div className="admin-cell-strong">{new Date(order.createdAt).toLocaleDateString('en-IN')}</div>
+                                        <div className="admin-muted-line">{new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                                    </td>
+                                    <td>
+                                        <div className="admin-row-actions">
+                                            <button className="admin-icon-btn view" onClick={() => { setSelectedOrder(order); setShowModal(true); }} title="View order">
+                                                <Eye size={15} />
                                             </button>
-                                            <button className="btn btn-sm btn-white border shadow-sm text-danger rounded-pill p-3 hover-bg-danger hover-text-white transition-all" onClick={() => handleDeleteOrder(order._id)}>
-                                                <Trash size={16} />
+                                            <button className="admin-icon-btn invoice" onClick={() => generateInvoice(order)} title="Download invoice">
+                                                <Download size={15} />
+                                            </button>
+                                            <button className="admin-icon-btn danger" onClick={() => handleDeleteOrder(order._id)} title="Delete order">
+                                                <Trash size={15} />
                                             </button>
                                         </div>
                                     </td>
@@ -1419,6 +1576,66 @@ const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled }) 
                         </tbody>
                     </table>
                 </div>
+                {/* Orders Pagination Footer */}
+                {filtered.length > 0 && (
+                    <div className="d-flex flex-column flex-md-row justify-content-between align-items-center p-4 bg-light border-top border-opacity-10">
+                        <div className="d-flex align-items-center gap-3 mb-3 mb-md-0">
+                            <span className="font-label extra-small text-muted fw-bold">Rows per page:</span>
+                            <select className="form-select form-select-sm border-opacity-25 shadow-sm rounded-pill fw-bold font-body" style={{ width: '80px' }} value={rowsPerPage} onChange={(e) => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}>
+                                <option value={10}>10</option>
+                                <option value={20}>20</option>
+                                <option value={50}>50</option>
+                                <option value={100}>100</option>
+                            </select>
+                        </div>
+                        <div className="d-flex align-items-center gap-4">
+                            <span className="font-label extra-small text-muted fw-bold">
+                                Showing {(currentPage - 1) * rowsPerPage + 1}-{Math.min(currentPage * rowsPerPage, filtered.length)} of {filtered.length}
+                            </span>
+                            <div className="d-flex gap-2">
+                                <button className="btn btn-sm btn-white border shadow-sm rounded-circle d-flex align-items-center justify-content-center hover-bg-primary hover-text-white transition-all" style={{ width: '32px', height: '32px' }} disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)}>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                                </button>
+                                <button className="btn btn-sm btn-white border shadow-sm rounded-circle d-flex align-items-center justify-content-center hover-bg-primary hover-text-white transition-all" style={{ width: '32px', height: '32px' }} disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(prev => prev + 1)}>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            <div className="admin-order-mobile-list">
+                {filtered.length === 0 ? (
+                    <div className="admin-mobile-empty">No order records found.</div>
+                ) : paginatedOrders.map(order => (
+                    <article key={order._id} className="admin-order-card">
+                        <div className="d-flex justify-content-between align-items-start gap-3 mb-3">
+                            <div>
+                                <div className="admin-order-id">#{order._id.substring(order._id.length - 8).toUpperCase()}</div>
+                                <div className="admin-muted-line">{new Date(order.createdAt).toLocaleString('en-IN')}</div>
+                            </div>
+                            <div className="admin-total-value">Rs. {Number(order.totalPrice || 0).toLocaleString()}</div>
+                        </div>
+                        <div className="admin-mobile-grid">
+                            <div><span>Customer</span><strong>{order.shippingAddress?.name || 'Customer'}</strong></div>
+                            <div><span>Items</span><strong>{order.orderItems?.length || 0} SKU</strong></div>
+                            <div><span>Payment</span><strong>{order.paymentMethod === 'COD' ? 'COD' : (order.paymentMethod || 'ONLINE')}</strong></div>
+                            <div><span>City</span><strong>{order.shippingAddress?.city || 'N/A'}</strong></div>
+                        </div>
+                        <select className="admin-status-select w-100 mt-3" value={order.status || 'Processing'} onChange={(e) => updateOrderStatus(order._id, e.target.value)}>
+                            <option value="Processing">Processing</option>
+                            <option value="Shipped">Shipped</option>
+                            <option value="Delivered">Delivered</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                        <div className="admin-row-actions justify-content-end mt-3">
+                            <button className="admin-icon-btn view" onClick={() => { setSelectedOrder(order); setShowModal(true); }}><Eye size={15} /></button>
+                            <button className="admin-icon-btn invoice" onClick={() => generateInvoice(order)}><Download size={15} /></button>
+                            <button className="admin-icon-btn danger" onClick={() => handleDeleteOrder(order._id)}><Trash size={15} /></button>
+                        </div>
+                    </article>
+                ))}
             </div>
 
             {/* HIGH-POLY MODAL: Order Details */}
@@ -1531,8 +1748,13 @@ const CustomersTab = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
     const [editUser, setEditUser] = useState(null);
     const [editForm, setEditForm] = useState({ name: '', email: '', isAdmin: false, password: '' });
+
+    // Reset page when filter changes
+    useEffect(() => { setCurrentPage(1); }, [searchQuery]);
 
     const fetchUsers = async () => {
         try {
@@ -1578,6 +1800,9 @@ const CustomersTab = () => {
 
     const filtered = users.filter(u => u.name.toLowerCase().includes(searchQuery.toLowerCase()) || u.email.toLowerCase().includes(searchQuery.toLowerCase()));
 
+    const paginatedUsers = filtered.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+    const totalPages = Math.ceil(filtered.length / rowsPerPage);
+
     return (
         <div className="container-fluid p-0 animate-fade-in">
             <div className="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
@@ -1614,7 +1839,7 @@ const CustomersTab = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filtered.map(user => (
+                            {paginatedUsers.map(user => (
                                 <tr key={user._id} className="transition-all hover-scale-xs">
                                     <td className="ps-5 py-4">
                                         <div className="d-flex align-items-center gap-4">
@@ -1645,6 +1870,33 @@ const CustomersTab = () => {
                         </tbody>
                     </table>
                 </div>
+                {/* Customers Pagination Footer */}
+                {filtered.length > 0 && (
+                    <div className="d-flex flex-column flex-md-row justify-content-between align-items-center p-4 bg-light border-top border-opacity-10">
+                        <div className="d-flex align-items-center gap-3 mb-3 mb-md-0">
+                            <span className="font-label extra-small text-muted fw-bold">Rows per page:</span>
+                            <select className="form-select form-select-sm border-opacity-25 shadow-sm rounded-pill fw-bold font-body" style={{ width: '80px' }} value={rowsPerPage} onChange={(e) => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}>
+                                <option value={10}>10</option>
+                                <option value={20}>20</option>
+                                <option value={50}>50</option>
+                                <option value={100}>100</option>
+                            </select>
+                        </div>
+                        <div className="d-flex align-items-center gap-4">
+                            <span className="font-label extra-small text-muted fw-bold">
+                                Showing {(currentPage - 1) * rowsPerPage + 1}-{Math.min(currentPage * rowsPerPage, filtered.length)} of {filtered.length}
+                            </span>
+                            <div className="d-flex gap-2">
+                                <button className="btn btn-sm btn-white border shadow-sm rounded-circle d-flex align-items-center justify-content-center hover-bg-primary hover-text-white transition-all" style={{ width: '32px', height: '32px' }} disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)}>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                                </button>
+                                <button className="btn btn-sm btn-white border shadow-sm rounded-circle d-flex align-items-center justify-content-center hover-bg-primary hover-text-white transition-all" style={{ width: '32px', height: '32px' }} disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(prev => prev + 1)}>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {editUser && (
@@ -1688,20 +1940,253 @@ const CustomersTab = () => {
     );
 };
 
+const CouponsTab = () => {
+    const [coupons, setCoupons] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [showModal, setShowModal] = useState(false);
+    const [editCoupon, setEditCoupon] = useState(null);
+    const [form, setForm] = useState({
+        code: '', discountType: 'percentage', discountValue: '', minOrderAmount: '',
+        maxDiscount: '', usageLimit: '', expiresAt: '', isActive: true
+    });
+
+    const fetchCoupons = async () => {
+        try {
+            setLoading(true);
+            const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/coupons`);
+            setCoupons(data);
+        } catch (error) { console.error('Coupon fetch error:', error); } finally { setLoading(false); }
+    };
+
+    useEffect(() => { fetchCoupons(); }, []);
+
+    const resetForm = () => {
+        setForm({ code: '', discountType: 'percentage', discountValue: '', minOrderAmount: '', maxDiscount: '', usageLimit: '', expiresAt: '', isActive: true });
+        setEditCoupon(null);
+    };
+
+    const handleOpenCreate = () => { resetForm(); setShowModal(true); };
+
+    const handleOpenEdit = (coupon) => {
+        setEditCoupon(coupon);
+        setForm({
+            code: coupon.code, discountType: coupon.discountType, discountValue: coupon.discountValue,
+            minOrderAmount: coupon.minOrderAmount || '', maxDiscount: coupon.maxDiscount || '',
+            usageLimit: coupon.usageLimit || '', expiresAt: coupon.expiresAt ? new Date(coupon.expiresAt).toISOString().split('T')[0] : '',
+            isActive: coupon.isActive
+        });
+        setShowModal(true);
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const payload = {
+                code: form.code, discountType: form.discountType,
+                discountValue: Number(form.discountValue),
+                minOrderAmount: form.minOrderAmount ? Number(form.minOrderAmount) : 0,
+                maxDiscount: form.maxDiscount ? Number(form.maxDiscount) : null,
+                usageLimit: form.usageLimit ? Number(form.usageLimit) : 0,
+                expiresAt: form.expiresAt || null,
+                isActive: form.isActive
+            };
+            if (editCoupon) {
+                await axios.put(`${import.meta.env.VITE_API_URL}/api/coupons/${editCoupon._id}`, payload);
+            } else {
+                await axios.post(`${import.meta.env.VITE_API_URL}/api/coupons`, payload);
+            }
+            setShowModal(false);
+            resetForm();
+            fetchCoupons();
+        } catch (error) {
+            alert(error.response?.data?.message || 'Operation failed');
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm('Delete this coupon permanently?')) {
+            try {
+                await axios.delete(`${import.meta.env.VITE_API_URL}/api/coupons/${id}`);
+                fetchCoupons();
+            } catch (error) { alert('Failed to delete coupon'); }
+        }
+    };
+
+    const toggleActive = async (coupon) => {
+        try {
+            await axios.put(`${import.meta.env.VITE_API_URL}/api/coupons/${coupon._id}`, { isActive: !coupon.isActive });
+            fetchCoupons();
+        } catch (error) { alert('Failed to update status'); }
+    };
+
+    if (loading) return <div className="p-5 text-center text-muted animate-pulse border bg-white rounded-4 shadow-sm"><Ticket className="mx-auto mb-3 opacity-15" size={64} /> Loading coupon registry...</div>;
+
+    return (
+        <div className="container-fluid p-0 animate-fade-in">
+            <div className="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
+                <div>
+                    <div className="d-flex align-items-center gap-2 mb-2 font-label">
+                        <div className="bg-secondary bg-opacity-10 text-primary rounded-pill px-4 py-1 extra-small fw-bold border border-secondary border-opacity-20 d-flex align-items-center gap-1">
+                            <Ticket size={12} /> PROMO ENGINE
+                        </div>
+                    </div>
+                    <h2 className="font-headline fs-2 text-primary m-0 fw-bold">Coupon Manager</h2>
+                    <p className="font-body text-muted mb-0 small mt-1">Create and manage promotional discount coupons.</p>
+                </div>
+                <button className="btn btn-primary rounded-pill px-5 py-3 shadow-md fw-bold d-flex align-items-center gap-3 border-0 transition-all hover-shadow-lg font-label" onClick={handleOpenCreate}>
+                    <Plus size={20} /> Create Coupon
+                </button>
+            </div>
+
+            {/* Stats */}
+            <div className="admin-order-stats mb-4" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
+                <div className="admin-order-stat-card"><span>Total Coupons</span><strong>{coupons.length}</strong></div>
+                <div className="admin-order-stat-card"><span>Active</span><strong>{coupons.filter(c => c.isActive).length}</strong></div>
+                <div className="admin-order-stat-card"><span>Expired</span><strong>{coupons.filter(c => c.expiresAt && new Date(c.expiresAt) < new Date()).length}</strong></div>
+            </div>
+
+            {/* Table */}
+            <div className="bg-white rounded-5 shadow-sm overflow-hidden border border-opacity-50">
+                <div className="table-responsive">
+                    <table className="table table-hover align-middle mb-0">
+                        <thead className="bg-light border-bottom border-opacity-10 font-label">
+                            <tr className="extra-small text-muted uppercase fw-bold" style={{ letterSpacing: '2px' }}>
+                                <th className="ps-5 py-4">Code</th>
+                                <th>Type</th>
+                                <th>Value</th>
+                                <th>Min Order</th>
+                                <th>Usage</th>
+                                <th>Expires</th>
+                                <th>Status</th>
+                                <th className="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {coupons.length === 0 ? (
+                                <tr><td colSpan="8" className="text-center py-5 text-muted fw-bold">No coupons created yet. Click "Create Coupon" to get started.</td></tr>
+                            ) : coupons.map(coupon => {
+                                const isExpired = coupon.expiresAt && new Date(coupon.expiresAt) < new Date();
+                                return (
+                                    <tr key={coupon._id} className="transition-all hover-scale-xs">
+                                        <td className="ps-5 py-4">
+                                            <span className="font-headline fw-bold text-secondary bg-primary bg-opacity-10 px-3 py-1 rounded-pill" style={{ fontSize: '14px', letterSpacing: '1px' }}>{coupon.code}</span>
+                                        </td>
+                                        <td><span className="badge bg-light text-secondary border px-3 py-2 rounded-pill extra-small fw-bold font-label uppercase">{coupon.discountType}</span></td>
+                                        <td className="fw-bold text-secondary font-headline">{coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`}{coupon.maxDiscount ? <span className="d-block extra-small text-muted fw-bold">Max ₹{coupon.maxDiscount}</span> : null}</td>
+                                        <td className="fw-bold font-body">{coupon.minOrderAmount ? `₹${coupon.minOrderAmount}` : '—'}</td>
+                                        <td><span className="font-headline fw-bold">{coupon.usedCount}</span><span className="text-muted">/{coupon.usageLimit || '∞'}</span></td>
+                                        <td>{coupon.expiresAt ? <span className={`extra-small fw-bold ${isExpired ? 'text-danger' : 'text-primary'}`}>{new Date(coupon.expiresAt).toLocaleDateString()}{isExpired && <span className="d-block text-danger">EXPIRED</span>}</span> : <span className="text-muted extra-small fw-bold">Never</span>}</td>
+                                        <td>
+                                            <div className="form-check form-switch d-inline-block p-0">
+                                                <input className="form-check-input custom-switch border-primary" type="checkbox" checked={coupon.isActive} onChange={() => toggleActive(coupon)} style={{ cursor: 'pointer' }} />
+                                            </div>
+                                        </td>
+                                        <td className="text-center">
+                                            <div className="d-flex justify-content-center gap-2">
+                                                <button className="btn btn-sm btn-white border shadow-sm p-3 rounded-pill hover-bg-primary hover-text-white transition-all" onClick={() => handleOpenEdit(coupon)}><Edit size={16} className="text-primary" /></button>
+                                                <button className="btn btn-sm btn-white border shadow-sm text-danger rounded-pill p-3 hover-bg-danger hover-text-white transition-all" onClick={() => handleDelete(coupon._id)}><Trash size={16} /></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* Create / Edit Modal */}
+            {showModal && (
+                <div className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-80 d-flex justify-content-center align-items-center shadow-2xl animate-fade-in" style={{ zIndex: 9999, backdropFilter: 'blur(10px)' }}>
+                    <div className="bg-white rounded-5 shadow-2xl p-5 w-100 border-0" style={{ maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
+                        <div className="d-flex justify-content-between align-items-center mb-5 border-bottom border-opacity-10 pb-4">
+                            <div>
+                                <h4 className="font-headline text-primary m-0 fw-bold d-flex align-items-center gap-3"><Ticket size={22} /> {editCoupon ? 'Edit Coupon' : 'Create New Coupon'}</h4>
+                                <p className="extra-small text-muted fw-bold m-0 uppercase opacity-75 mt-2 font-label">{editCoupon ? `EDITING: ${editCoupon.code}` : 'GENERATE A PROMOTIONAL CODE'}</p>
+                            </div>
+                            <button className="btn btn-light btn-sm rounded-circle p-2 border shadow-sm hover-bg-danger hover-text-white transition-all" onClick={() => { setShowModal(false); resetForm(); }}> <X size={24} /> </button>
+                        </div>
+                        <form onSubmit={handleSubmit}>
+                            <div className="row g-4">
+                                <div className="col-md-6">
+                                    <label className="extra-small text-muted fw-bold mb-2 uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Coupon Code</label>
+                                    <input type="text" className="form-control rounded-4 py-3 border-opacity-25 shadow-sm font-headline fw-bold text-uppercase" required placeholder="e.g. SAVE20" value={form.code} onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })} />
+                                </div>
+                                <div className="col-md-6">
+                                    <label className="extra-small text-muted fw-bold mb-2 uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Discount Type</label>
+                                    <select className="form-select rounded-4 py-3 border-opacity-25 shadow-sm fw-bold" value={form.discountType} onChange={e => setForm({ ...form, discountType: e.target.value })}>
+                                        <option value="percentage">Percentage (%)</option>
+                                        <option value="fixed">Fixed Amount (₹)</option>
+                                    </select>
+                                </div>
+                                <div className="col-md-6">
+                                    <label className="extra-small text-muted fw-bold mb-2 uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Discount Value</label>
+                                    <input type="number" className="form-control rounded-4 py-3 border-opacity-25 shadow-sm fw-bold" required placeholder={form.discountType === 'percentage' ? 'e.g. 20' : 'e.g. 100'} value={form.discountValue} onChange={e => setForm({ ...form, discountValue: e.target.value })} />
+                                </div>
+                                <div className="col-md-6">
+                                    <label className="extra-small text-muted fw-bold mb-2 uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Min Order Amount (₹)</label>
+                                    <input type="number" className="form-control rounded-4 py-3 border-opacity-25 shadow-sm" placeholder="e.g. 500 (0 = no minimum)" value={form.minOrderAmount} onChange={e => setForm({ ...form, minOrderAmount: e.target.value })} />
+                                </div>
+                                {form.discountType === 'percentage' && (
+                                    <div className="col-md-6">
+                                        <label className="extra-small text-muted fw-bold mb-2 uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Max Discount Cap (₹)</label>
+                                        <input type="number" className="form-control rounded-4 py-3 border-opacity-25 shadow-sm" placeholder="e.g. 200 (empty = no cap)" value={form.maxDiscount} onChange={e => setForm({ ...form, maxDiscount: e.target.value })} />
+                                    </div>
+                                )}
+                                <div className="col-md-6">
+                                    <label className="extra-small text-muted fw-bold mb-2 uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Usage Limit</label>
+                                    <input type="number" className="form-control rounded-4 py-3 border-opacity-25 shadow-sm" placeholder="0 = Unlimited" value={form.usageLimit} onChange={e => setForm({ ...form, usageLimit: e.target.value })} />
+                                </div>
+                                <div className="col-md-6">
+                                    <label className="extra-small text-muted fw-bold mb-2 uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Expiry Date</label>
+                                    <input type="date" className="form-control rounded-4 py-3 border-opacity-25 shadow-sm" value={form.expiresAt} onChange={e => setForm({ ...form, expiresAt: e.target.value })} />
+                                </div>
+                                <div className="col-md-6">
+                                    <label className="extra-small text-muted fw-bold mb-2 uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Status</label>
+                                    <div className="p-3 bg-light bg-opacity-40 rounded-4 border border-opacity-10 mt-1">
+                                        <div className="form-check form-switch d-flex align-items-center gap-4">
+                                            <input className="form-check-input border-primary shadow-none" style={{ transform: 'scale(1.3)' }} type="checkbox" checked={form.isActive} onChange={e => setForm({ ...form, isActive: e.target.checked })} />
+                                            <label className="form-check-label font-body fw-bold text-primary mb-0 small">{form.isActive ? 'Active' : 'Inactive'}</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="d-flex gap-2 justify-content-end mt-5">
+                                <button type="button" className="btn btn-light px-5 py-3 rounded-pill border fw-bold font-label extra-small" onClick={() => { setShowModal(false); resetForm(); }}>CANCEL</button>
+                                <button type="submit" className="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-md border-0 font-label extra-small">{editCoupon ? 'UPDATE COUPON' : 'CREATE COUPON'}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 const CMSContentTab = () => {
     const [cmsData, setCmsData] = useState(null);
+    const [initialCmsData, setInitialCmsData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [timerValue, setTimerValue] = useState({ hours: 0, minutes: 0 });
+    const [isDirty, setIsDirty] = useState(false);
 
     const fetchCMS = async () => {
         try {
             setLoading(true);
             const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/cms/homepage`);
             setCmsData(data);
+            setInitialCmsData(JSON.parse(JSON.stringify(data)));
+            setIsDirty(false);
         } catch (error) { console.error('CMS fetch error:', error); } finally { setLoading(false); }
     };
 
     useEffect(() => { fetchCMS(); }, []);
+
+    useEffect(() => {
+        if (cmsData && initialCmsData) {
+            setIsDirty(JSON.stringify(cmsData) !== JSON.stringify(initialCmsData));
+        }
+    }, [cmsData, initialCmsData]);
 
     const handleSaveCMS = async () => {
         try {
@@ -1709,6 +2194,13 @@ const CMSContentTab = () => {
             alert('Settings saved successfully!');
             fetchCMS();
         } catch (error) { console.error('CMS save error:', error); }
+    };
+
+    const handleCancelCMS = () => {
+        if (initialCmsData) {
+            setCmsData(JSON.parse(JSON.stringify(initialCmsData)));
+            setIsDirty(false);
+        }
     };
 
     const startFlashSale = () => {
@@ -1737,7 +2229,6 @@ const CMSContentTab = () => {
                     <h2 className="font-headline fs-2 text-primary m-0 fw-bold">Edit Website Content</h2>
                     <p className="font-body text-muted small mt-1">Update your banners, promos, and homepage slides.</p>
                 </div>
-                <button className="btn btn-primary rounded-pill px-5 py-3 shadow-md fw-bold d-flex align-items-center gap-3 border-0 transition-all hover-shadow-lg font-label" onClick={handleSaveCMS}> <Save size={20} /> Save Changes </button>
             </div>
 
             <div className="card shadow-premium border-0 rounded-4 overflow-hidden mb-5">
@@ -2162,43 +2653,30 @@ const CMSContentTab = () => {
                     <div className="bg-white p-5 rounded-5 shadow-sm border border-opacity-50">
                         <div className="d-flex justify-content-between align-items-center mb-5 pb-3 border-bottom border-opacity-10">
                             <div>
-                                <h4 className="font-headline text-primary fs-5 mb-0 fw-bold d-flex align-items-center gap-3"> <ShoppingCart size={24} /> Website Banners</h4>
-                                <p className="text-muted extra-small fw-bold m-0 mt-2 uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Edit Homepage Banners and Promotions</p>
+                                <h4 className="font-headline text-primary fs-5 mb-0 fw-bold d-flex align-items-center gap-3"> <Ticket size={24} /> Website Banners & Promo Bar</h4>
+                                <p className="text-muted extra-small fw-bold m-0 mt-2 uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Edit Homepage Banners and Promo Bar Content</p>
                             </div>
-                            <button className="btn btn-outline-primary rounded-pill px-4 py-2 extra-small fw-bold border-2 d-flex align-items-center gap-2 font-label" onClick={() => setCmsData({ ...cmsData, promos: [...(cmsData.promos || []), { title: 'Limited Time Offer', discount: 'SAVE 20%', bg: '#f6f8f8', accentColor: '#0F484E' }] })}> <Plus size={16} /> ADD BANNER</button>
+                            {(cmsData?.promos || []).length < 3 && (
+                                <button className="btn btn-outline-primary rounded-pill px-4 py-2 extra-small fw-bold border-2 d-flex align-items-center gap-2 font-label" onClick={() => setCmsData({ ...cmsData, promos: [...(cmsData.promos || []), { title: 'Limited Time Offer', code: 'SAVE20' }] })}> <Plus size={16} /> ADD BANNER</button>
+                            )}
                         </div>
                         <div className="row g-4">
                             {(cmsData?.promos || []).map((promo, idx) => (
-                                <div className="col-md-6" key={idx}>
-                                    <div className="p-4 rounded-5 border border-opacity-20 transition-all hover-shadow-lg shadow-sm group hover-bg-white" style={{ backgroundColor: promo.bg || '#ffffff', borderLeft: `8px solid ${promo.accentColor || '#6BB252'}` }}>
+                                <div className="col-md-4" key={idx}>
+                                    <div className="p-4 rounded-5 border border-opacity-20 transition-all hover-shadow-lg shadow-sm group hover-bg-white bg-light bg-opacity-30">
                                         <div className="d-flex justify-content-between align-items-start mb-4">
-                                            <div className="badge rounded-pill px-4 py-2 small fw-bold shadow-sm font-label" style={{ backgroundColor: promo.accentColor || '#6BB252', color: '#fff' }}>ACTIVE PROMO</div>
+                                            <div className="badge rounded-pill bg-primary px-4 py-2 small fw-bold shadow-sm font-label text-white">ACTIVE PROMO</div>
                                             <button className="btn btn-sm btn-white border rounded-pill p-2 shadow-sm text-danger hover-bg-danger hover-text-white transition-all opacity-0 group-hover-opacity-100" onClick={() => {
                                                 const np = [...cmsData.promos]; np.splice(idx, 1); setCmsData({ ...cmsData, promos: np });
                                             }}> <Trash size={18} /> </button>
                                         </div>
-                                        <div className="row g-4">
-                                            <div className="col-md-7">
-                                                <label className="extra-small text-muted fw-bold mb-2 d-block uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Headline Title</label>
-                                                <input type="text" className="form-control rounded-4 py-2 border-opacity-30 shadow-sm font-body fw-bold" value={promo.title} onChange={(e) => handlePromoChange(idx, 'title', e.target.value)} />
-                                                <div className="row g-3 mt-3">
-                                                    <div className="col-6">
-                                                        <label className="extra-small text-muted fw-bold mb-1 d-block uppercase opacity-75 font-label">Accent HEX</label>
-                                                        <input type="text" className="form-control form-control-sm rounded-pill font-label shadow-sm" style={{ fontWeight: 800 }} value={promo.accentColor || '#0F484E'} onChange={(e) => handlePromoChange(idx, 'accentColor', e.target.value)} />
-                                                    </div>
-                                                    <div className="col-6">
-                                                        <label className="extra-small text-muted fw-bold mb-1 d-block uppercase opacity-75 font-label">BG HEX</label>
-                                                        <input type="text" className="form-control form-control-sm rounded-pill font-label shadow-sm" style={{ fontWeight: 800 }} value={promo.bg || '#f8f8f8'} onChange={(e) => handlePromoChange(idx, 'bg', e.target.value)} />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="col-md-5">
-                                                <label className="extra-small text-muted fw-bold mb-2 d-block uppercase opacity-75 font-label">Asset Overlay</label>
-                                                <div className="cat-thumb-mini border border-opacity-10 rounded-5 overflow-hidden shadow-inner bg-white p-3 d-flex align-items-center justify-content-center" style={{ height: '110px' }}>
-                                                    <img src={promo.img || '/Reference/images/product-thumb-1.png'} className="h-100 object-fit-contain group-hover-opacity-100 transition-all" alt="" />
-                                                </div>
-                                                <input type="text" className="form-control form-control-sm rounded-pill mt-3 extra-small font-label" placeholder="Cloud asset URL..." value={promo.img || ''} onChange={(e) => handlePromoChange(idx, 'img', e.target.value)} />
-                                            </div>
+                                        <div className="mb-3">
+                                            <label className="extra-small text-muted fw-bold mb-2 d-block uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Headline Title</label>
+                                            <input type="text" className="form-control rounded-4 py-2 border-opacity-30 shadow-sm font-body fw-bold" placeholder="e.g. Free shipping on all orders" value={promo.title} onChange={(e) => handlePromoChange(idx, 'title', e.target.value)} />
+                                        </div>
+                                        <div>
+                                            <label className="extra-small text-muted fw-bold mb-2 d-block uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Promo Code (Optional)</label>
+                                            <input type="text" className="form-control rounded-4 py-2 border-opacity-30 shadow-sm font-body fw-bold text-primary" placeholder="e.g. WELCOME10" value={promo.code || ''} onChange={(e) => handlePromoChange(idx, 'code', e.target.value)} />
                                         </div>
                                     </div>
                                 </div>
@@ -2303,10 +2781,36 @@ const CMSContentTab = () => {
                                 <label className="extra-small text-muted fw-bold mb-2 d-block uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Return Policy</label>
                                 <textarea className="form-control rounded-4 border-opacity-25 shadow-sm" rows="3" value={cmsData?.shippingInfo?.returnPolicy || ''} onChange={(e) => setCmsData({ ...cmsData, shippingInfo: { ...(cmsData.shippingInfo || {}), returnPolicy: e.target.value } })} />
                             </div>
+                            <div className="col-12 mt-4 pt-4 border-top border-opacity-10">
+                                <p className="text-muted extra-small fw-bold m-0 mb-3 uppercase opacity-75 font-label d-flex align-items-center gap-2" style={{ letterSpacing: '1px' }}><CreditCard size={14} /> CHECKOUT PRICING — THESE VALUES CONTROL THE LIVE CHECKOUT PAGE</p>
+                            </div>
+                            <div className="col-md-6">
+                                <label className="extra-small text-muted fw-bold mb-2 d-block uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Free Shipping Threshold (₹)</label>
+                                <input type="number" className="form-control rounded-4 py-3 border-opacity-25 shadow-sm fw-bold font-headline" placeholder="e.g. 1999" value={cmsData?.freeShippingThreshold ?? 1999} onChange={(e) => setCmsData({ ...cmsData, freeShippingThreshold: Number(e.target.value) })} />
+                                <small className="text-muted extra-small mt-1 d-block">Orders above this amount get free delivery on checkout.</small>
+                            </div>
+                            <div className="col-md-6">
+                                <label className="extra-small text-muted fw-bold mb-2 d-block uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Delivery Charge (₹)</label>
+                                <input type="number" className="form-control rounded-4 py-3 border-opacity-25 shadow-sm fw-bold font-headline" placeholder="e.g. 50" value={cmsData?.deliveryCharge ?? 50} onChange={(e) => setCmsData({ ...cmsData, deliveryCharge: Number(e.target.value) })} />
+                                <small className="text-muted extra-small mt-1 d-block">Flat delivery fee for orders below the free shipping threshold.</small>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+            {/* Save/Cancel Floating Popup */}
+            {isDirty && (
+                <div className="position-fixed bottom-0 start-50 translate-middle-x mb-4 shadow-lg bg-white rounded-pill px-4 py-3 d-flex align-items-center gap-4 animate-slide-up" style={{ zIndex: 9999, border: '1px solid rgba(212, 175, 55, 0.3)' }}>
+                    <div className="d-flex align-items-center gap-2">
+                        <div className="bg-warning rounded-circle" style={{ width: '8px', height: '8px' }}></div>
+                        <span className="font-label fw-bold text-dark fs-7">Unsaved Changes</span>
+                    </div>
+                    <div className="d-flex align-items-center gap-2">
+                        <button className="btn btn-light rounded-pill px-4 py-2 font-label extra-small fw-bold border hover-bg-danger hover-text-white transition-all" onClick={handleCancelCMS}>Discard</button>
+                        <button className="btn btn-primary rounded-pill px-4 py-2 font-label extra-small fw-bold d-flex align-items-center gap-2 shadow-sm border-0 transition-all hover-shadow-md" onClick={handleSaveCMS}><Save size={14} /> Save</button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -1,7 +1,7 @@
 import express from 'express';
 import { 
     getProducts, getProductById, createProduct, updateProduct, deleteProduct,
-    getProductBySlug, migrateSlugs, createMultipleProducts
+    getProductBySlug, createMultipleProducts
 } from '../controllers/productController.js';
 import upload, { memoryUpload } from '../config/multer.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
@@ -10,7 +10,6 @@ const router = express.Router();
 
 router.get('/', getProducts);
 router.post('/bulk', protect, admin, createMultipleProducts);
-router.post('/migrate-slugs', protect, admin, migrateSlugs);
 router.get('/slug/:categorySlug/:productSlug', getProductBySlug);
 router.get('/:id', getProductById);
 router.post('/', protect, admin, memoryUpload.array('images', 5), createProduct);

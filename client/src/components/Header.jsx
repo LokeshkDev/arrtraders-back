@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import axios from 'axios';
 import { Search, Menu, X, Heart, ShoppingBag, User, LayoutGrid, ChevronDown } from 'lucide-react';
 import { CartContext } from '../context/CartContext';
 import SideCategoryMenu from './SideCategoryMenu';
@@ -13,7 +14,10 @@ const Header = () => {
   const [userInfo, setUserInfo] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  
+  const [shippingThreshold, setShippingThreshold] = useState(1999);
+  const [promos, setPromos] = useState([]);
+  const [currentPromoIdx, setCurrentPromoIdx] = useState(0);
+
   const location = useLocation();
   const cartContext = useContext(CartContext);
   const getCartCount = cartContext?.getCartCount || (() => 0);
@@ -25,10 +29,30 @@ const Header = () => {
       else setUserInfo(null);
     };
 
+    const fetchShippingSettings = async () => {
+      try {
+        const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/cms/homepage`);
+        if (data.freeShippingThreshold) setShippingThreshold(data.freeShippingThreshold);
+        if (data.promos) setPromos(data.promos);
+      } catch (e) { console.error('Failed to fetch shipping settings'); }
+    };
+
     fetchUserInfo();
+    fetchShippingSettings();
     window.addEventListener('storage', fetchUserInfo);
     return () => window.removeEventListener('storage', fetchUserInfo);
   }, []);
+
+  useEffect(() => {
+    if (promos.length > 1) {
+      const timer = setInterval(() => {
+        setCurrentPromoIdx((prev) => (prev + 1) % promos.length);
+      }, 5000);
+      return () => clearInterval(timer);
+    }
+  }, [promos]);
+
+  const activePromo = promos.length > 0 ? promos[currentPromoIdx] : null;
 
   const handleLogout = () => {
     localStorage.removeItem('userInfo');
@@ -53,13 +77,13 @@ const Header = () => {
 
   const UserMenu = ({ isScrolled = false }) => (
     <div className="position-relative user-dropdown-container">
-      <button 
+      <button
         className={`action-icon border-0 bg-transparent ${isScrolled ? 'text-secondary' : ''}`}
         onClick={() => setUserDropdownOpen(!userDropdownOpen)}
       >
         <User size={isScrolled ? 22 : 24} />
       </button>
-      
+
       {userDropdownOpen && (
         <div className="user-dropdown-menu shadow-premium">
           {!userInfo ? (
@@ -98,13 +122,22 @@ const Header = () => {
       <div className="top-utility-bar d-none d-lg-block">
         <div className="container-lg d-flex justify-content-between align-items-center py-2">
           <div className="utility-promo">
-             <span className="promo-badge">PROMO</span>
-             <span className="promo-text">Free shipping on all orders over ₹1,999</span>
+            {/* <span className="promo-badge">PROMO</span> */}
+            <span className="promo-text transition-all">
+              {activePromo ? (
+                <>
+                  {activePromo.title}
+                  {activePromo.code && <strong className="ms-2 promo-badge" style={{ color: 'var(--primary)', borderLeft: '1px solid rgba(212,175,55,0.3)', paddingLeft: '10px' }}>CODE: {activePromo.code}</strong>}
+                </>
+              ) : (
+                `Free shipping on all orders over ₹${shippingThreshold.toLocaleString()}`
+              )}
+            </span>
           </div>
           <div className="utility-links d-flex gap-4">
-             <Link to="/about" className="utility-link">Our Story</Link>
-             <Link to="/faq" className="utility-link">Help Center</Link>
-             <Link to="/contact" className="utility-link">Contact Us</Link>
+            <Link to="/about" className="utility-link">Our Story</Link>
+            <Link to="/faq" className="utility-link">Help Center</Link>
+            <Link to="/contact" className="utility-link">Contact Us</Link>
           </div>
         </div>
       </div>
@@ -115,8 +148,8 @@ const Header = () => {
           <div className="row align-items-center">
             {/* Logo Section */}
             <div className="col-lg-3 col-9 d-flex align-items-center gap-3">
-              <button 
-                className="category-sidebar-trigger border-0 bg-transparent p-0 d-flex align-items-center justify-content-center" 
+              <button
+                className="category-sidebar-trigger border-0 bg-transparent p-0 d-flex align-items-center justify-content-center"
                 onClick={() => setCategoryMenuOpen(true)}
                 title="Browse Categories"
               >
@@ -132,9 +165,9 @@ const Header = () => {
               <div className="trendy-search-container">
                 <div className="search-bar-inner">
                   <Search size={18} className="search-icon" />
-                  <input 
-                    type="text" 
-                    placeholder="Search for pure organic products..." 
+                  <input
+                    type="text"
+                    placeholder="Search for pure organic products..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -147,10 +180,10 @@ const Header = () => {
             <div className="col-lg-4 col-3">
               <div className="d-flex justify-content-end align-items-center gap-4">
                 <div className="d-none d-lg-flex align-items-center gap-4 me-2">
-                   <Link to="/" className="nav-link-trendy">Home</Link>
-                   <Link to="/categories" className="nav-link-trendy">Shop</Link>
+                  <Link to="/" className="nav-link-trendy">Home</Link>
+                  <Link to="/categories" className="nav-link-trendy">Shop</Link>
                 </div>
-                
+
                 {/* Desktop Icons */}
                 <div className="header-actions-group d-none d-lg-flex align-items-center gap-2">
                   <UserMenu isScrolled={scrolled} />
@@ -165,14 +198,14 @@ const Header = () => {
 
                 {/* Mobile: Search Icon + Hamburger */}
                 <div className="d-lg-none d-flex align-items-center gap-3">
-                  <button 
+                  <button
                     className="mobile-search-toggle border-0 bg-transparent p-0"
                     onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
                     aria-label="Toggle search"
                   >
                     <Search size={22} className="text-secondary" />
                   </button>
-                  <button 
+                  <button
                     className="mobile-hamburger-btn border-0 bg-transparent"
                     onClick={() => setMobileHelpMenuOpen(true)}
                   >
@@ -182,35 +215,35 @@ const Header = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Mobile Search - Expandable overlay */}
           {mobileSearchOpen && (
-          <div className="mobile-search-expanded d-lg-none">
-            <div className="mobile-search-bar">
-              <Search size={16} />
-              <input 
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                autoFocus
-              />
-              <button 
-                className="mobile-search-close border-0 bg-transparent p-0"
-                onClick={() => setMobileSearchOpen(false)}
-              >
-                <X size={18} className="text-muted" />
-              </button>
+            <div className="mobile-search-expanded d-lg-none">
+              <div className="mobile-search-bar">
+                <Search size={16} />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  autoFocus
+                />
+                <button
+                  className="mobile-search-close border-0 bg-transparent p-0"
+                  onClick={() => setMobileSearchOpen(false)}
+                >
+                  <X size={18} className="text-muted" />
+                </button>
+              </div>
             </div>
-          </div>
           )}
         </div>
       </div>
 
       {/* Slide-out Category Menu */}
-      <SideCategoryMenu 
-        isOpen={categoryMenuOpen} 
-        onClose={() => setCategoryMenuOpen(false)} 
+      <SideCategoryMenu
+        isOpen={categoryMenuOpen}
+        onClose={() => setCategoryMenuOpen(false)}
       />
 
       {/* Mobile Help Menu Overlay */}
@@ -238,14 +271,14 @@ const Header = () => {
             </Link>
           </div>
           <div className="drawer-footer mt-auto p-4 border-top">
-             <div className="d-flex justify-content-center gap-4">
-                <Link to="/wishlist" className="drawer-footer-icon"><Heart size={24} /></Link>
-                <Link to="/cart" className="drawer-footer-icon position-relative">
-                   <ShoppingBag size={24} />
-                   {getCartCount() > 0 && <span className="cart-badge-mini">{getCartCount()}</span>}
-                </Link>
-                <Link to="/profile" className="drawer-footer-icon"><User size={24} /></Link>
-             </div>
+            <div className="d-flex justify-content-center gap-4">
+              <Link to="/wishlist" className="drawer-footer-icon"><Heart size={24} /></Link>
+              <Link to="/cart" className="drawer-footer-icon position-relative">
+                <ShoppingBag size={24} />
+                {getCartCount() > 0 && <span className="cart-badge-mini">{getCartCount()}</span>}
+              </Link>
+              <Link to="/profile" className="drawer-footer-icon"><User size={24} /></Link>
+            </div>
           </div>
         </div>
       </div>

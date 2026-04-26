@@ -5,7 +5,7 @@ import { Autoplay, EffectFade, Navigation, Pagination } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import DOMPurify from 'dompurify';
 import { CartContext } from '../context/CartContext';
-import { ArrowRight, ShoppingCart, Heart, Eye, TrendingUp, Star, ShieldCheck, Truck, RefreshCcw, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, ShoppingCart, Heart, Eye, TrendingUp, Star, ShieldCheck, Truck, RefreshCcw, Clock, ChevronLeft, ChevronRight, Mail } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import Testimonials from '../components/Testimonials';
 
@@ -239,7 +239,7 @@ const Home = () => {
 
       {/* Category Grid - fit to screen */}
       {(cmsData?.showCategories !== false) && (
-        <section className="padding-large category-section-refined" style={{ paddingBottom: "80px" }}>
+        <section className=" category-section-refined" style={{ paddingBottom: "80px", paddingTop: "50px" }}>
           <div className="container-lg">
             <div className="text-center mb-5 pb-3">
               <h2 className="display-5 fw-bold mb-3 font-headline">Explore categories</h2>
@@ -263,7 +263,7 @@ const Home = () => {
 
       {/* Featured Collections - IF ENABLED */}
       {(cmsData?.showFeatured !== false) && featuredProducts.length > 0 && (
-        <section className="padding-large bg-light bg-opacity-30 border-top border-bottom">
+        <section className=" bg-light bg-opacity-30 border-top border-bottom" style={{ paddingTop: "50px", paddingBottom: "10px" }}>
           <div className="container-lg">
             <div className="d-flex justify-content-between align-items-end mb-5 align-items-end flex-lg-row flex-column">
               <div>
@@ -372,7 +372,7 @@ const Home = () => {
 
       {/* Best Sellers - Premium Desktop Polish */}
       {(cmsData?.showBestSellers !== false) && (
-        <section className="padding-large bg-white shadow-inner">
+        <section className="bg-white shadow-inner" style={{ paddingTop: "50px", paddingBottom: "10px" }}>
           <div className="container-lg">
             <div className="d-flex justify-content-between align-items-end mb-5 flex-lg-row flex-column">
               <div>
@@ -445,8 +445,27 @@ const Home = () => {
       {cmsData?.showTestimonials !== false && cmsData?.testimonials?.length > 0 && (
         <Testimonials testimonials={cmsData.testimonials} />
       )}
+
+      <section className="home-newsletter-section">
+        <div className="container-lg">
+          <div className="home-newsletter-card">
+            <div className="home-newsletter-copy">
+              <span className="home-newsletter-kicker">
+                <Mail size={15} /> Premium Harvest Updates
+              </span>
+              <h2 className="font-headline">Get new arrivals, offers and gifting ideas</h2>
+              <p className="font-body">
+                Join AR Rahman Dates for updates on premium dates, dry fruits, nuts, hampers and seasonal wellness collections.
+              </p>
+            </div>
+            <form className="home-newsletter-form" onSubmit={(e) => e.preventDefault()}>
+              <input type="email" placeholder="Enter your email address" aria-label="Email address" required />
+              <button type="submit">Subscribe</button>
+            </form>
+          </div>
+        </div>
+      </section>
       {/* Bottom Spacer for Mobile Nav */}
-      <div className="pb-5 mb-5 d-lg-none"></div>
     </main>
   );
 };

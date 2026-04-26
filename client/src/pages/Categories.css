@@ -28,6 +28,81 @@
   .sidebar-sticky-wrapper::-webkit-scrollbar {
     display: none;
   }
+
+  .mobile-category-tabs,
+  .mobile-subcategory-tabs {
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-category-tabs::-webkit-scrollbar,
+  .mobile-subcategory-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-cat-tab {
+    width: auto;
+    min-width: max-content;
+    max-width: none;
+    height: 34px;
+    padding: 0 0.85rem !important;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0;
+    scroll-snap-align: start;
+    gap: 0.35rem !important;
+    overflow: visible;
+  }
+
+  .mobile-cat-tab img {
+    width: 17px !important;
+    height: 17px !important;
+    flex: 0 0 17px;
+  }
+
+  .mobile-cat-tab svg {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 14px;
+  }
+
+  .mobile-cat-tab span,
+  .mobile-subcat-tab span {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: nowrap;
+  }
+
+  .mobile-cat-tab.btn-primary,
+  .mobile-cat-tab.btn-outline-secondary {
+    padding-left: 0.85rem !important;
+    padding-right: 0.85rem !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    line-height: 1 !important;
+  }
+
+  .mobile-subcat-tab {
+    width: auto;
+    min-width: max-content;
+    max-width: none;
+    height: 28px;
+    padding: 0 0.7rem !important;
+    justify-content: center;
+    font-size: 9px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0;
+    scroll-snap-align: start;
+    overflow: visible;
+  }
+
+  .mobile-subcat-tab.btn-secondary,
+  .mobile-subcat-tab.btn-outline-secondary {
+    font-size: 9px !important;
+    font-weight: 600 !important;
+  }
 }
 
 .sidebar-nav-item {
@@ -112,14 +187,25 @@
   border-color: var(--primary);
 }
 
-/* Heritage Footer Card */
-.heritage-footer-card {
-  transition: var(--transition-cubic);
+.category-promo-section {
+  background: #fff;
+  border: 1px solid rgba(15, 61, 46, 0.08);
+  border-radius: 28px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
 }
 
-.heritage-footer-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 40px 80px rgba(26, 38, 26, 0.2);
+.category-promo-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--secondary);
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
 }
 
 /* Widescreen Grid Optimization */
@@ -135,5 +221,22 @@
   .col-xxl-3 {
     flex: 0 0 auto;
     width: 20%; /* 5 columns */
+  }
+}
+
+@media (max-width: 991px) {
+  .category-promo-section {
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+    padding: 1rem 0.75rem;
+    border-radius: 22px;
+  }
+
+  .category-promo-section h2 {
+    font-size: 1.3rem;
+  }
+
+  .category-promo-eyebrow {
+    font-size: 0.62rem;
   }
 }

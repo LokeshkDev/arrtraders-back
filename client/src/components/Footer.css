@@ -41,6 +41,21 @@
   color: var(--secondary);
 }
 
+.footer-links-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.footer-links-list li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
 .footer-nav-link {
   color: rgba(248, 241, 229, 0.6);
   text-decoration: none;
@@ -53,6 +68,13 @@
 .footer-nav-link:hover {
   color: var(--secondary);
   transform: translateX(10px);
+}
+
+.footer-category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.5rem;
+  row-gap: 0.75rem;
 }
 
 .social-links a {
@@ -74,51 +96,6 @@
   border-color: var(--secondary);
   transform: translateY(-8px);
   box-shadow: 0 10px 25px rgba(212, 175, 55, 0.3);
-}
-
-.newsletter-form {
-  position: relative;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 6px;
-  border-radius: 50px;
-  border: 1px solid rgba(212, 175, 55, 0.2);
-}
-
-.footer-email-input {
-  width: 100%;
-  padding: 15px 20px;
-  border-radius: 50px;
-  border: none;
-  background: transparent;
-  font-size: 14px;
-  color: var(--accent);
-  outline: none !important;
-  font-family: var(--font-body);
-}
-
-.footer-email-input::placeholder {
-  color: rgba(248, 241, 229, 0.4);
-}
-
-.footer-subscribe-btn {
-  background: var(--secondary);
-  color: var(--primary);
-  border: none;
-  padding: 14px 28px;
-  border-radius: 50px;
-  font-weight: 800;
-  font-family: var(--font-heading);
-  width: 100%;
-  margin-top: 5px;
-  transition: var(--transition-fast);
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  font-size: 12px;
-}
-
-.footer-subscribe-btn:hover {
-  background: #fff;
-  color: var(--primary);
 }
 
 .footer-bottom-bar {
@@ -163,5 +140,28 @@
   }
   .footer-bottom-bar {
     margin-top: 60px;
+  }
+
+  .footer-category-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 575px) {
+  .artisanal-footer {
+    padding-top: 56px;
+    padding-bottom: 95px;
+  }
+
+  .footer-section-heading {
+    margin-bottom: 18px;
+  }
+
+  .footer-links-list {
+    gap: 0.55rem;
+  }
+
+  .footer-nav-link {
+    font-size: 13px;
   }
 }

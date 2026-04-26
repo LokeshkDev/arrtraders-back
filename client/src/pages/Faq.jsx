@@ -1,38 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
 
 const Faq = () => {
   const [activeIndex, setActiveIndex] = useState(null);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const faqs = [
-    { 
-      q: "Where do your dates come from?", 
-      a: "We source our premium dates from the finest farms across the Middle East and Africa, ensuring authentic variety and high quality." 
-    },
-    { 
-      q: "Do you offer discounts for large orders?", 
-      a: "Yes, we provide special pricing for weddings, corporate gifts, and wholesale orders. Please contact us for a quote." 
-    },
-    { 
-      q: "How should I store the dates?", 
-      a: "Most dates stay fresh at room temperature for up to a month, but we recommend keeping them in the refrigerator in a closed container to last longer." 
-    },
-    { 
-      q: "Are your products organic?", 
-      a: "We work with traditional farmers who use natural methods without synthetic additives to give you the best products." 
-    },
-    {
-      q: "How long does delivery take?",
-      a: "Standard delivery usually takes 3-5 business days depending on your location. We also offer express shipping if you need it faster."
-    }
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/cms/pages/faq`);
+        setData(data);
+      } catch (error) {
+        console.error('Fetch error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const toggleAccordion = (index) => {
     setActiveIndex(activeIndex === index ? null : index);
   };
 
+  if (loading) return <div className="min-vh-100 d-flex align-items-center justify-content-center bg-surface"><div className="spinner-border text-primary"></div></div>;
+
+  const faqs = data?.content?.items || [];
+
   return (
     <main className="pt-5 mt-5 bg-surface" style={{ minHeight: '80vh' }}>
+      {data?.bannerImage && (
+        <section className="container-fluid px-0 position-relative overflow-hidden" style={{ height: '250px' }}>
+          <img src={data.bannerImage} className="w-100 h-100 object-fit-cover opacity-50" alt="FAQ" />
+          <div className="position-absolute top-50 start-50 translate-middle text-center w-100">
+             <h1 className="display-4 font-headline text-primary mb-0 fw-bold">FAQ</h1>
+          </div>
+        </section>
+      )}
+
       <section className="container-lg py-5 px-4" style={{ maxWidth: '800px' }}>
         <div className="text-center mb-5">
            <span className="font-label text-primary extra-small fw-bold uppercase tracking-widest mb-2 d-inline-block">Help Center</span>
