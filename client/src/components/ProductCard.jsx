@@ -186,6 +186,7 @@ const ProductCard = ({
                 aria-label="Add to cart"
               >
                 <ShoppingCart size={18} />
+                <span className="btn-add-label">Add to Cart</span>
               </button>
             )}
           </div>

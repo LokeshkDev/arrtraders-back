@@ -226,6 +226,10 @@
   cursor: pointer;
 }
 
+.btn-add-label {
+  display: none;
+}
+
 .btn-add-action:hover {
   background: var(--secondary);
   color: var(--primary);
@@ -315,8 +319,15 @@
   }
 
   .btn-add-action {
-    height: 40px;
-    border-radius: 8px;
+    width: 100%;
+    min-height: 42px;
+    height: 42px;
+    border-radius: 10px;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 12px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
   }
 
   .persistent-qty-pill {
@@ -341,7 +352,13 @@
   }
 
   .purchase-action {
-    width: 80%;
+    width: 100%;
+  }
+
+  .btn-add-label {
+    display: inline-block;
+    font-size: 0.78rem;
+    text-transform: uppercase;
   }
 }
 

@@ -343,6 +343,32 @@ const ProductDetails = () => {
                    ))}
                 </div>
 
+                <div className="pd-mobile-action-bar d-lg-none mt-4">
+                  <div className="pd-mobile-bar-inner">
+                    <div className="pd-mobile-qty-wrap">
+                      <div className="pd-qty-stepper d-flex align-items-center">
+                        <button onClick={() => setQty(Math.max(1, qty - 1))} className="stepper-btn"><Minus size={14} /></button>
+                        <span className="stepper-val">{qty}</span>
+                        <button onClick={() => setQty(qty + 1)} className="stepper-btn"><Plus size={14} /></button>
+                      </div>
+                      <div className="price-stack mt-1">
+                        <span className="price-small">₹{formattedPrice(currentPrice)}</span>
+                      </div>
+                    </div>
+                    <div className="flex-grow-1">
+                      <button
+                        className="btn-add-luxury-mobile w-100"
+                        onClick={handleAddToCart}
+                        disabled={!serviceable || locationLoading}
+                      >
+                        {!serviceable ? 'UNSERVICEABLE' : (
+                          <><ShoppingCart size={18} /> ADD TO CART</>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="pd-info-tabs mt-4 mt-lg-5">
                    <div className="d-flex border-bottom gap-4 mb-4">
                       {['description', 'shipping'].map(tab => (
@@ -451,7 +477,7 @@ const ProductDetails = () => {
       </div>
 
       {/* Mobile-only Sticky Action Bar */}
-      <div className="pd-mobile-action-bar d-lg-none">
+      <div className="pd-mobile-action-bar d-none">
         <div className="pd-mobile-bar-inner">
            <div className="pd-mobile-qty-wrap">
               <div className="pd-qty-stepper d-flex align-items-center">
