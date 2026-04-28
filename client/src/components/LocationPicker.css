@@ -71,7 +71,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 2000;
+    z-index: 5000;
+    overflow: hidden;
+    overscroll-behavior: contain;
 }
 
 .location-modal-content {
@@ -81,6 +83,9 @@
     border-radius: 16px;
     overflow: hidden;
     animation: modalSlideUp 0.3s ease-out;
+    max-height: min(88vh, 680px);
+    display: flex;
+    flex-direction: column;
 }
 
 @keyframes modalSlideUp {
@@ -118,6 +123,8 @@
 
 .modal-body-premium {
     padding: 24px 20px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .modal-description {
@@ -258,7 +265,7 @@
 .service-popup-overlay {
     position: fixed;
     inset: 0;
-    z-index: 2500;
+    z-index: 5100;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -346,4 +353,34 @@
         font-size: 11px;
         max-width: 60px;
     }
+
+    .location-modal-overlay {
+        align-items: flex-end;
+        justify-content: stretch;
+        padding: 0;
+    }
+
+    .location-modal-content {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 16px 16px 0 0;
+        max-height: 86dvh;
+        min-height: 52dvh;
+        animation: modalSheetUp 0.24s ease-out;
+    }
+
+    .modal-header-premium {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
+    .modal-body-premium {
+        padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    }
+}
+
+@keyframes modalSheetUp {
+    from { transform: translateY(20px); opacity: 0.9; }
+    to { transform: translateY(0); opacity: 1; }
 }

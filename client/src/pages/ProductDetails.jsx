@@ -167,6 +167,15 @@ const ProductDetails = () => {
     }
   };
 
+  const handleAddToCart = () => {
+    const productToCart = {
+      ...product,
+      weight: selectedWeight,
+      price: currentPrice
+    };
+    addToCart(productToCart, qty);
+  };
+
   return (
     <main className="product-details-page bg-white animate-fade-in">
       {/* Mobile-only Floating Header */}

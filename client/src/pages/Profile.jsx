@@ -20,7 +20,8 @@ import {
     X,
     Phone,
     Home,
-    Briefcase
+    Briefcase,
+    Heart
 } from 'lucide-react';
 import axios from 'axios';
 import './Profile.css';
@@ -141,22 +142,27 @@ const Profile = () => {
 
     return (
         <div className="profile-page-app bg-surface min-vh-100">
-            <div className="container-lg py-5 mt-5">
-                <header className="profile-header-premium mb-5 d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-4 border-bottom pb-4">
+            <div className="container-lg mt-5 mobile-profile">
+                <header className="profile-header-premium mb-2 d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-4 border-bottom pb-4">
                     <div>
                         <span className="font-label text-secondary small uppercase tracking-widest fw-bold mb-2 d-inline-block">Your Account</span>
                         <h1 className="font-headline text-primary m-0 display-4">Profile Details</h1>
+                        <div className="d-flex flex-wrap align-items-center gap-2 mt-3">
+                            <Link to="/wishlist" className="btn btn-outline-secondary rounded-pill px-4 py-2 font-label fw-bold small d-inline-flex align-items-center gap-2">
+                                <Heart size={16} /> WISHLIST
+                            </Link>
+                            <button onClick={handleLogout} className="btn btn-outline-danger rounded-pill px-4 py-2 font-label fw-bold small d-inline-flex align-items-center gap-2">
+                                <LogOut size={16} /> LOGOUT
+                            </button>
+                        </div>
                     </div>
-                    <button onClick={handleLogout} className="btn btn-outline-danger rounded-pill px-4 py-2 font-label fw-bold small d-none d-md-flex align-items-center gap-2 art-logout-btn">
-                        <LogOut size={16} /> LOGOUT
-                    </button>
                 </header>
 
                 <div className="row g-5">
                     {/* Lateral Navigation */}
                     <aside className="col-lg-3">
                         <div className="prof-side-anchor bg-white border rounded-5 overflow-hidden shadow-sm position-sticky" style={{ top: '120px' }}>
-                            <div className="prof-card-hero p-5 text-center border-bottom bg-light bg-opacity-50">
+                            <div className="prof-card-hero text-center border-bottom bg-light bg-opacity-50">
                                 <div className="avatar-monogram mx-auto mb-4 position-relative">
                                     <div className="monogram-circle bg-primary text-white font-headline fs-2 d-flex align-items-center justify-content-center shadow-lg">
                                         {user?.name?.charAt(0)}
@@ -199,7 +205,7 @@ const Profile = () => {
                     <main className="col-lg-9">
                         {activeTab === 'orders' && (
                             <div className="animated fadeIn">
-                                <h2 className="font-headline text-primary mb-5 d-flex align-items-center gap-3">
+                                <h2 className="font-headline text-primary mb-2 d-flex align-items-center gap-3">
                                     <span className="title-slash">/</span> My Orders
                                 </h2>
                                 {orders.length === 0 ? (

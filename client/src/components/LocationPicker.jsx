@@ -10,6 +10,22 @@ const LocationPicker = () => {
     const [error, setError] = useState('');
     const [servicePopup, setServicePopup] = useState(null);
 
+    useEffect(() => {
+        const prevBody = document.body.style.overflow;
+        const prevHtml = document.documentElement.style.overflow;
+        if (showModal || servicePopup) {
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = prevBody || '';
+            document.documentElement.style.overflow = prevHtml || '';
+        }
+        return () => {
+            document.body.style.overflow = prevBody || '';
+            document.documentElement.style.overflow = prevHtml || '';
+        };
+    }, [showModal, servicePopup]);
+
     const showServiceUnavailablePopup = (message) => {
         setServicePopup(message || 'Service is not available at this time. Please try another pincode.');
     };

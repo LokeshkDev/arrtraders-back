@@ -13,6 +13,48 @@
   padding-bottom: env(safe-area-inset-bottom, 12px); /* Improved iPhone notch support */
 }
 
+.bottom-nav-support-sheet {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: calc(65px + env(safe-area-inset-bottom, 12px) + 6px);
+  display: flex;
+  gap: 10px;
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: all 0.25s ease;
+}
+
+.bottom-nav-support-sheet.open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.bottom-support-action {
+  flex: 1;
+  min-height: 44px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 12px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+}
+
+.bottom-support-action.whatsapp {
+  background: #25D366;
+}
+
+.bottom-support-action.call {
+  background: var(--primary);
+}
+
 .bottom-nav-container {
   display: flex;
   justify-content: space-around;
@@ -31,6 +73,8 @@
   height: 100%;
   transition: var(--transition-fast);
   position: relative;
+  background: transparent;
+  border: none;
 }
 
 .nav-icon {
@@ -117,4 +161,9 @@
   justify-content: center;
   border: 2px solid #fff;
   padding: 0 2px;
+}
+
+.bottom-nav-support-btn {
+  cursor: pointer;
+  color: var(--text-muted);
 }
