@@ -102,7 +102,7 @@ const Categories = () => {
       {/* Top Margin specific to mobile so it doesn't collide with the header */}
       <div className="pt-4 pt-lg-5"></div>
 
-      <div className="container-lg px-2 px-md-3">
+      <div className="container-lg px-2 px-md-3 pb-5">
         <div className="row g-2 g-md-5">
 
           {/* SIDEBAR - Desktop Only */}
@@ -299,7 +299,7 @@ const Categories = () => {
               </div>
             )}
 
-            {promoProducts.items.length > 0 && (
+            {/* {promoProducts.items.length > 0 && (
               <section className="category-promo-section mt-5">
                 <div className="d-flex justify-content-between align-items-end gap-3 mb-4 flex-wrap">
                   <div>
@@ -320,7 +320,7 @@ const Categories = () => {
                   ))}
                 </div>
               </section>
-            )}
+            )} */}
           </div>
         </div>
         <div className="pb-5 mb-5 d-lg-none"></div> {/* Spacer for mobile bottom nav */}

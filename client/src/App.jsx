@@ -22,6 +22,7 @@ import ProductCollectionPage from './pages/ProductCollectionPage';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { ShopProvider } from './context/ShopContext';
+import { LocationProvider } from './context/LocationContext';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
 import 'swiper/css/pagination';
@@ -85,39 +86,41 @@ const Layout = ({ children }) => {
 
 function App() {
   return (
-    <ShopProvider>
-      <CartProvider>
-        <WishlistProvider>
-          <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-            <Layout>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/categories" element={<Categories />} />
-              <Route path="/category/:id" element={<Categories />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/featured" element={<ProductCollectionPage type="featured" />} />
-              <Route path="/best-sellers" element={<ProductCollectionPage type="bestSeller" />} />
-              <Route path="/wishlist" element={<Wishlist />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/product/:id" element={<ProductRedirect />} />
-              <Route path="/:categorySlug/:productSlug" element={<ProductDetails />} />
-              <Route path="/shipping" element={<Shipping />} />
-              <Route path="/returns" element={<Returns />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/faq" element={<Faq />} />
-              <Route path="/order-success/:id" element={<OrderSuccess />} />
-              <Route path="/order-failure" element={<OrderFailure />} />
-            </Routes>
-          </Layout>
-        </Router>
-      </WishlistProvider>
-    </CartProvider>
-    </ShopProvider>
+    <LocationProvider>
+      <ShopProvider>
+        <CartProvider>
+          <WishlistProvider>
+            <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/categories" element={<Categories />} />
+                  <Route path="/category/:id" element={<Categories />} />
+                  <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/featured" element={<ProductCollectionPage type="featured" />} />
+                  <Route path="/best-sellers" element={<ProductCollectionPage type="bestSeller" />} />
+                  <Route path="/wishlist" element={<Wishlist />} />
+                  <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/product/:id" element={<ProductRedirect />} />
+                  <Route path="/:categorySlug/:productSlug" element={<ProductDetails />} />
+                  <Route path="/shipping" element={<Shipping />} />
+                  <Route path="/returns" element={<Returns />} />
+                  <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/faq" element={<Faq />} />
+                  <Route path="/order-success/:id" element={<OrderSuccess />} />
+                  <Route path="/order-failure" element={<OrderFailure />} />
+                </Routes>
+              </Layout>
+            </Router>
+          </WishlistProvider>
+        </CartProvider>
+      </ShopProvider>
+    </LocationProvider>
   );
 }
 

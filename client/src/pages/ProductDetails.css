@@ -232,10 +232,162 @@
   margin-top: 8px;
 }
 
-/* Responsive */
+/* Responsive & Mobile App Overrides */
 @media (max-width: 991px) {
-  .main-preview-stage {
-    height: 400px;
-    padding: 30px;
+  .product-details-page {
+    padding-top: 0; /* No offset needed for floating header */
+    background: #f8f9fa;
   }
+
+  .pd-mobile-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    pointer-events: none; /* Let clicks pass through to Swiper if not on buttons */
+  }
+
+  .mobile-nav-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    color: var(--primary);
+    pointer-events: auto;
+    backdrop-filter: blur(5px);
+  }
+
+  .mobile-nav-btn.active {
+    color: #e74c3c;
+  }
+
+  .mobile-app-gallery {
+    margin-top: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .mobile-img-container {
+    height: 450px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+  }
+
+  .mobile-app-card {
+    background: white;
+    border-radius: 30px 30px 0 0;
+    padding: 30px 20px;
+    margin-top: -35px; /* Overlap image */
+    position: relative;
+    z-index: 2;
+    box-shadow: 0 -15px 35px rgba(0,0,0,0.05);
+  }
+
+  .price-premium {
+    font-size: 2rem;
+  }
+
+  .pd-weight-pill {
+    padding: 8px 20px;
+    font-size: 0.8rem;
+  }
+
+  /* Bottom Action Bar */
+  .pd-mobile-action-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px);
+    border-top: 1px solid rgba(0,0,0,0.05);
+    padding: 12px 20px;
+    z-index: 1001;
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.1);
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  .pd-mobile-bar-inner {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .pd-mobile-qty-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .pd-mobile-qty-wrap .pd-qty-stepper {
+    width: 110px;
+    height: 40px;
+    padding: 3px;
+  }
+
+  .pd-mobile-qty-wrap .stepper-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .pd-mobile-qty-wrap .stepper-val {
+    font-size: 0.9rem;
+  }
+
+  .price-small {
+    font-weight: 800;
+    color: var(--primary);
+    font-size: 0.85rem;
+  }
+
+  .btn-add-luxury-mobile {
+    background: var(--primary);
+    color: var(--secondary);
+    border: none;
+    height: 54px;
+    border-radius: 15px;
+    font-weight: 800;
+    font-family: var(--font-heading);
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 0.9rem;
+  }
+
+  .btn-add-luxury-mobile:disabled {
+    background: #e9ecef;
+    color: #adb5bd;
+  }
+}
+
+.usp-icon {
+  transition: transform 0.3s ease;
+}
+
+.usp-item:hover .usp-icon {
+  transform: translateY(-5px);
+}
+
+.anim-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }

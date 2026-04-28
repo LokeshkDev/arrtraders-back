@@ -20,11 +20,13 @@ import {
   ArrowLeft,
   ArrowRight,
   Info,
+  AlertCircle,
   Package,
   Leaf
 } from 'lucide-react';
 import { CartContext } from '../context/CartContext';
 import { WishlistContext } from '../context/WishlistContext';
+import { useLocation } from '../context/LocationContext';
 import ProductCard from '../components/ProductCard';
 import './ProductDetails.css';
 
@@ -33,6 +35,7 @@ const ProductDetails = () => {
   const navigate = useNavigate();
   const { addToCart, removeFromCart, updateQty, cart } = useContext(CartContext);
   const { toggleWishlist, isInWishlist } = useContext(WishlistContext);
+  const { location, serviceable, loading: locationLoading } = useLocation();
   
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -150,16 +153,39 @@ const ProductDetails = () => {
 
   const inWishlist = isInWishlist(product._id);
 
-  const handleAddToCart = () => {
-    addToCart({ ...product, price: currentPrice, weight: selectedWeight }, qty);
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: product.name,
+        text: product.subtitle,
+        url: window.location.href,
+      }).catch((error) => console.log('Error sharing', error));
+    } else {
+      // Fallback: Copy to clipboard
+      navigator.clipboard.writeText(window.location.href);
+      // We could use a toast here if we had one in this page's context
+    }
   };
-
-
 
   return (
     <main className="product-details-page bg-white animate-fade-in">
-      <div className="container-lg py-4">
-        <nav aria-label="breadcrumb" className="mb-4">
+      {/* Mobile-only Floating Header */}
+      <div className="pd-mobile-header d-lg-none">
+        <button onClick={() => navigate(-1)} className="mobile-nav-btn">
+          <ArrowLeft size={20} />
+        </button>
+        <div className="d-flex gap-2">
+          <button className="mobile-nav-btn" onClick={handleShare}>
+            <Share2 size={20} />
+          </button>
+          <button className={`mobile-nav-btn ${inWishlist ? 'active' : ''}`} onClick={() => toggleWishlist(product)}>
+            <Heart size={20} fill={inWishlist ? "currentColor" : "none"} />
+          </button>
+        </div>
+      </div>
+
+      <div className="container-lg py-4 px-0 px-lg-3">
+        <nav aria-label="breadcrumb" className="mb-4 d-none d-lg-block">
           <ol className="breadcrumb">
             <li className="breadcrumb-item"><Link to="/" className="text-muted">Home</Link></li>
             <li className="breadcrumb-item"><Link to="/categories" className="text-muted">Collections</Link></li>
@@ -167,8 +193,8 @@ const ProductDetails = () => {
           </ol>
         </nav>
 
-        <div className="row g-lg-5">
-          <div className="col-lg-7">
+        <div className="row g-lg-5 m-0">
+          <div className="col-lg-7 px-0">
             <div className="sticky-gallery-wrapper">
                 <div className="d-none d-lg-block">
                     <div className="amazon-gallery-wrapper d-flex gap-3">
@@ -199,15 +225,17 @@ const ProductDetails = () => {
                     </div>
                 </div>
 
-                <div className="d-lg-none mb-4 pb-4 position-relative">
+                <div className="d-lg-none mobile-app-gallery">
                    <Swiper
                      modules={[Pagination]}
                      pagination={{ clickable: true }}
-                     className="rounded-4 overflow-hidden shadow-sm bg-light"
+                     className="bg-light"
                    >
                      {productImages.map((img, idx) => (
                        <SwiperSlide key={idx}>
-                         <img src={img} alt={product.name} className="w-100 object-fit-contain" style={{ height: '350px' }} />
+                         <div className="mobile-img-container">
+                            <img src={img} alt={product.name} className="w-100 h-100 object-fit-contain" />
+                         </div>
                        </SwiperSlide>
                      ))}
                    </Swiper>
@@ -215,8 +243,8 @@ const ProductDetails = () => {
             </div>
           </div>
 
-          <div className="col-lg-5">
-            <div className="pd-main-info mt-4 mt-lg-0">
+          <div className="col-lg-5 px-3 px-lg-0">
+            <div className="pd-main-info mt-n4 mt-lg-0 mobile-app-card">
                <div className="d-flex align-items-center gap-2 mb-3">
                    <span className="badge-luxury-reserve">ESTATE RESERVE</span>
                    <div className="d-flex align-items-center gap-1 ms-2">
@@ -228,19 +256,19 @@ const ProductDetails = () => {
                 <h1 className="display-5 font-headline mb-2 text-primary">{product.name}</h1>
                 <p className="fs-5 text-muted opacity-80 mb-4">{product.subtitle}</p>
 
-                <div className="d-flex align-items-baseline flex-wrap gap-2 gap-md-3 mb-5">
+                <div className="d-flex align-items-baseline flex-wrap gap-2 gap-md-3 mb-4 mb-lg-5">
                    <span className="price-premium">₹{formattedPrice(currentPrice)}</span>
                    {hasDiscount && (
-                      <div className="d-flex align-items-center gap-2 mt-2 mt-md-0">
+                      <div className="d-flex align-items-center gap-2">
                         <span className="fs-4 text-muted text-decoration-line-through opacity-50">₹{formattedPrice(currentOriginalPrice)}</span>
                         <span className="badge-discount px-3 py-2 ms-1">SAVE {discountPercent}%</span>
                       </div>
                    )}
                 </div>
 
-                <div className="mb-5">
+                <div className="mb-4 mb-lg-5">
                    <h6 className="fw-bold tracking-widest text-muted extra-small uppercase mb-3 font-heading">CHOOSE WEIGHT</h6>
-                   <div className="d-flex gap-3">
+                   <div className="d-flex flex-wrap gap-2 gap-md-3">
                       {weights.map(w => (
                         <button 
                           key={w}
@@ -253,7 +281,7 @@ const ProductDetails = () => {
                    </div>
                 </div>
 
-                <div className="d-flex flex-wrap align-items-center gap-2 gap-md-3 mb-5 pb-2">
+                <div className="d-none d-lg-flex flex-wrap align-items-center gap-2 gap-md-3 mb-5 pb-2">
                    <div className="pd-qty-stepper d-flex align-items-center">
                       <button onClick={() => setQty(Math.max(1, qty - 1))} className="stepper-btn"><Minus size={16} /></button>
                       <span className="stepper-val">{qty}</span>
@@ -265,15 +293,31 @@ const ProductDetails = () => {
                            <span className="fw-bold">{qtyInCart} in cart</span>
                        </div>
                    )}
-                   <button className="btn-add-luxury flex-grow-1" onClick={handleAddToCart}>
-                      <ShoppingCart size={20} /> <span className="d-none d-sm-inline">ADD TO BASKET</span><span className="d-sm-none">ADD</span>
-                   </button>
+                   <div className="flex-grow-1">
+                       {!location && (
+                           <p className="text-warning small mb-2 d-flex align-items-center gap-1">
+                               <Info size={14} /> Please select delivery location
+                           </p>
+                       )}
+                       {location && !serviceable && (
+                           <p className="text-danger small mb-2 d-flex align-items-center gap-1">
+                               <AlertCircle size={14} /> Not serviceable at {location.pincode}
+                           </p>
+                       )}
+                       <button 
+                         className="btn-add-luxury w-100" 
+                         onClick={handleAddToCart}
+                         disabled={!serviceable || locationLoading}
+                       >
+                          <ShoppingCart size={20} /> <span className="d-none d-sm-inline">{!serviceable ? 'UNSERVICEABLE' : 'ADD TO BASKET'}</span><span className="d-sm-none">{!serviceable ? 'N/A' : 'ADD'}</span>
+                       </button>
+                   </div>
                    <button className={`pd-wish-btn ${inWishlist ? 'active' : ''}`} onClick={() => toggleWishlist(product)}>
                      <Heart size={22} fill={inWishlist ? "currentColor" : "none"} />
                    </button>
                 </div>
 
-                <div className="usp-grid row g-4 mb-5">
+                <div className="usp-grid row g-4 mb-4 mb-lg-5">
                    {[
                      { icon: BadgeCheck, title: "Source Verified", sub: "Authentic Selection" },
                      { icon: Leaf, title: "100% Quality", sub: "No Added Preservatives" },
@@ -281,17 +325,16 @@ const ProductDetails = () => {
                    ].map((usp, i) => (
                      <div key={i} className="col-md-4 col-4">
                           <div className="usp-item text-center">
-                              <div className="usp-icon mx-auto mb-2 text-primary bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '45px', height: '45px' }}>
-                                  <usp.icon size={20} className="text-secondary" />
+                              <div className="usp-icon mx-auto mb-2 text-primary bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                                  <usp.icon size={18} className="text-secondary" />
                               </div>
-                              <h6 className="extra-small fw-bold mb-0 font-heading">{usp.title}</h6>
-                              <span className="fs-10 text-muted">{usp.sub}</span>
+                              <h6 className="extra-small fw-bold mb-0 font-heading" style={{ fontSize: '10px' }}>{usp.title}</h6>
                           </div>
                      </div>
                    ))}
                 </div>
 
-                <div className="pd-info-tabs mt-5">
+                <div className="pd-info-tabs mt-4 mt-lg-5">
                    <div className="d-flex border-bottom gap-4 mb-4">
                       {['description', 'shipping'].map(tab => (
                          <button 
@@ -325,7 +368,7 @@ const ProductDetails = () => {
                             {shippingInfo ? (
                                <>
                                  <p className="text-muted fs-7 lh-lg mb-4">{shippingInfo.content}</p>
-                                 <div className="row g-3 mb-4">
+                                 <div className="row g-2 mb-4">
                                    <div className="col-6">
                                      <div className="bg-light p-3 rounded-4 text-center border">
                                        <Truck size={20} className="text-secondary mb-2" />
@@ -337,7 +380,7 @@ const ProductDetails = () => {
                                      <div className="bg-light p-3 rounded-4 text-center border">
                                        <Package size={20} className="text-secondary mb-2" />
                                        <span className="d-block extra-small text-muted uppercase fw-bold mb-1 font-heading">Free Shipping</span>
-                                       <span className="d-block fs-7 fw-bold text-primary">Orders above {shippingInfo.freeShippingMin}</span>
+                                       <span className="d-block fs-7 fw-bold text-primary">Above {shippingInfo.freeShippingMin}</span>
                                      </div>
                                    </div>
                                  </div>
@@ -360,8 +403,8 @@ const ProductDetails = () => {
         </div>
 
         {featuredProducts.length > 0 && (
-        <section className="mt-5 pt-5 border-top">
-            <div className="d-flex justify-content-between align-items-end mb-4 mb-lg-5">
+        <section className="mt-5 pt-5 border-top mb-5 pb-5">
+            <div className="d-flex justify-content-between align-items-end mb-4 px-3 px-lg-0">
                 <div>
                    <h4 className="text-secondary fw-bold mb-2 font-body uppercase extra-small" style={{ letterSpacing: '2px' }}>Handpicked For You</h4>
                    <h2 className="display-6 font-headline mb-0 text-primary">Featured Today</h2>
@@ -379,10 +422,10 @@ const ProductDetails = () => {
                 ))}
             </div>
 
-            <div className="d-lg-none product-swiper-wrap pb-4">
+            <div className="d-lg-none product-swiper-wrap pb-5 px-3">
                 <Swiper
                     modules={[Pagination]}
-                    slidesPerView={1.4}
+                    slidesPerView={1.3}
                     spaceBetween={15}
                     pagination={{ clickable: true, dynamicBullets: true }}
                     breakpoints={{ 576: { slidesPerView: 2.2 } }}
@@ -396,6 +439,33 @@ const ProductDetails = () => {
             </div>
         </section>
         )}
+      </div>
+
+      {/* Mobile-only Sticky Action Bar */}
+      <div className="pd-mobile-action-bar d-lg-none">
+        <div className="pd-mobile-bar-inner">
+           <div className="pd-mobile-qty-wrap">
+              <div className="pd-qty-stepper d-flex align-items-center">
+                 <button onClick={() => setQty(Math.max(1, qty - 1))} className="stepper-btn"><Minus size={14} /></button>
+                 <span className="stepper-val">{qty}</span>
+                 <button onClick={() => setQty(qty + 1)} className="stepper-btn"><Plus size={14} /></button>
+              </div>
+              <div className="price-stack mt-1">
+                 <span className="price-small">₹{formattedPrice(currentPrice)}</span>
+              </div>
+           </div>
+           <div className="flex-grow-1">
+              <button 
+                className="btn-add-luxury-mobile w-100" 
+                onClick={handleAddToCart}
+                disabled={!serviceable || locationLoading}
+              >
+                {!serviceable ? 'UNSERVICEABLE' : (
+                  <><ShoppingCart size={18} /> ADD TO CART</>
+                )}
+              </button>
+           </div>
+        </div>
       </div>
     </main>
   );

@@ -46,6 +46,11 @@ const Coupon = sequelize.define('Coupon', {
         type: DataTypes.DATE,
         allowNull: true
     },
+    freeShipping: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false
+    },
     isActive: {
         type: DataTypes.BOOLEAN,
         allowNull: false,

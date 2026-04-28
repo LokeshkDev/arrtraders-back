@@ -1,5 +1,5 @@
 import Coupon from '../models/sql/Coupon.js';
-import { Op } from 'sequelize';
+import { DataTypes, Op } from 'sequelize';
 
 // Helper to generate Mongo-style ID
 const generateMongoId = () => {
@@ -19,10 +19,24 @@ const formatResponse = (data) => {
     return { ...json, _id: json.id };
 };
 
+const ensureCouponSchema = async () => {
+    const queryInterface = Coupon.sequelize.getQueryInterface();
+    const table = await queryInterface.describeTable(Coupon.getTableName());
+
+    if (!table.freeShipping) {
+        await queryInterface.addColumn(Coupon.getTableName(), 'freeShipping', {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
+        });
+    }
+};
+
 // @desc    Get all coupons (admin)
 // @route   GET /api/coupons
 export const getCoupons = async (req, res) => {
     try {
+        await ensureCouponSchema();
         const coupons = await Coupon.findAll({ order: [['createdAt', 'DESC']] });
         res.json(formatResponse(coupons));
     } catch (error) {
@@ -34,10 +48,11 @@ export const getCoupons = async (req, res) => {
 // @route   POST /api/coupons
 export const createCoupon = async (req, res) => {
     try {
-        const { code, discountType, discountValue, minOrderAmount, maxDiscount, usageLimit, expiresAt, isActive } = req.body;
+        await ensureCouponSchema();
+        const { code, discountType, discountValue, minOrderAmount, maxDiscount, usageLimit, expiresAt, isActive, freeShipping } = req.body;
 
-        if (!code || !discountValue) {
-            return res.status(400).json({ message: 'Code and discount value are required' });
+        if (!code || (!freeShipping && !discountValue)) {
+            return res.status(400).json({ message: 'Code and discount value are required unless free shipping is enabled' });
         }
 
         // Check for duplicate code
@@ -55,6 +70,7 @@ export const createCoupon = async (req, res) => {
             maxDiscount: maxDiscount || null,
             usageLimit: usageLimit || 0,
             expiresAt: expiresAt || null,
+            freeShipping: !!freeShipping,
             isActive: isActive !== undefined ? isActive : true
         });
 
@@ -68,12 +84,13 @@ export const createCoupon = async (req, res) => {
 // @route   PUT /api/coupons/:id
 export const updateCoupon = async (req, res) => {
     try {
+        await ensureCouponSchema();
         const coupon = await Coupon.findByPk(req.params.id);
         if (!coupon) {
             return res.status(404).json({ message: 'Coupon not found' });
         }
 
-        const { code, discountType, discountValue, minOrderAmount, maxDiscount, usageLimit, expiresAt, isActive } = req.body;
+        const { code, discountType, discountValue, minOrderAmount, maxDiscount, usageLimit, expiresAt, isActive, freeShipping } = req.body;
 
         // If code is changing, check for duplicates
         if (code && code.toUpperCase() !== coupon.code) {
@@ -90,6 +107,7 @@ export const updateCoupon = async (req, res) => {
         if (maxDiscount !== undefined) coupon.maxDiscount = maxDiscount;
         if (usageLimit !== undefined) coupon.usageLimit = usageLimit;
         if (expiresAt !== undefined) coupon.expiresAt = expiresAt;
+        if (freeShipping !== undefined) coupon.freeShipping = !!freeShipping;
         if (isActive !== undefined) coupon.isActive = isActive;
 
         const updated = await coupon.save();
@@ -118,6 +136,7 @@ export const deleteCoupon = async (req, res) => {
 // @route   POST /api/coupons/validate
 export const validateCoupon = async (req, res) => {
     try {
+        await ensureCouponSchema();
         const { code, cartTotal } = req.body;
 
         if (!code) {
@@ -167,6 +186,7 @@ export const validateCoupon = async (req, res) => {
             discountType: coupon.discountType,
             discountValue: coupon.discountValue,
             discount,
+            freeShipping: coupon.freeShipping,
             message: `Coupon applied! You save ₹${discount}`
         });
     } catch (error) {

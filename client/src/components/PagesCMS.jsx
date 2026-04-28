@@ -7,7 +7,7 @@ import {
     Shield, RefreshCw, Truck
 } from 'lucide-react';
 
-const PagesCMS = () => {
+const PagesCMS = ({ showToast, setConfirmModal }) => {
     const [selectedSlug, setSelectedSlug] = useState('about');
     const [pageData, setPageData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -85,9 +85,9 @@ const PagesCMS = () => {
         try {
             setSaving(true);
             await axios.put(`${import.meta.env.VITE_API_URL}/api/cms/pages/${selectedSlug}`, pageData);
-            alert('Page updated successfully!');
+            showToast('Page updated successfully!');
         } catch (error) {
-            alert('Failed to save page: ' + (error.response?.data?.message || error.message));
+            showToast('Failed to save page: ' + (error.response?.data?.message || error.message), 'error');
         } finally {
             setSaving(false);
         }

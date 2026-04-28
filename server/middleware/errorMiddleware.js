@@ -7,6 +7,8 @@ export const notFound = (req, res, next) => {
 export const errorHandler = (err, req, res, next) => {
     let statusCode = res.statusCode === 200 ? 500 : res.statusCode;
     let message = err.message;
+    
+    console.error(`[API Error] ${req.method} ${req.url}:`, err);
 
     // In production, return generic message for 500 errors to avoid information leakage
     if (process.env.NODE_ENV === 'production' && statusCode === 500) {

@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { Search, Menu, X, Heart, ShoppingBag, User, LayoutGrid, ChevronDown } from 'lucide-react';
+import { Search, Menu, X, Heart, ShoppingBag, User, LayoutGrid, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CartContext } from '../context/CartContext';
 import SideCategoryMenu from './SideCategoryMenu';
+import LocationPicker from './LocationPicker';
 import './Header.css';
+import './LocationPicker.css';
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -16,7 +18,6 @@ const Header = () => {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [shippingThreshold, setShippingThreshold] = useState(1999);
   const [promos, setPromos] = useState([]);
-  const [currentPromoIdx, setCurrentPromoIdx] = useState(0);
 
   const location = useLocation();
   const cartContext = useContext(CartContext);
@@ -42,17 +43,6 @@ const Header = () => {
     window.addEventListener('storage', fetchUserInfo);
     return () => window.removeEventListener('storage', fetchUserInfo);
   }, []);
-
-  useEffect(() => {
-    if (promos.length > 1) {
-      const timer = setInterval(() => {
-        setCurrentPromoIdx((prev) => (prev + 1) % promos.length);
-      }, 5000);
-      return () => clearInterval(timer);
-    }
-  }, [promos]);
-
-  const activePromo = promos.length > 0 ? promos[currentPromoIdx] : null;
 
   const handleLogout = () => {
     localStorage.removeItem('userInfo');
@@ -119,22 +109,25 @@ const Header = () => {
   return (
     <div className={`header-wrapper ${scrolled ? 'header-sticky' : ''}`}>
       {/* Layer 1: Top Utility Bar */}
-      <div className="top-utility-bar d-none d-lg-block">
-        <div className="container-lg d-flex justify-content-between align-items-center py-2">
-          <div className="utility-promo">
-            {/* <span className="promo-badge">PROMO</span> */}
-            <span className="promo-text transition-all">
-              {activePromo ? (
-                <>
-                  {activePromo.title}
-                  {activePromo.code && <strong className="ms-2 promo-badge" style={{ color: 'var(--primary)', borderLeft: '1px solid rgba(212,175,55,0.3)', paddingLeft: '10px' }}>CODE: {activePromo.code}</strong>}
-                </>
-              ) : (
-                `Free shipping on all orders over ₹${shippingThreshold.toLocaleString()}`
-              )}
-            </span>
+      <div className="top-utility-bar">
+        <div className="container-lg d-flex justify-content-between align-items-center py-0" style={{ minHeight: '40px' }}>
+          <div className="promo-marquee-container flex-grow-1 overflow-hidden">
+            <div className="promo-marquee-content">
+              {(promos.length > 0 ? [...promos, ...promos, ...promos] : [{ title: `Free shipping on all orders over ₹${shippingThreshold.toLocaleString()}` }]).map((promo, idx) => (
+                <div className="promo-item" key={idx}>
+                  <span className="me-2">{promo.title}</span>
+                  {promo.code && (
+                    <strong className="promo-badge">
+                      CODE: {promo.code}
+                    </strong>
+                  )}
+                  <span className="promo-separator">|</span>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="utility-links d-flex gap-4">
+          
+          <div className="utility-links d-none d-lg-flex gap-4 ms-4" style={{ whiteSpace: 'nowrap' }}>
             <Link to="/about" className="utility-link">Our Story</Link>
             <Link to="/faq" className="utility-link">Help Center</Link>
             <Link to="/contact" className="utility-link">Contact Us</Link>
@@ -147,7 +140,7 @@ const Header = () => {
         <div className="container-lg">
           <div className="row align-items-center">
             {/* Logo Section */}
-            <div className="col-lg-3 col-9 d-flex align-items-center gap-3">
+            <div className="col-lg-2 col-9 d-flex align-items-center gap-3">
               <button
                 className="category-sidebar-trigger border-0 bg-transparent p-0 d-flex align-items-center justify-content-center"
                 onClick={() => setCategoryMenuOpen(true)}
@@ -160,14 +153,19 @@ const Header = () => {
               </Link>
             </div>
 
+            {/* Location Picker (Desktop) */}
+            <div className="col-lg-2 d-none d-lg-block">
+              <LocationPicker />
+            </div>
+
             {/* Centered Search Bar (Desktop) */}
-            <div className="col-lg-5 d-none d-lg-block">
+            <div className="col-lg-4 d-none d-lg-block">
               <div className="trendy-search-container">
                 <div className="search-bar-inner">
                   <Search size={18} className="search-icon" />
                   <input
                     type="text"
-                    placeholder="Search for pure organic products..."
+                    placeholder="Search..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -197,13 +195,14 @@ const Header = () => {
                 </div>
 
                 {/* Mobile: Search Icon + Hamburger */}
-                <div className="d-lg-none d-flex align-items-center gap-3">
+                <div className="d-lg-none d-flex align-items-center gap-2">
+                  <LocationPicker />
                   <button
                     className="mobile-search-toggle border-0 bg-transparent p-0"
                     onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
                     aria-label="Toggle search"
                   >
-                    <Search size={22} className="text-secondary" />
+                    <Search size={20} className="text-secondary" />
                   </button>
                   <button
                     className="mobile-hamburger-btn border-0 bg-transparent"

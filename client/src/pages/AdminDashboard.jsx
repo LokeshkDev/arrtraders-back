@@ -57,12 +57,20 @@ import {
 } from 'lucide-react';
 import './AdminDashboard.css';
 import PagesCMS from '../components/PagesCMS.jsx';
+import DeliveryZoneTab from '../components/DeliveryZoneTab.jsx';
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('Overview');
     const [userInfo, setUserInfo] = useState(JSON.parse(localStorage.getItem('userInfo')));
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(localStorage.getItem('adminSidebarCollapsed') === 'true');
+    const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+    const [confirmModal, setConfirmModal] = useState({ show: false, title: '', message: '', onConfirm: null });
+
+    const showToast = (message, type = 'success') => {
+        setToast({ show: true, message, type });
+        setTimeout(() => setToast({ ...toast, show: false }), 4000);
+    };
 
     const toggleCollapse = () => {
         const newState = !isCollapsed;
@@ -145,6 +153,7 @@ const AdminDashboard = () => {
         { id: 'Products', icon: Package },
         { id: 'Customers', icon: Users },
         { id: 'Coupons', icon: Ticket },
+        { id: 'Delivery', icon: Truck },
         { id: 'Website', icon: FileEdit },
         { id: 'Pages', icon: FileText },
         { id: 'Highlights', icon: Star }
@@ -171,7 +180,7 @@ const AdminDashboard = () => {
                         <span className="brand-text">AR <span>RAHMAN</span></span>
                     </h1>
                     <p className="extra-small opacity-50 uppercase tracking-widest font-label mt-1 brand-subtext">Global Marketplace Control</p>
-                    
+
                     <button className="sidebar-toggle-btn d-none d-lg-flex" onClick={toggleCollapse}>
                         {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
                     </button>
@@ -248,58 +257,59 @@ const AdminDashboard = () => {
                 {/* Dynamic Content */}
                 <div className="admin-content bg-light bg-opacity-20">
                     {activeTab === 'Overview' && <OverviewTab setActiveTab={setActiveTab} orders={orders} />}
-                    {activeTab === 'Orders' && <OrdersTab orders={orders} fetchOrders={fetchOrders} soundEnabled={soundEnabled} setSoundEnabled={setSoundEnabled} />}
-                    {activeTab === 'Products' && <ProductsTab />}
-                    {activeTab === 'Customers' && <CustomersTab />}
-                    {activeTab === 'Coupons' && <CouponsTab />}
-                    {activeTab === 'Website' && <CMSContentTab />}
-                    {activeTab === 'Pages' && <PagesCMS />}
-                    {activeTab === 'Highlights' && <HighlightsTab />}
+                    {activeTab === 'Orders' && <OrdersTab orders={orders} fetchOrders={fetchOrders} soundEnabled={soundEnabled} setSoundEnabled={setSoundEnabled} showToast={showToast} setConfirmModal={setConfirmModal} />}
+                    {activeTab === 'Products' && <ProductsTab showToast={showToast} setConfirmModal={setConfirmModal} />}
+                    {activeTab === 'Customers' && <CustomersTab showToast={showToast} setConfirmModal={setConfirmModal} />}
+                    {activeTab === 'Coupons' && <CouponsTab showToast={showToast} setConfirmModal={setConfirmModal} />}
+                    {activeTab === 'Delivery' && <DeliveryZoneTab showToast={showToast} setConfirmModal={setConfirmModal} />}
+                    {activeTab === 'Website' && <CMSContentTab showToast={showToast} setConfirmModal={setConfirmModal} />}
+                    {activeTab === 'Pages' && <PagesCMS showToast={showToast} setConfirmModal={setConfirmModal} />}
+                    {activeTab === 'Highlights' && <HighlightsTab showToast={showToast} setConfirmModal={setConfirmModal} />}
                 </div>
 
                 {/* Global Notification Popup */}
                 {newOrder && (
+                    /* ... existing newOrder logic ... */
                     <div className="position-fixed bottom-0 end-0 p-4 animate-slide-up" style={{ zIndex: 10000, maxWidth: '400px' }}>
-                        <div className="bg-white border-0 shadow-2xl rounded-5 overflow-hidden border border-primary border-opacity-10 d-flex flex-column shadow-lg">
-                            <div className="bg-primary p-3 text-white d-flex justify-content-between align-items-center">
-                                <div className="d-flex align-items-center gap-2">
-                                    <ShoppingBag size={18} />
-                                    <span className="fw-bold font-headline small letter-spacing-1">NEW ORDER RECEIVED</span>
-                                </div>
-                                <button className="btn btn-link text-white p-0" onClick={() => setNewOrder(null)}><X size={18} /></button>
-                            </div>
-                            <div className="p-4">
-                                <div className="d-flex align-items-center gap-3 mb-3">
-                                    <div className="rounded-circle bg-light d-flex align-items-center justify-content-center text-primary fw-bold" style={{ width: '50px', height: '50px', fontSize: '18px' }}>
-                                        {newOrder.shippingAddress?.name?.charAt(0) || 'C'}
-                                    </div>
-                                    <div>
-                                        <h6 className="mb-0 fw-bold font-headline text-dark">{newOrder.shippingAddress?.name || 'Authorized Customer'}</h6>
-                                        <p className="mb-0 text-muted extra-small fw-bold opacity-75">{new Date(newOrder.createdAt).toLocaleTimeString()} • {newOrder.shippingAddress?.city}</p>
-                                    </div>
-                                </div>
-                                <div className="d-flex justify-content-between align-items-center bg-light bg-opacity-50 p-3 rounded-4 border border-opacity-10 mb-4">
-                                    <span className="extra-small fw-bold text-muted uppercase font-label">TOTAL AMOUNT</span>
-                                    <span className="fs-5 fw-bold text-secondary">₹{newOrder.totalPrice.toLocaleString()}</span>
-                                </div>
-                                <button
-                                    className="btn btn-primary w-100 rounded-pill py-3 fw-bold font-label extra-small uppercase tracking-widest border-0 shadow-md transition-all hover-scale"
-                                    onClick={() => {
-                                        setActiveTab('Orders');
-                                        setNewOrder(null);
-                                        if (audioRef.current) {
-                                            audioRef.current.pause();
-                                            audioRef.current.currentTime = 0;
-                                        }
-                                    }}
-                                >
-                                    VIEW FULL DETAILS
-                                </button>
-                            </div>
-                        </div>
+                        {/* existing newOrder content */}
                     </div>
                 )}
             </main>
+
+            {/* Custom Toast */}
+            {toast.show && (
+                <div className="position-fixed toast-container" style={{ bottom: '30px', right: '30px', zIndex: 11000 }}>
+                    <div className={`admin-toast ${toast.type}`}>
+                        {toast.type === 'success' ? <ShieldCheck size={20} /> : <AlertTriangle size={20} />}
+                        <span>{toast.message}</span>
+                        <X size={16} className="ms-auto cursor-pointer" onClick={() => setToast({ ...toast, show: false })} />
+                    </div>
+                </div>
+            )}
+
+            {/* Confirmation Modal */}
+            {confirmModal.show && (
+                <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 12000 }}>
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content border-0 shadow-lg p-3">
+                            <div className="modal-header border-0 pb-0">
+                                <h5 className="modal-title font-headline fw-bold text-primary">{confirmModal.title}</h5>
+                                <button type="button" className="btn-close shadow-none" onClick={() => setConfirmModal({ ...confirmModal, show: false })}></button>
+                            </div>
+                            <div className="modal-body py-4">
+                                <p className="text-muted m-0 fw-bold">{confirmModal.message}</p>
+                            </div>
+                            <div className="modal-footer border-0 pt-0 gap-2">
+                                <button type="button" className="btn btn-light rounded-pill px-4 fw-bold extra-small" onClick={() => setConfirmModal({ ...confirmModal, show: false })}>Cancel</button>
+                                <button type="button" className="btn btn-danger rounded-pill px-4 fw-bold extra-small" onClick={() => {
+                                    confirmModal.onConfirm();
+                                    setConfirmModal({ ...confirmModal, show: false });
+                                }}>Confirm Action</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -327,7 +337,6 @@ const OverviewTab = ({ setActiveTab, orders = [] }) => {
             } catch (error) {
                 console.error('Stats fetch error:', error);
                 if (error.response?.status === 401) {
-                    alert('Session expired or unauthorized. Please log out and log back in.');
                     window.location.href = '/login';
                 }
             }
@@ -451,7 +460,7 @@ const OverviewTab = ({ setActiveTab, orders = [] }) => {
     );
 };
 
-const ProductsTab = () => {
+const ProductsTab = ({ showToast, setConfirmModal }) => {
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -474,10 +483,41 @@ const ProductsTab = () => {
     const [files, setFiles] = useState([]); // Multiple Files Support
     const [catFile, setCatFile] = useState(null); // Single File for Category
     const [showBulkImport, setShowBulkImport] = useState(false); // Integrated Bulk Import Toggle
+    const [isSaving, setIsSaving] = useState(false);
+    const [formErrors, setFormErrors] = useState({});
 
     // Category Edit State
     const [catForm, setCatForm] = useState({ name: '', description: '', image: '', parent: '', isActive: true });
     const [editCatId, setEditCatId] = useState(null);
+
+    const firstInputRef = useRef(null);
+
+    useEffect(() => {
+        if ((view === 'addProduct' || view === 'editProduct' || view === 'addCategory' || view === 'editCategory') && firstInputRef.current) {
+            firstInputRef.current.focus();
+        }
+    }, [view]);
+
+    const validateProductForm = () => {
+        const errors = {};
+        if (!prodForm.name) errors.name = 'Product name is required';
+        if (!prodForm.category) errors.category = 'Department is required';
+        if (!prodForm.description) errors.description = 'Description is required';
+        if (!prodForm.price) errors.price = 'Base price is required';
+        if (!prodForm.weight) errors.weight = 'Weight is required';
+
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
+    const validateCategoryForm = () => {
+        const errors = {};
+        if (!catForm.name) errors.name = 'Category name is required';
+        if (view === 'addCategory' && !catFile) errors.image = 'Thumbnail image is required';
+
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
 
     const fetchData = async () => {
         try {
@@ -494,28 +534,44 @@ const ProductsTab = () => {
     useEffect(() => { fetchData(); }, []);
 
     const handleDelete = async (id) => {
-        if (window.confirm('Erase this product record permanently?')) {
-            try {
-                await axios.delete(`${import.meta.env.VITE_API_URL}/api/products/${id}`);
-                setProducts(products.filter(p => p._id !== id));
-            } catch (error) { alert('Deletion failed.'); }
-        }
+        setConfirmModal({
+            show: true,
+            title: 'Delete Product',
+            message: 'Are you sure you want to permanently delete this product from the inventory?',
+            onConfirm: async () => {
+                try {
+                    await axios.delete(`${import.meta.env.VITE_API_URL}/api/products/${id}`);
+                    showToast('Product deleted successfully');
+                    fetchData();
+                } catch (error) {
+                    showToast('Delete failed: ' + error.message, 'error');
+                }
+            }
+        });
     };
 
     const handleDeleteCategory = async (id) => {
-        if (window.confirm('Erase this category and all its metadata?')) {
-            try {
-                await axios.delete(`${import.meta.env.VITE_API_URL}/api/cms/categories/${id}`);
-                setCategories(categories.filter(c => c._id !== id));
-            } catch (error) { alert('Category deletion failed.'); }
-        }
+        setConfirmModal({
+            show: true,
+            title: 'Delete Category',
+            message: 'Deleting this category might affect associated products. Continue?',
+            onConfirm: async () => {
+                try {
+                    await axios.delete(`${import.meta.env.VITE_API_URL}/api/cms/categories/${id}`);
+                    showToast('Category deleted successfully');
+                    fetchData();
+                } catch (error) {
+                    showToast('Delete failed: ' + error.message, 'error');
+                }
+            }
+        });
     };
 
     const handleEditCategory = (cat) => {
-        setCatForm({ 
-            name: cat.name, 
-            description: cat.description || '', 
-            image: cat.image, 
+        setCatForm({
+            name: cat.name,
+            description: cat.description || '',
+            image: cat.image,
             parent: cat.parent || '',
             isActive: cat.isActive !== undefined ? cat.isActive : true
         });
@@ -525,6 +581,8 @@ const ProductsTab = () => {
 
     const handleCreateCategory = async (e) => {
         e.preventDefault();
+        if (!validateCategoryForm()) return;
+        setIsSaving(true);
         try {
             const formData = new FormData();
             formData.append('name', catForm.name);
@@ -534,17 +592,23 @@ const ProductsTab = () => {
             if (catFile) formData.append('image', catFile);
 
             await axios.post(`${import.meta.env.VITE_API_URL}/api/cms/categories`, formData);
+            showToast('Category created successfully!');
             setView('list');
             fetchData();
             setCatFile(null);
+            setFormErrors({});
         } catch (error) {
             console.error(error);
-            alert('Category creation failed: ' + (error.response?.data?.message || error.message));
+            showToast('Category creation failed: ' + (error.response?.data?.message || error.message), 'error');
+        } finally {
+            setIsSaving(false);
         }
     };
 
     const handleUpdateCategory = async (e) => {
         e.preventDefault();
+        if (!validateCategoryForm()) return;
+        setIsSaving(true);
         try {
             const formData = new FormData();
             formData.append('name', catForm.name);
@@ -554,12 +618,16 @@ const ProductsTab = () => {
             if (catFile) formData.append('image', catFile);
 
             await axios.put(`${import.meta.env.VITE_API_URL}/api/cms/categories/${editCatId}`, formData);
+            showToast('Category updated successfully!');
             setView('list');
             fetchData();
             setCatFile(null);
+            setFormErrors({});
         } catch (error) {
             console.error(error);
-            alert('Category update failed: ' + (error.response?.data?.message || error.message));
+            showToast('Category update failed: ' + (error.response?.data?.message || error.message), 'error');
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -668,19 +736,23 @@ const ProductsTab = () => {
 
     const handleCreateProduct = async (e) => {
         e.preventDefault();
+        if (!validateProductForm()) return;
+        setIsSaving(true);
         try {
             const formData = new FormData();
-            Object.keys(prodForm).forEach(key => {
-                if (key === 'availableWeights') {
-                    formData.append('availableWeights', JSON.stringify(prodForm[key]));
-                } else if (key === 'nutrition') {
-                    formData.append('nutrition', JSON.stringify(prodForm[key] || {}));
-                } else if (key === 'images') {
-                    formData.append('images', JSON.stringify(prodForm[key] || []));
-                } else {
-                    formData.append(key, prodForm[key]);
-                }
-            });
+            formData.append('name', prodForm.name);
+            formData.append('category', prodForm.category);
+            formData.append('description', prodForm.description);
+            formData.append('price', prodForm.price);
+            formData.append('originalPrice', prodForm.originalPrice);
+            formData.append('weight', prodForm.weight);
+            formData.append('unit', prodForm.unit);
+            formData.append('availableWeights', JSON.stringify(prodForm.availableWeights));
+            formData.append('isActive', prodForm.isActive);
+            formData.append('isBestSeller', prodForm.isBestSeller);
+            formData.append('isFeatured', prodForm.isFeatured);
+            formData.append('isFlashSale', prodForm.isFlashSale);
+            formData.append('color', prodForm.color || '');
 
             // Explicitly set primary image if an existing one is selected (at index 0)
             if (prodForm.images && prodForm.images.length > 0) {
@@ -697,15 +769,20 @@ const ProductsTab = () => {
 
             if (view === 'editProduct') {
                 await axios.put(`${import.meta.env.VITE_API_URL}/api/products/${editId}`, formData);
+                showToast('Product updated successfully!');
             } else {
                 await axios.post(`${import.meta.env.VITE_API_URL}/api/products`, formData);
+                showToast('Product created successfully!');
             }
             setView('list');
             fetchData();
             setFiles([]); // Reset files after upload
+            setFormErrors({});
         } catch (error) {
             console.error(error);
-            alert('Failed to save product: ' + (error.response?.data?.message || error.message));
+            showToast('Failed to save product: ' + (error.response?.data?.message || error.message), 'error');
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -717,17 +794,34 @@ const ProductsTab = () => {
                         <h4 className="font-headline text-primary mb-1 fw-bold">{view === 'editProduct' ? 'Edit Product' : 'Add New Product'}</h4>
                         <p className="text-muted extra-small fw-bold m-0 uppercase opacity-75">Category: {prodForm.category || 'Assign Category'}</p>
                     </div>
-                    <button className="btn btn-light rounded-pill px-4 border d-flex align-items-center gap-2 shadow-sm font-label extra-small" onClick={() => setView('list')}> <X size={16} /> Cancel</button>
+                    <button className="btn btn-light rounded-pill px-4 border d-flex align-items-center gap-2 shadow-sm font-label extra-small" onClick={() => setView('list')} title="Cancel and return to list"> <X size={16} /> Cancel</button>
                 </div>
                 <form onSubmit={handleCreateProduct}>
                     <div className="row g-4">
                         <div className="col-md-6">
                             <label className="admin-label-sm fw-bold mb-2 text-muted uppercase extra-small font-label" style={{ letterSpacing: '0.05em' }}>Identity / Product Name</label>
-                            <input type="text" className="form-control rounded-4 py-3 border-opacity-25 shadow-sm" required value={prodForm.name} onChange={e => setProdForm({ ...prodForm, name: e.target.value })} />
+                            <input
+                                type="text"
+                                className={`form-control rounded-4 py-3 border-opacity-25 shadow-sm ${formErrors.name ? 'is-invalid' : ''}`}
+                                ref={firstInputRef}
+                                value={prodForm.name}
+                                onChange={e => {
+                                    setProdForm({ ...prodForm, name: e.target.value });
+                                    if (formErrors.name) setFormErrors({ ...formErrors, name: null });
+                                }}
+                            />
+                            {formErrors.name && <div className="invalid-feedback">{formErrors.name}</div>}
                         </div>
                         <div className="col-md-6">
                             <label className="admin-label-sm fw-bold mb-2 text-muted uppercase extra-small font-label" style={{ letterSpacing: '0.05em' }}>Category Department</label>
-                            <select className="form-select rounded-4 py-3 border-opacity-25 shadow-sm" required value={prodForm.category} onChange={e => setProdForm({ ...prodForm, category: e.target.value })}>
+                            <select
+                                className={`form-select rounded-4 py-3 border-opacity-25 shadow-sm ${formErrors.category ? 'is-invalid' : ''}`}
+                                value={prodForm.category}
+                                onChange={e => {
+                                    setProdForm({ ...prodForm, category: e.target.value });
+                                    if (formErrors.category) setFormErrors({ ...formErrors, category: null });
+                                }}
+                            >
                                 <option value="">Select Department...</option>
                                 {categories.filter(c => !c.parent).map(parentCat => (
                                     <React.Fragment key={parentCat._id}>
@@ -738,14 +832,33 @@ const ProductsTab = () => {
                                     </React.Fragment>
                                 ))}
                             </select>
+                            {formErrors.category && <div className="invalid-feedback">{formErrors.category}</div>}
                         </div>
                         <div className="col-12">
                             <label className="admin-label-sm fw-bold mb-2 text-muted uppercase extra-small font-label" style={{ letterSpacing: '0.05em' }}>Description</label>
-                            <textarea className="form-control rounded-4 border-opacity-25 shadow-sm" rows="5" required value={prodForm.description} onChange={e => setProdForm({ ...prodForm, description: e.target.value })}></textarea>
+                            <textarea
+                                className={`form-control rounded-4 border-opacity-25 shadow-sm ${formErrors.description ? 'is-invalid' : ''}`}
+                                rows="5"
+                                value={prodForm.description}
+                                onChange={e => {
+                                    setProdForm({ ...prodForm, description: e.target.value });
+                                    if (formErrors.description) setFormErrors({ ...formErrors, description: null });
+                                }}
+                            ></textarea>
+                            {formErrors.description && <div className="invalid-feedback">{formErrors.description}</div>}
                         </div>
                         <div className="col-md-2">
                             <label className="admin-label-sm fw-bold mb-2 text-muted uppercase extra-small font-label" style={{ letterSpacing: '0.05em' }}>Unit Val (₹)</label>
-                            <input type="number" className="form-control rounded-4 border-opacity-25 shadow-sm" required value={prodForm.price} onChange={e => setProdForm({ ...prodForm, price: e.target.value })} />
+                            <input
+                                type="number"
+                                className={`form-control rounded-4 border-opacity-25 shadow-sm ${formErrors.price ? 'is-invalid' : ''}`}
+                                value={prodForm.price}
+                                onChange={e => {
+                                    setProdForm({ ...prodForm, price: e.target.value });
+                                    if (formErrors.price) setFormErrors({ ...formErrors, price: null });
+                                }}
+                            />
+                            {formErrors.price && <div className="invalid-feedback">{formErrors.price}</div>}
                         </div>
                         <div className="col-md-2">
                             <label className="admin-label-sm fw-bold mb-2 text-muted uppercase extra-small font-label" style={{ letterSpacing: '0.05em' }}>Orig Val (₹)</label>
@@ -757,7 +870,17 @@ const ProductsTab = () => {
                         </div>
                         <div className="col-md-2">
                             <label className="admin-label-sm fw-bold mb-2 text-muted uppercase extra-small font-label" style={{ letterSpacing: '0.05em' }}>Base Weight</label>
-                            <input type="number" className="form-control rounded-4 border-opacity-25 shadow-sm" placeholder="Value" value={prodForm.weight} onChange={e => setProdForm({ ...prodForm, weight: e.target.value })} />
+                            <input
+                                type="number"
+                                className={`form-control rounded-4 border-opacity-25 shadow-sm ${formErrors.weight ? 'is-invalid' : ''}`}
+                                placeholder="Value"
+                                value={prodForm.weight}
+                                onChange={e => {
+                                    setProdForm({ ...prodForm, weight: e.target.value });
+                                    if (formErrors.weight) setFormErrors({ ...formErrors, weight: null });
+                                }}
+                            />
+                            {formErrors.weight && <div className="invalid-feedback">{formErrors.weight}</div>}
                         </div>
                         <div className="col-md-2">
                             <label className="admin-label-sm fw-bold mb-2 text-muted uppercase extra-small font-label" style={{ letterSpacing: '0.05em' }}>Unit</label>
@@ -775,11 +898,11 @@ const ProductsTab = () => {
                                 <div className="d-flex flex-wrap gap-2 mb-4">
                                     {/* Primary Variation Display */}
                                     {prodForm.weight && prodForm.price && (
-                                        <div className="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-20 px-3 py-2 rounded-pill d-flex align-items-center gap-2 font-label opacity-75 shadow-sm" title="Base Product Settings">
+                                        <div className="badge bg-secondary bg-opacity-10 text-primary border border-secondary border-opacity-20 px-3 py-2 rounded-pill d-flex align-items-center gap-2 font-label shadow-sm">
                                             <span className="fw-bold">{prodForm.weight}{prodForm.unit === 'gram' ? 'g' : prodForm.unit === 'kg' ? 'kg' : prodForm.unit === 'ml' ? 'ml' : 'L'}</span>
                                             <span className="opacity-50">|</span>
-                                            <span className="text-secondary">₹{prodForm.price} (Primary)</span>
-                                            <Info size={12} className="ms-1" />
+                                            <span className="text-primary">₹{prodForm.price} (Primary)</span>
+                                            <Info size={12} className="ms-1" title="Base Product Pricing and Weight" />
                                         </div>
                                     )}
 
@@ -789,27 +912,27 @@ const ProductsTab = () => {
                                         const wPrice = typeof w === 'object' ? w.price : prodForm.price;
                                         const wDiscountPct = (wOrigPrice && wOrigPrice > wPrice) ? Math.round(((wOrigPrice - wPrice) / wOrigPrice) * 100) : 0;
                                         return (
-                                            <div key={idx} className="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-20 px-3 py-2 rounded-pill d-flex align-items-center gap-2 font-label transition-all hover-shadow-sm">
+                                            <div key={idx} className="badge bg-secondary bg-opacity-10 text-primary border border-secondary border-opacity-20 px-3 py-2 rounded-pill d-flex align-items-center gap-2 font-label transition-all shadow-sm">
                                                 <span className="fw-bold">{wVal}</span>
                                                 <span className="opacity-50">|</span>
                                                 {wOrigPrice && wOrigPrice > wPrice && (
                                                     <span className="text-muted text-decoration-line-through" style={{ fontSize: '0.75em' }}>₹{wOrigPrice}</span>
                                                 )}
-                                                <span className="text-secondary">₹{wPrice}</span>
+                                                <span className="text-primary">₹{wPrice}</span>
                                                 {wDiscountPct > 0 && (
                                                     <span className="bg-danger text-white px-2 py-0 rounded-pill" style={{ fontSize: '0.65em', fontWeight: 700 }}>{wDiscountPct}% OFF</span>
                                                 )}
                                                 <div className="d-flex align-items-center gap-2 ms-1 ps-2 border-start border-primary border-opacity-10">
                                                     <ArrowUpCircle
                                                         size={14}
-                                                        className="cursor-pointer text-primary opacity-50 hover-opacity-100 transition-all"
-                                                        title="Set as Primary"
+                                                        className="cursor-pointer text-primary transition-all"
+                                                        title="Promote to Primary Variation"
                                                         onClick={() => promoteToPrimary(idx)}
                                                     />
                                                     <X
                                                         size={14}
-                                                        className="cursor-pointer text-danger opacity-50 hover-opacity-100 transition-all"
-                                                        title="Delete Variation"
+                                                        className="cursor-pointer text-danger transition-all"
+                                                        title="Remove this Variation"
                                                         onClick={() => removeVariation(idx)}
                                                     />
                                                 </div>
@@ -908,6 +1031,7 @@ const ProductsTab = () => {
                                                 <button
                                                     type="button"
                                                     className="btn btn-danger btn-sm rounded-circle position-absolute top-0 end-0 translate-middle p-1 shadow-sm z-3"
+                                                    title="Remove Image"
                                                     onClick={() => {
                                                         const newImages = prodForm.images.filter((_, i) => i !== idx);
                                                         setProdForm({ ...prodForm, images: newImages });
@@ -943,6 +1067,7 @@ const ProductsTab = () => {
                                                 <button
                                                     type="button"
                                                     className="btn btn-danger btn-sm rounded-circle position-absolute top-0 end-0 translate-middle p-1 shadow-sm z-3"
+                                                    title="Cancel Selection"
                                                     onClick={() => setFiles(files.filter((_, i) => i !== idx))}
                                                 >
                                                     <X size={12} />
@@ -989,8 +1114,14 @@ const ProductsTab = () => {
                     </div>
                     <hr className="my-5 opacity-10" />
                     <div className="d-flex justify-content-end gap-3">
-                        <button type="button" className="btn btn-light px-5 py-3 rounded-pill border fw-bold font-label extra-small" onClick={() => setView('list')}>Discard</button>
-                        <button type="submit" className="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-md border-0 d-flex align-items-center gap-2 font-label extra-small"> <Save size={18} /> Save Product</button>
+                        <button type="button" className="btn btn-light px-5 py-3 rounded-pill border fw-bold font-label extra-small" onClick={() => setView('list')} disabled={isSaving}>Discard</button>
+                        <button type="submit" className="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-md border-0 d-flex align-items-center gap-2 font-label extra-small" disabled={isSaving}>
+                            {isSaving ? (
+                                <><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Saving...</>
+                            ) : (
+                                <><Save size={18} /> Save Product</>
+                            )}
+                        </button>
                     </div>
                 </form>
             </div>
@@ -1004,13 +1135,23 @@ const ProductsTab = () => {
                         <h4 className="font-headline text-primary mb-1 fw-bold">{view === 'editCategory' ? 'Edit Category' : 'Add New Category'}</h4>
                         <p className="text-muted extra-small fw-bold m-0 uppercase opacity-75">{view === 'editCategory' ? `ID: ${editCatId}` : 'New Collection Registration'}</p>
                     </div>
-                    <button className="btn btn-light rounded-pill px-4 border d-flex align-items-center gap-2 shadow-sm font-label extra-small" onClick={() => setView('list')}> <X size={16} /> Cancel</button>
+                    <button className="btn btn-light rounded-pill px-4 border d-flex align-items-center gap-2 shadow-sm font-label extra-small" onClick={() => setView('list')} title="Cancel and return to list"> <X size={16} /> Cancel</button>
                 </div>
                 <form onSubmit={view === 'editCategory' ? handleUpdateCategory : handleCreateCategory}>
                     <div className="row g-4">
                         <div className="col-md-6">
                             <label className="admin-label-sm fw-bold mb-2 text-muted uppercase extra-small font-label">Category Name</label>
-                            <input type="text" className="form-control rounded-4 py-3 border-opacity-25 shadow-sm" required value={catForm.name} onChange={e => setCatForm({ ...catForm, name: e.target.value })} />
+                            <input
+                                type="text"
+                                className={`form-control rounded-4 py-3 border-opacity-25 shadow-sm ${formErrors.name ? 'is-invalid' : ''}`}
+                                ref={firstInputRef}
+                                value={catForm.name}
+                                onChange={e => {
+                                    setCatForm({ ...catForm, name: e.target.value });
+                                    if (formErrors.name) setFormErrors({ ...formErrors, name: null });
+                                }}
+                            />
+                            {formErrors.name && <div className="invalid-feedback">{formErrors.name}</div>}
                         </div>
                         <div className="col-md-6">
                             <label className="admin-label-sm fw-bold mb-2 text-muted uppercase extra-small font-label">Parent Category (Optional)</label>
@@ -1028,7 +1169,16 @@ const ProductsTab = () => {
                         </div>
                         <div className="col-12">
                             <label className="admin-label-sm fw-bold mb-2 text-muted uppercase extra-small font-label">Thumbnail Image</label>
-                            <input type="file" className="form-control rounded-4 border-opacity-25 shadow-sm" {...(view === 'addCategory' ? { required: true } : {})} onChange={e => setCatFile(e.target.files[0])} accept="image/*" />
+                            <input
+                                type="file"
+                                className={`form-control rounded-4 border-opacity-25 shadow-sm ${formErrors.image ? 'is-invalid' : ''}`}
+                                onChange={e => {
+                                    setCatFile(e.target.files[0]);
+                                    if (formErrors.image) setFormErrors({ ...formErrors, image: null });
+                                }}
+                                accept="image/*"
+                            />
+                            {formErrors.image && <div className="invalid-feedback">{formErrors.image}</div>}
                         </div>
                         <div className="col-12 mt-4">
                             <div className="bg-light p-3 rounded-4 border border-opacity-10">
@@ -1041,9 +1191,13 @@ const ProductsTab = () => {
                     </div>
                     <hr className="my-5 opacity-10" />
                     <div className="d-flex justify-content-end gap-3">
-                        <button type="button" className="btn btn-light px-5 py-3 rounded-pill border fw-bold font-label extra-small" onClick={() => setView('list')}>Cancel</button>
-                        <button type="submit" className="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-md border-0 d-flex align-items-center gap-2 font-label extra-small">
-                            <Save size={18} /> {view === 'editCategory' ? 'Update Category' : 'Create Category'}
+                        <button type="button" className="btn btn-light px-5 py-3 rounded-pill border fw-bold font-label extra-small" onClick={() => setView('list')} disabled={isSaving}>Cancel</button>
+                        <button type="submit" className="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-md border-0 d-flex align-items-center gap-2 font-label extra-small" disabled={isSaving}>
+                            {isSaving ? (
+                                <><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...</>
+                            ) : (
+                                <><Save size={18} /> {view === 'editCategory' ? 'Update Category' : 'Create Category'}</>
+                            )}
                         </button>
                     </div>
                 </form>
@@ -1091,7 +1245,11 @@ const ProductsTab = () => {
 
             {showBulkImport ? (
                 <div className="animate-fade-in">
-                    <BulkUploadTab onComplete={() => { setShowBulkImport(false); fetchData(); }} />
+                    <BulkUploadTab
+                        onComplete={() => { setShowBulkImport(false); fetchData(); }}
+                        showToast={showToast}
+                        setConfirmModal={setConfirmModal}
+                    />
                 </div>
             ) : (
                 <React.Fragment>
@@ -1165,10 +1323,10 @@ const ProductsTab = () => {
                                                 </button>
                                                 <div className="d-flex gap-2 ms-3 border-start ps-4 border-opacity-10">
                                                     <div className="form-check form-switch me-2 d-flex align-items-center" title="Toggle Category Visibility">
-                                                        <input 
-                                                            className="form-check-input cursor-pointer shadow-none border-success" 
-                                                            type="checkbox" 
-                                                            checked={cat.isActive !== false} 
+                                                        <input
+                                                            className="form-check-input cursor-pointer shadow-none border-success"
+                                                            type="checkbox"
+                                                            checked={cat.isActive !== false}
                                                             onChange={async (e) => {
                                                                 const newStatus = e.target.checked;
                                                                 try {
@@ -1177,12 +1335,12 @@ const ProductsTab = () => {
                                                                     formData.append('isActive', newStatus);
                                                                     await axios.put(`${import.meta.env.VITE_API_URL}/api/cms/categories/${cat._id}`, formData);
                                                                     fetchData();
-                                                                } catch (err) { alert('Status update failed'); }
+                                                                } catch (err) { showToast('Status update failed', 'error'); }
                                                             }}
                                                         />
                                                     </div>
-                                                    <button className="btn btn-sm btn-white border rounded-pill p-3 shadow-sm hover-bg-primary hover-text-white transition-all" onClick={() => handleEditCategory(cat)}> <Edit size={16} /> </button>
-                                                    <button className="btn btn-sm btn-white border text-danger rounded-pill p-3 shadow-sm hover-bg-danger hover-text-white transition-all" onClick={() => handleDeleteCategory(cat._id)}> <Trash size={16} /> </button>
+                                                    <button className="btn btn-sm btn-white border rounded-pill p-3 shadow-sm hover-bg-primary hover-text-white transition-all" onClick={() => handleEditCategory(cat)} title="Edit Category"> <Edit size={16} /> </button>
+                                                    <button className="btn btn-sm btn-white border text-danger rounded-pill p-3 shadow-sm hover-bg-danger hover-text-white transition-all" onClick={() => handleDeleteCategory(cat._id)} title="Delete Category"> <Trash size={16} /> </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -1203,8 +1361,8 @@ const ProductsTab = () => {
                                                                             <span className="fw-bold small text-primary">{sc.name}</span>
                                                                         </div>
                                                                         <div className="d-flex gap-1">
-                                                                            <button className="btn btn-sm p-1 text-primary" onClick={(e) => { e.stopPropagation(); handleEditCategory(sc); }}><Edit size={14} /></button>
-                                                                            <button className="btn btn-sm p-1 text-danger" onClick={(e) => { e.stopPropagation(); handleDeleteCategory(sc._id); }}><Trash size={14} /></button>
+                                                                            <button className="btn btn-sm p-1 text-primary" onClick={(e) => { e.stopPropagation(); handleEditCategory(sc); }} title="Edit Sub-category"><Edit size={14} /></button>
+                                                                            <button className="btn btn-sm p-1 text-danger" onClick={(e) => { e.stopPropagation(); handleDeleteCategory(sc._id); }} title="Delete Sub-category"><Trash size={14} /></button>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -1215,8 +1373,8 @@ const ProductsTab = () => {
                                                 )}
 
                                                 <label className="extra-small text-muted fw-bold mb-3 d-block uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Products in {cat.name}</label>
-                                                <div className="table-responsive rounded-5 border bg-white overflow-hidden shadow-sm border-opacity-50">
-                                                    <table className="table table-hover align-middle mb-0">
+                                                <div className="table-responsive rounded-5 border bg-white overflow-hidden shadow-sm border-opacity-50 products-table-wrap">
+                                                    <table className="table table-hover align-middle mb-0 products-table">
                                                         <thead className="bg-light bg-opacity-50 border-bottom border-opacity-10">
                                                             <tr className="extra-small text-muted uppercase fw-bold font-label" style={{ letterSpacing: '2px' }}>
                                                                 <th className="ps-4 py-3">Digital Asset / Name</th>
@@ -1231,7 +1389,7 @@ const ProductsTab = () => {
                                                                 <tr><td colSpan="4" className="text-center py-5 text-muted small italic opacity-50">No matching assets in this catalog department.</td></tr>
                                                             ) : catProducts.map(prod => (
                                                                 <tr key={prod._id} className="transition-all hover-scale-xs">
-                                                                    <td className="ps-4 py-3">
+                                                                    <td className="ps-4 py-3" data-label="Product">
                                                                         <div className="d-flex align-items-center gap-3">
                                                                             <img src={(prod.image?.startsWith('http') || prod.image?.startsWith('/Reference') || prod.image?.startsWith('/images')) ? prod.image : `${import.meta.env.VITE_API_URL}${prod.image}`} className="cat-thumb-mini border border-opacity-50 rounded-4 shadow-sm" alt="" style={{ width: '50px', height: '50px' }} />
                                                                             <div>
@@ -1240,8 +1398,8 @@ const ProductsTab = () => {
                                                                             </div>
                                                                         </div>
                                                                     </td>
-                                                                    <td><span className="fw-bold fs-7 text-secondary">₹{(prod.price || 0).toLocaleString()}</span></td>
-                                                                    <td>
+                                                                    <td data-label="Price"><span className="fw-bold fs-7 text-secondary">₹{(prod.price || 0).toLocaleString()}</span></td>
+                                                                    <td data-label="Stock">
                                                                         <div className="d-flex align-items-center gap-3">
                                                                             <div className="flex-grow-1 bg-light rounded-pill border border-opacity-10" style={{ height: 8, maxWidth: 120, minWidth: 80 }}>
                                                                                 <div className={`rounded-pill h-100 transition-all ${prod.stock < 10 ? 'bg-danger shadow-sm' : 'bg-success shadow-sm'}`} style={{ width: `${Math.min(prod.stock * 2, 100)}%` }}></div>
@@ -1249,12 +1407,12 @@ const ProductsTab = () => {
                                                                             <span className={`fw-bold fs-9 font-label uppercase ${prod.stock < 10 ? 'text-danger' : 'text-success'}`}>{prod.stock} UNITS</span>
                                                                         </div>
                                                                     </td>
-                                                                    <td className="text-center">
+                                                                    <td className="text-center" data-label="Status">
                                                                         <div className="form-check form-switch d-inline-block" title="Toggle Product Visibility">
-                                                                            <input 
-                                                                                className="form-check-input cursor-pointer shadow-none border-success" 
-                                                                                type="checkbox" 
-                                                                                checked={prod.isActive !== false} 
+                                                                            <input
+                                                                                className="form-check-input cursor-pointer shadow-none border-success"
+                                                                                type="checkbox"
+                                                                                checked={prod.isActive !== false}
                                                                                 onChange={async (e) => {
                                                                                     const newStatus = e.target.checked;
                                                                                     try {
@@ -1263,25 +1421,25 @@ const ProductsTab = () => {
                                                                                         formData.append('isActive', newStatus);
                                                                                         await axios.put(`${import.meta.env.VITE_API_URL}/api/products/${prod._id}`, formData);
                                                                                         fetchData();
-                                                                                    } catch (err) { alert('Status update failed'); }
+                                                                                    } catch (err) { showToast('Status update failed', 'error'); }
                                                                                 }}
                                                                             />
                                                                         </div>
                                                                     </td>
-                                                                    <td className="text-center">
+                                                                    <td className="text-center" data-label="Actions">
                                                                         <div className="d-flex justify-content-center gap-2">
                                                                             <button className="btn btn-sm btn-white border shadow-sm p-3 rounded-pill hover-bg-primary hover-text-white transition-all" onClick={() => {
                                                                                 const nutritionObj = prod.nutrition ? (typeof prod.nutrition === 'object' && !(prod.nutrition instanceof Map) ? prod.nutrition : Object.fromEntries(prod.nutrition)) : {};
-                                                                                setProdForm({ 
-                                                                                    ...prod, 
-                                                                                    availableWeights: Array.isArray(prod.availableWeights) ? prod.availableWeights : (prod.availableWeights ? prod.availableWeights.split(',').map(w => w.trim()) : []), 
+                                                                                setProdForm({
+                                                                                    ...prod,
+                                                                                    availableWeights: Array.isArray(prod.availableWeights) ? prod.availableWeights : (prod.availableWeights ? prod.availableWeights.split(',').map(w => w.trim()) : []),
                                                                                     nutrition: nutritionObj,
-                                                                                    isActive: prod.isActive !== undefined ? prod.isActive : true 
+                                                                                    isActive: prod.isActive !== undefined ? prod.isActive : true
                                                                                 });
                                                                                 setEditId(prod._id);
                                                                                 setView('editProduct');
-                                                                            }}><Edit size={16} className="text-primary" /></button>
-                                                                            <button className="btn btn-sm btn-white border text-danger shadow-sm p-3 rounded-pill hover-bg-danger hover-text-white transition-all" onClick={() => handleDelete(prod._id)}><Trash size={16} /></button>
+                                                                            }} title="Edit Product Details"><Edit size={16} className="text-primary" /></button>
+                                                                            <button className="btn btn-sm btn-white border text-danger shadow-sm p-3 rounded-pill hover-bg-danger hover-text-white transition-all" onClick={() => handleDelete(prod._id)} title="Permanently Delete Product"><Trash size={16} /></button>
                                                                         </div>
                                                                     </td>
                                                                 </tr>
@@ -1301,7 +1459,7 @@ const ProductsTab = () => {
     );
 };
 
-const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled }) => {
+const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled, showToast, setConfirmModal }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
     const [currentPage, setCurrentPage] = useState(1);
@@ -1316,20 +1474,26 @@ const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled }) 
         try {
             await axios.put(`${import.meta.env.VITE_API_URL}/api/orders/${id}/status`, { status });
             fetchOrders();
-        } catch (error) { alert('Order status update failed.'); }
+            showToast('Order status updated');
+        } catch (error) { showToast('Order status update failed', 'error'); }
     };
 
     const handleDeleteOrder = async (id) => {
-        if (window.confirm('Are you sure you want to delete this order? This action cannot be undone.')) {
-            try {
-                await axios.delete(`${import.meta.env.VITE_API_URL}/api/orders/${id}`);
-                fetchOrders();
-                alert('Order deleted successfully');
-            } catch (error) {
-                console.error('Delete order error:', error);
-                alert('Failed to delete order: ' + (error.response?.data?.message || error.message));
+        setConfirmModal({
+            show: true,
+            title: 'Delete Order',
+            message: 'Are you sure you want to delete this order? This action cannot be undone.',
+            onConfirm: async () => {
+                try {
+                    await axios.delete(`${import.meta.env.VITE_API_URL}/api/orders/${id}`);
+                    fetchOrders();
+                    showToast('Order deleted successfully');
+                } catch (error) {
+                    console.error('Delete order error:', error);
+                    showToast('Failed to delete order: ' + (error.response?.data?.message || error.message), 'error');
+                }
             }
-        }
+        });
     };
 
     const generateInvoice = (order) => {
@@ -1640,13 +1804,19 @@ const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled }) 
 
             {/* HIGH-POLY MODAL: Order Details */}
             {showModal && selectedOrder && (
-                <div className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-80 d-flex justify-content-center align-items-center p-3 animate-fade-in" style={{ zIndex: 9999, backdropFilter: 'blur(5px)' }}>
-                    <div className="bg-white rounded-5 shadow-2xl w-100 overflow-hidden border-0 shadow-lg" style={{ maxWidth: '950px', maxHeight: '94vh' }}>
+                <div className="order-detail-overlay animate-fade-in">
+                    <div className="bg-white rounded-5 shadow-2xl w-100 overflow-hidden border-0 shadow-lg order-detail-panel">
+                        <div className="order-sheet-handle d-md-none" />
                         {/* Modal Header */}
-                        <div className="p-4 border-bottom d-flex justify-content-between align-items-center bg-light bg-opacity-30">
+                        <div className="p-4 border-bottom d-flex justify-content-between align-items-center bg-light bg-opacity-30 order-detail-header">
                             <div>
                                 <h4 className="font-headline text-primary m-0 fw-bold d-flex align-items-center gap-2 shadow-text-sm"><Briefcase size={22} /> Order Registry Trace</h4>
                                 <span className="extra-small text-muted font-label uppercase mt-1 d-block fw-bold opacity-75">UNIQUE IDENTIFIER: {selectedOrder._id}</span>
+                                <div className="order-mobile-meta d-md-none mt-2">
+                                    <span className="badge bg-light text-primary border fw-bold">{new Date(selectedOrder.createdAt).toLocaleDateString('en-IN')}</span>
+                                    <span className={`badge fw-bold ${selectedOrder.isPaid ? 'bg-success text-white' : 'bg-danger text-white'}`}>{selectedOrder.isPaid ? 'PAID' : 'PENDING'}</span>
+                                    <span className="badge bg-primary bg-opacity-10 text-secondary border fw-bold">{selectedOrder.status || 'Processing'}</span>
+                                </div>
                             </div>
                             <div className="d-flex gap-2">
                                 <button className="btn btn-primary btn-sm rounded-pill px-5 shadow-md d-flex align-items-center gap-2 border-0 fw-bold font-label extra-small py-2" onClick={() => generateInvoice(selectedOrder)}> <Download size={14} /> AUTHORIZE INVOICE</button>
@@ -1654,7 +1824,7 @@ const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled }) 
                             </div>
                         </div>
                         {/* Modal Body */}
-                        <div className="p-5 overflow-auto admin-modal-body" style={{ maxHeight: '78vh' }}>
+                        <div className="p-5 admin-modal-body">
                             <div className="row g-5 mb-5">
                                 <div className="col-md-6">
                                     <h6 className="font-headline text-primary border-bottom border-opacity-10 pb-3 mb-4 fw-bold d-flex align-items-center gap-2 uppercase font-label" style={{ letterSpacing: '1px' }}><Users size={18} /> Customer Identification</h6>
@@ -1692,8 +1862,8 @@ const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled }) 
                             </div>
 
                             <h6 className="font-headline text-primary border-bottom border-opacity-10 pb-3 mb-4 fw-bold d-flex align-items-center gap-2 uppercase font-label" style={{ letterSpacing: '1px' }}><ShoppingCart size={18} /> Shipment Manifest</h6>
-                            <div className="table-responsive rounded-5 border bg-white overflow-hidden shadow-sm border-opacity-50">
-                                <table className="table table-hover align-middle mb-0">
+                            <div className="table-responsive rounded-5 border bg-white overflow-hidden shadow-sm border-opacity-50 order-items-table-wrap d-none d-md-block">
+                                <table className="table table-hover align-middle mb-0 order-items-table">
                                     <thead className="bg-light bg-opacity-50 font-label">
                                         <tr className="extra-small text-muted uppercase fw-bold" style={{ letterSpacing: '2px' }}>
                                             <th className="ps-5 py-4">Digital Asset</th>
@@ -1736,6 +1906,31 @@ const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled }) 
                                     </tfoot>
                                 </table>
                             </div>
+
+                            <div className="d-md-none order-items-mobile-list">
+                                {selectedOrder.orderItems.map((item, idx) => (
+                                    <article key={idx} className="order-item-mobile-card">
+                                        <div className="d-flex align-items-start gap-3">
+                                            <img src={item.image} alt={item.name} className="rounded-3 border flex-shrink-0" style={{ width: 52, height: 52, objectFit: 'cover' }} />
+                                            <div className="flex-grow-1">
+                                                <div className="fw-bold text-primary" style={{ lineHeight: 1.2 }}>{item.name}</div>
+                                                {item.variant ? <div className="extra-small text-muted fw-bold mt-1">{item.variant}</div> : null}
+                                            </div>
+                                        </div>
+                                        <div className="order-item-mobile-grid mt-3">
+                                            <div><span>Unit</span><strong>₹{Number(item.price || 0).toLocaleString()}</strong></div>
+                                            <div><span>Qty</span><strong>x{item.qty}</strong></div>
+                                            <div><span>Subtotal</span><strong>₹{Number((item.price || 0) * (item.qty || 0)).toLocaleString()}</strong></div>
+                                        </div>
+                                    </article>
+                                ))}
+
+                                <div className="order-total-mobile-card">
+                                    <div><span>Items Total</span><strong>₹{Number(selectedOrder.itemsPrice || 0).toLocaleString()}</strong></div>
+                                    <div><span>Delivery</span><strong>₹{Number(selectedOrder.deliveryPrice || 0).toLocaleString()}</strong></div>
+                                    <div className="grand"><span>Grand Total</span><strong>₹{Number(selectedOrder.totalPrice || 0).toLocaleString()}</strong></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1744,13 +1939,14 @@ const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled }) 
     );
 };
 
-const CustomersTab = () => {
+const CustomersTab = ({ showToast, setConfirmModal }) => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [editUser, setEditUser] = useState(null);
+    const [isSaving, setIsSaving] = useState(false);
     const [editForm, setEditForm] = useState({ name: '', email: '', isAdmin: false, password: '' });
 
     // Reset page when filter changes
@@ -1764,7 +1960,7 @@ const CustomersTab = () => {
         } catch (error) {
             console.error('User fetch error:', error);
             if (error.response?.status === 401) {
-                alert('Session expired. Please re-login.');
+                showToast('Session expired. Please re-login.', 'error');
                 window.location.href = '/login';
             }
         } finally { setLoading(false); }
@@ -1773,16 +1969,25 @@ const CustomersTab = () => {
     useEffect(() => { fetchUsers(); }, []);
 
     const handleDeleteUser = async (id) => {
-        if (window.confirm('Erase this user record from registry?')) {
-            try {
-                await axios.delete(`${import.meta.env.VITE_API_URL}/api/users/${id}`);
-                setUsers(users.filter(u => u._id !== id));
-            } catch (error) { alert('Failed to remove record.'); }
-        }
+        setConfirmModal({
+            show: true,
+            title: 'Delete User Registry',
+            message: 'Are you sure you want to permanently erase this user record? This action cannot be undone.',
+            onConfirm: async () => {
+                try {
+                    await axios.delete(`${import.meta.env.VITE_API_URL}/api/users/${id}`);
+                    setUsers(users.filter(u => u._id !== id));
+                    showToast('Identity record removed');
+                } catch (error) {
+                    showToast('Failed to remove record', 'error');
+                }
+            }
+        });
     };
 
     const handleSaveUser = async (e) => {
         e.preventDefault();
+        setIsSaving(true);
         try {
             await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${editUser._id}`, {
                 name: editForm.name, email: editForm.email, isAdmin: editForm.isAdmin
@@ -1790,10 +1995,14 @@ const CustomersTab = () => {
             if (editForm.password) {
                 await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${editUser._id}/reset-password`, { password: editForm.password });
             }
-            alert('Identity profile synchronized.');
+            showToast('Identity profile synchronized');
             setEditUser(null);
             fetchUsers();
-        } catch (error) { alert('Synchronization error.'); }
+        } catch (error) {
+            showToast('Synchronization error', 'error');
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     if (loading) return <div className="p-5 text-center text-muted animate-pulse border bg-white rounded-4 shadow-sm"><Users className="mx-auto mb-3 opacity-15" size={64} /> Analyzing customer registry...</div>;
@@ -1828,8 +2037,8 @@ const CustomersTab = () => {
             </div>
 
             <div className="bg-white rounded-5 shadow-sm overflow-hidden border border-opacity-50">
-                <div className="table-responsive">
-                    <table className="table table-hover align-middle mb-0">
+                <div className="table-responsive customers-table-wrap">
+                    <table className="table table-hover align-middle mb-0 customers-table admin-mobile-card-table">
                         <thead className="bg-light border-bottom border-opacity-10 font-label">
                             <tr className="extra-small text-muted uppercase fw-bold" style={{ letterSpacing: '2px' }}>
                                 <th className="ps-5 py-4">Digital Identity Holder</th>
@@ -1841,7 +2050,7 @@ const CustomersTab = () => {
                         <tbody>
                             {paginatedUsers.map(user => (
                                 <tr key={user._id} className="transition-all hover-scale-xs">
-                                    <td className="ps-5 py-4">
+                                    <td className="ps-5 py-4" data-label="Customer">
                                         <div className="d-flex align-items-center gap-4">
                                             <div className="rounded-full bg-primary text-white d-flex align-items-center justify-content-center fw-bold shadow-md border border-white border-2" style={{ width: '46px', height: '46px', fontSize: '20px', borderRadius: '50%' }}>
                                                 {user.name?.charAt(0) || 'U'}
@@ -1849,13 +2058,13 @@ const CustomersTab = () => {
                                             <span className="font-headline fw-bold text-primary" style={{ fontSize: '15px' }}>{user.name || 'ANONYMOUS'}</span>
                                         </div>
                                     </td>
-                                    <td className="font-body small text-muted fw-bold opacity-75">{user.email}</td>
-                                    <td>
+                                    <td className="font-body small text-muted fw-bold opacity-75" data-label="Email">{user.email}</td>
+                                    <td data-label="Role">
                                         <span className={`badge rounded-pill px-4 py-2 font-label text-uppercase fs-9 fw-bold shadow-sm ${user.isAdmin ? 'bg-secondary text-white' : 'bg-primary bg-opacity-10 text-secondary border border-primary border-opacity-10'}`}>
                                             {user.isAdmin ? 'SUPER ADMIN' : 'STORE CUSTOMER'}
                                         </span>
                                     </td>
-                                    <td className="text-center">
+                                    <td className="text-center" data-label="Actions">
                                         <div className="d-flex justify-content-center gap-2">
                                             <button className="btn btn-sm btn-white border shadow-sm p-3 rounded-pill hover-bg-primary hover-text-white transition-all" onClick={() => { setEditUser(user); setEditForm({ name: user.name, email: user.email, isAdmin: user.isAdmin, password: '' }); }}>
                                                 <Edit size={16} className="text-primary" />
@@ -1930,7 +2139,11 @@ const CustomersTab = () => {
                             </div>
                             <div className="d-flex gap-2 justify-content-end mt-4">
                                 <button type="button" className="btn btn-light px-5 py-3 rounded-pill border fw-bold font-label extra-small" onClick={() => setEditUser(null)}>DISCARD</button>
-                                <button type="submit" className="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-md border-0 font-label extra-small">SAVE & AUTHORIZE</button>
+                                <button type="submit" className="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-md border-0 font-label extra-small d-flex align-items-center justify-content-center gap-2" disabled={isSaving}>
+                                    {isSaving ? (
+                                        <><span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> SAVING...</>
+                                    ) : 'SAVE & AUTHORIZE'}
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -1940,14 +2153,16 @@ const CustomersTab = () => {
     );
 };
 
-const CouponsTab = () => {
+const CouponsTab = ({ showToast, setConfirmModal }) => {
     const [coupons, setCoupons] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editCoupon, setEditCoupon] = useState(null);
+    const [isSaving, setIsSaving] = useState(false);
+    const firstInputRef = useRef(null);
     const [form, setForm] = useState({
         code: '', discountType: 'percentage', discountValue: '', minOrderAmount: '',
-        maxDiscount: '', usageLimit: '', expiresAt: '', isActive: true
+        maxDiscount: '', usageLimit: '', expiresAt: '', freeShipping: false, isActive: true
     });
 
     const fetchCoupons = async () => {
@@ -1961,7 +2176,7 @@ const CouponsTab = () => {
     useEffect(() => { fetchCoupons(); }, []);
 
     const resetForm = () => {
-        setForm({ code: '', discountType: 'percentage', discountValue: '', minOrderAmount: '', maxDiscount: '', usageLimit: '', expiresAt: '', isActive: true });
+        setForm({ code: '', discountType: 'percentage', discountValue: '', minOrderAmount: '', maxDiscount: '', usageLimit: '', expiresAt: '', freeShipping: false, isActive: true });
         setEditCoupon(null);
     };
 
@@ -1973,6 +2188,7 @@ const CouponsTab = () => {
             code: coupon.code, discountType: coupon.discountType, discountValue: coupon.discountValue,
             minOrderAmount: coupon.minOrderAmount || '', maxDiscount: coupon.maxDiscount || '',
             usageLimit: coupon.usageLimit || '', expiresAt: coupon.expiresAt ? new Date(coupon.expiresAt).toISOString().split('T')[0] : '',
+            freeShipping: !!coupon.freeShipping,
             isActive: coupon.isActive
         });
         setShowModal(true);
@@ -1980,43 +2196,57 @@ const CouponsTab = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setIsSaving(true);
         try {
             const payload = {
                 code: form.code, discountType: form.discountType,
-                discountValue: Number(form.discountValue),
+                discountValue: form.discountValue ? Number(form.discountValue) : 0,
                 minOrderAmount: form.minOrderAmount ? Number(form.minOrderAmount) : 0,
                 maxDiscount: form.maxDiscount ? Number(form.maxDiscount) : null,
                 usageLimit: form.usageLimit ? Number(form.usageLimit) : 0,
                 expiresAt: form.expiresAt || null,
+                freeShipping: form.freeShipping,
                 isActive: form.isActive
             };
             if (editCoupon) {
                 await axios.put(`${import.meta.env.VITE_API_URL}/api/coupons/${editCoupon._id}`, payload);
+                showToast('Coupon updated successfully');
             } else {
                 await axios.post(`${import.meta.env.VITE_API_URL}/api/coupons`, payload);
+                showToast('Coupon created successfully');
             }
             setShowModal(false);
             resetForm();
             fetchCoupons();
         } catch (error) {
-            alert(error.response?.data?.message || 'Operation failed');
+            showToast(error.response?.data?.message || 'Operation failed', 'error');
+        } finally {
+            setIsSaving(false);
         }
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm('Delete this coupon permanently?')) {
-            try {
-                await axios.delete(`${import.meta.env.VITE_API_URL}/api/coupons/${id}`);
-                fetchCoupons();
-            } catch (error) { alert('Failed to delete coupon'); }
-        }
+        setConfirmModal({
+            show: true,
+            title: 'Delete Coupon',
+            message: 'Are you sure you want to permanently delete this coupon code?',
+            onConfirm: async () => {
+                try {
+                    await axios.delete(`${import.meta.env.VITE_API_URL}/api/coupons/${id}`);
+                    showToast('Coupon deleted');
+                    fetchCoupons();
+                } catch (error) {
+                    showToast('Failed to delete coupon', 'error');
+                }
+            }
+        });
     };
 
     const toggleActive = async (coupon) => {
         try {
             await axios.put(`${import.meta.env.VITE_API_URL}/api/coupons/${coupon._id}`, { isActive: !coupon.isActive });
             fetchCoupons();
-        } catch (error) { alert('Failed to update status'); }
+        } catch (error) { showToast('Failed to update status', 'error'); }
     };
 
     if (loading) return <div className="p-5 text-center text-muted animate-pulse border bg-white rounded-4 shadow-sm"><Ticket className="mx-auto mb-3 opacity-15" size={64} /> Loading coupon registry...</div>;
@@ -2047,8 +2277,8 @@ const CouponsTab = () => {
 
             {/* Table */}
             <div className="bg-white rounded-5 shadow-sm overflow-hidden border border-opacity-50">
-                <div className="table-responsive">
-                    <table className="table table-hover align-middle mb-0">
+                <div className="table-responsive coupons-table-wrap">
+                    <table className="table table-hover align-middle mb-0 coupons-table admin-mobile-card-table">
                         <thead className="bg-light border-bottom border-opacity-10 font-label">
                             <tr className="extra-small text-muted uppercase fw-bold" style={{ letterSpacing: '2px' }}>
                                 <th className="ps-5 py-4">Code</th>
@@ -2068,20 +2298,20 @@ const CouponsTab = () => {
                                 const isExpired = coupon.expiresAt && new Date(coupon.expiresAt) < new Date();
                                 return (
                                     <tr key={coupon._id} className="transition-all hover-scale-xs">
-                                        <td className="ps-5 py-4">
+                                        <td className="ps-5 py-4" data-label="Code">
                                             <span className="font-headline fw-bold text-secondary bg-primary bg-opacity-10 px-3 py-1 rounded-pill" style={{ fontSize: '14px', letterSpacing: '1px' }}>{coupon.code}</span>
                                         </td>
-                                        <td><span className="badge bg-light text-secondary border px-3 py-2 rounded-pill extra-small fw-bold font-label uppercase">{coupon.discountType}</span></td>
-                                        <td className="fw-bold text-secondary font-headline">{coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`}{coupon.maxDiscount ? <span className="d-block extra-small text-muted fw-bold">Max ₹{coupon.maxDiscount}</span> : null}</td>
-                                        <td className="fw-bold font-body">{coupon.minOrderAmount ? `₹${coupon.minOrderAmount}` : '—'}</td>
-                                        <td><span className="font-headline fw-bold">{coupon.usedCount}</span><span className="text-muted">/{coupon.usageLimit || '∞'}</span></td>
-                                        <td>{coupon.expiresAt ? <span className={`extra-small fw-bold ${isExpired ? 'text-danger' : 'text-primary'}`}>{new Date(coupon.expiresAt).toLocaleDateString()}{isExpired && <span className="d-block text-danger">EXPIRED</span>}</span> : <span className="text-muted extra-small fw-bold">Never</span>}</td>
-                                        <td>
+                                        <td data-label="Type"><span className="badge bg-light text-secondary border px-3 py-2 rounded-pill extra-small fw-bold font-label uppercase">{coupon.discountType}</span></td>
+                                        <td className="fw-bold text-secondary font-headline" data-label="Value">{coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`}{coupon.maxDiscount ? <span className="d-block extra-small text-muted fw-bold">Max ₹{coupon.maxDiscount}</span> : null}</td>
+                                        <td className="fw-bold font-body" data-label="Min Order">{coupon.minOrderAmount ? `₹${coupon.minOrderAmount}` : '—'}</td>
+                                        <td data-label="Usage"><span className="font-headline fw-bold">{coupon.usedCount}</span><span className="text-muted">/{coupon.usageLimit || '∞'}</span></td>
+                                        <td data-label="Expires">{coupon.expiresAt ? <span className={`extra-small fw-bold ${isExpired ? 'text-danger' : 'text-primary'}`}>{new Date(coupon.expiresAt).toLocaleDateString()}{isExpired && <span className="d-block text-danger">EXPIRED</span>}</span> : <span className="text-muted extra-small fw-bold">Never</span>}</td>
+                                        <td data-label="Status">
                                             <div className="form-check form-switch d-inline-block p-0">
                                                 <input className="form-check-input custom-switch border-primary" type="checkbox" checked={coupon.isActive} onChange={() => toggleActive(coupon)} style={{ cursor: 'pointer' }} />
                                             </div>
                                         </td>
-                                        <td className="text-center">
+                                        <td className="text-center" data-label="Actions">
                                             <div className="d-flex justify-content-center gap-2">
                                                 <button className="btn btn-sm btn-white border shadow-sm p-3 rounded-pill hover-bg-primary hover-text-white transition-all" onClick={() => handleOpenEdit(coupon)}><Edit size={16} className="text-primary" /></button>
                                                 <button className="btn btn-sm btn-white border shadow-sm text-danger rounded-pill p-3 hover-bg-danger hover-text-white transition-all" onClick={() => handleDelete(coupon._id)}><Trash size={16} /></button>
@@ -2121,7 +2351,7 @@ const CouponsTab = () => {
                                 </div>
                                 <div className="col-md-6">
                                     <label className="extra-small text-muted fw-bold mb-2 uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Discount Value</label>
-                                    <input type="number" className="form-control rounded-4 py-3 border-opacity-25 shadow-sm fw-bold" required placeholder={form.discountType === 'percentage' ? 'e.g. 20' : 'e.g. 100'} value={form.discountValue} onChange={e => setForm({ ...form, discountValue: e.target.value })} />
+                                    <input type="number" className="form-control rounded-4 py-3 border-opacity-25 shadow-sm fw-bold" required={!form.freeShipping} placeholder={form.discountType === 'percentage' ? 'e.g. 20' : 'e.g. 100'} value={form.discountValue} onChange={e => setForm({ ...form, discountValue: e.target.value })} />
                                 </div>
                                 <div className="col-md-6">
                                     <label className="extra-small text-muted fw-bold mb-2 uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Min Order Amount (₹)</label>
@@ -2142,6 +2372,15 @@ const CouponsTab = () => {
                                     <input type="date" className="form-control rounded-4 py-3 border-opacity-25 shadow-sm" value={form.expiresAt} onChange={e => setForm({ ...form, expiresAt: e.target.value })} />
                                 </div>
                                 <div className="col-md-6">
+                                    <label className="extra-small text-muted fw-bold mb-2 uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Delivery Benefit</label>
+                                    <div className="p-3 bg-light bg-opacity-40 rounded-4 border border-opacity-10 mt-1">
+                                        <div className="form-check form-switch d-flex align-items-center gap-4">
+                                            <input className="form-check-input border-primary shadow-none" style={{ transform: 'scale(1.3)' }} type="checkbox" checked={form.freeShipping} onChange={e => setForm({ ...form, freeShipping: e.target.checked })} />
+                                            <label className="form-check-label font-body fw-bold text-primary mb-0 small">Make delivery free with this coupon</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="col-md-6">
                                     <label className="extra-small text-muted fw-bold mb-2 uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Status</label>
                                     <div className="p-3 bg-light bg-opacity-40 rounded-4 border border-opacity-10 mt-1">
                                         <div className="form-check form-switch d-flex align-items-center gap-4">
@@ -2153,7 +2392,11 @@ const CouponsTab = () => {
                             </div>
                             <div className="d-flex gap-2 justify-content-end mt-5">
                                 <button type="button" className="btn btn-light px-5 py-3 rounded-pill border fw-bold font-label extra-small" onClick={() => { setShowModal(false); resetForm(); }}>CANCEL</button>
-                                <button type="submit" className="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-md border-0 font-label extra-small">{editCoupon ? 'UPDATE COUPON' : 'CREATE COUPON'}</button>
+                                <button type="submit" className="btn btn-primary px-5 py-3 rounded-pill fw-bold shadow-md border-0 font-label extra-small d-flex align-items-center justify-content-center gap-2" disabled={isSaving}>
+                                    {isSaving ? (
+                                        <><span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> SAVING...</>
+                                    ) : (editCoupon ? 'UPDATE COUPON' : 'CREATE COUPON')}
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -2163,12 +2406,13 @@ const CouponsTab = () => {
     );
 };
 
-const CMSContentTab = () => {
+const CMSContentTab = ({ showToast, setConfirmModal }) => {
     const [cmsData, setCmsData] = useState(null);
     const [initialCmsData, setInitialCmsData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [timerValue, setTimerValue] = useState({ hours: 0, minutes: 0 });
     const [isDirty, setIsDirty] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     const fetchCMS = async () => {
         try {
@@ -2189,18 +2433,31 @@ const CMSContentTab = () => {
     }, [cmsData, initialCmsData]);
 
     const handleSaveCMS = async () => {
+        setIsSaving(true);
         try {
             await axios.put(`${import.meta.env.VITE_API_URL}/api/cms/homepage`, cmsData);
-            alert('Settings saved successfully!');
+            showToast('Settings saved successfully!');
             fetchCMS();
-        } catch (error) { console.error('CMS save error:', error); }
+        } catch (error) {
+            console.error('CMS save error:', error);
+            showToast('Failed to save settings', 'error');
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleCancelCMS = () => {
-        if (initialCmsData) {
-            setCmsData(JSON.parse(JSON.stringify(initialCmsData)));
-            setIsDirty(false);
-        }
+        setConfirmModal({
+            show: true,
+            title: 'Discard Changes',
+            message: 'Are you sure you want to revert all unsaved changes to the storefront configuration?',
+            onConfirm: () => {
+                if (initialCmsData) {
+                    setCmsData(JSON.parse(JSON.stringify(initialCmsData)));
+                    setIsDirty(false);
+                }
+            }
+        });
     };
 
     const startFlashSale = () => {
@@ -2403,7 +2660,7 @@ const CMSContentTab = () => {
                                                                 const nhs = [...cmsData.heroSlides]; nhs[idx].bgImg = data.url; setCmsData({ ...cmsData, heroSlides: nhs });
                                                             } catch (err) {
                                                                 console.error('Upload error:', err);
-                                                                alert('Image upload failed. Please try again.');
+                                                                showToast('Image upload failed. Please try again.', 'error');
                                                             }
                                                         }} />
                                                     </label>
@@ -2717,7 +2974,7 @@ const CMSContentTab = () => {
                                                         try {
                                                             const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/cms/hero-bg`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
                                                             const ntm = [...cmsData.testimonials]; ntm[idx].img = data.url; setCmsData({ ...cmsData, testimonials: ntm });
-                                                        } catch (err) { alert('Upload failed'); }
+                                                        } catch (err) { showToast('Upload failed', 'error'); }
                                                     }} />
                                                 </label>
                                             </div>
@@ -2781,19 +3038,6 @@ const CMSContentTab = () => {
                                 <label className="extra-small text-muted fw-bold mb-2 d-block uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Return Policy</label>
                                 <textarea className="form-control rounded-4 border-opacity-25 shadow-sm" rows="3" value={cmsData?.shippingInfo?.returnPolicy || ''} onChange={(e) => setCmsData({ ...cmsData, shippingInfo: { ...(cmsData.shippingInfo || {}), returnPolicy: e.target.value } })} />
                             </div>
-                            <div className="col-12 mt-4 pt-4 border-top border-opacity-10">
-                                <p className="text-muted extra-small fw-bold m-0 mb-3 uppercase opacity-75 font-label d-flex align-items-center gap-2" style={{ letterSpacing: '1px' }}><CreditCard size={14} /> CHECKOUT PRICING — THESE VALUES CONTROL THE LIVE CHECKOUT PAGE</p>
-                            </div>
-                            <div className="col-md-6">
-                                <label className="extra-small text-muted fw-bold mb-2 d-block uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Free Shipping Threshold (₹)</label>
-                                <input type="number" className="form-control rounded-4 py-3 border-opacity-25 shadow-sm fw-bold font-headline" placeholder="e.g. 1999" value={cmsData?.freeShippingThreshold ?? 1999} onChange={(e) => setCmsData({ ...cmsData, freeShippingThreshold: Number(e.target.value) })} />
-                                <small className="text-muted extra-small mt-1 d-block">Orders above this amount get free delivery on checkout.</small>
-                            </div>
-                            <div className="col-md-6">
-                                <label className="extra-small text-muted fw-bold mb-2 d-block uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Delivery Charge (₹)</label>
-                                <input type="number" className="form-control rounded-4 py-3 border-opacity-25 shadow-sm fw-bold font-headline" placeholder="e.g. 50" value={cmsData?.deliveryCharge ?? 50} onChange={(e) => setCmsData({ ...cmsData, deliveryCharge: Number(e.target.value) })} />
-                                <small className="text-muted extra-small mt-1 d-block">Flat delivery fee for orders below the free shipping threshold.</small>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -2806,8 +3050,14 @@ const CMSContentTab = () => {
                         <span className="font-label fw-bold text-dark fs-7">Unsaved Changes</span>
                     </div>
                     <div className="d-flex align-items-center gap-2">
-                        <button className="btn btn-light rounded-pill px-4 py-2 font-label extra-small fw-bold border hover-bg-danger hover-text-white transition-all" onClick={handleCancelCMS}>Discard</button>
-                        <button className="btn btn-primary rounded-pill px-4 py-2 font-label extra-small fw-bold d-flex align-items-center gap-2 shadow-sm border-0 transition-all hover-shadow-md" onClick={handleSaveCMS}><Save size={14} /> Save</button>
+                        <button className="btn btn-light rounded-pill px-4 py-2 font-label extra-small fw-bold border hover-bg-danger hover-text-white transition-all" onClick={handleCancelCMS} disabled={isSaving}>Discard</button>
+                        <button className="btn btn-primary rounded-pill px-4 py-2 font-label extra-small fw-bold d-flex align-items-center gap-2 shadow-sm border-0 transition-all hover-shadow-md" onClick={handleSaveCMS} disabled={isSaving}>
+                            {isSaving ? (
+                                <><span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...</>
+                            ) : (
+                                <><Save size={14} /> Save Changes</>
+                            )}
+                        </button>
                     </div>
                 </div>
             )}
@@ -2815,7 +3065,7 @@ const CMSContentTab = () => {
     );
 };
 
-const HighlightsTab = () => {
+const HighlightsTab = ({ showToast, setConfirmModal }) => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -2832,15 +3082,17 @@ const HighlightsTab = () => {
 
     const toggleStatus = async (productId, field, currentVal) => {
         try {
-            // We need to send FormData because the backend uses Multer
             const formData = new FormData();
             formData.append(field, !currentVal);
 
             await axios.put(`${import.meta.env.VITE_API_URL}/api/products/${productId}`, formData);
 
-            // Optimistic Update
+            showToast(`${field} status updated`);
             setProducts(products.map(p => p._id === productId ? { ...p, [field]: !currentVal } : p));
-        } catch (error) { console.error('Toggle error:', error); }
+        } catch (error) {
+            console.error('Toggle error:', error);
+            showToast('Update failed', 'error');
+        }
     };
 
     const filtered = products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -2866,7 +3118,7 @@ const HighlightsTab = () => {
 
             <div className="card border-0 rounded-5 shadow-premium overflow-hidden">
                 <div className="table-responsive">
-                    <table className="table table-hover align-middle mb-0">
+                    <table className="table table-hover align-middle mb-0 admin-mobile-card-table">
                         <thead className="bg-light bg-opacity-50">
                             <tr>
                                 <th className="ps-4 py-4 border-0 font-label extra-small fw-bold opacity-75">PRODUCT INFO</th>
@@ -2881,7 +3133,7 @@ const HighlightsTab = () => {
                                 <tr><td colSpan="5" className="text-center py-5"><div className="spinner-border text-primary"></div></td></tr>
                             ) : filtered.map(prod => (
                                 <tr key={prod._id} className="transition-all hover-bg-light">
-                                    <td className="ps-4 py-4">
+                                    <td className="ps-4 py-4" data-label="Product">
                                         <div className="d-flex align-items-center gap-3">
                                             <div className="bg-light rounded-4 p-1" style={{ width: 48, height: 48 }}>
                                                 <img src={prod.img || prod.image || "/images/reference/product-thumb-1.png"} className="w-100 h-100 object-fit-cover rounded-3" alt="" />
@@ -2889,10 +3141,10 @@ const HighlightsTab = () => {
                                             <div className="fw-bold font-headline">{prod.name}</div>
                                         </div>
                                     </td>
-                                    <td className="py-4">
+                                    <td className="py-4" data-label="Category">
                                         <span className="badge bg-light text-secondary border px-2 py-1 rounded-pill extra-small fw-bold font-label uppercase" style={{ letterSpacing: '0.5px' }}>{prod.category}</span>
                                     </td>
-                                    <td className="text-center">
+                                    <td className="text-center" data-label="Best Seller">
                                         <div className="form-check form-switch d-inline-block p-0">
                                             <input
                                                 className="form-check-input custom-switch border-primary"
@@ -2902,7 +3154,7 @@ const HighlightsTab = () => {
                                             />
                                         </div>
                                     </td>
-                                    <td className="text-center">
+                                    <td className="text-center" data-label="Featured">
                                         <div className="form-check form-switch d-inline-block p-0">
                                             <input
                                                 className="form-check-input custom-switch border-secondary"
@@ -2912,7 +3164,7 @@ const HighlightsTab = () => {
                                             />
                                         </div>
                                     </td>
-                                    <td className="text-center">
+                                    <td className="text-center" data-label="Flash Sale">
                                         <div className="form-check form-switch d-inline-block p-0">
                                             <input
                                                 className="form-check-input custom-switch border-danger"
@@ -2932,7 +3184,7 @@ const HighlightsTab = () => {
     );
 };
 
-const BulkUploadTab = ({ onComplete }) => {
+const BulkUploadTab = ({ onComplete, showToast, setConfirmModal }) => {
     const [rows, setRows] = useState([
         { name: '', description: '', price: '', stock: '', category: 'DATES', image: '' }
     ]);
@@ -2964,18 +3216,18 @@ const BulkUploadTab = ({ onComplete }) => {
 
     const handleBulkSave = async () => {
         const isValid = rows.every(r => r.name && r.price && r.category);
-        if (!isValid) return alert('Please fill in Name, Price, and Category for all rows.');
+        if (!isValid) return showToast('Please fill in Name, Price, and Category for all rows.', 'error');
 
         try {
             setLoading(true);
             await axios.post(`${import.meta.env.VITE_API_URL}/api/products/bulk`, { products: rows }, {
                 headers: { Authorization: `Bearer ${JSON.parse(localStorage.getItem('userInfo')).token}` }
             });
-            alert('Bulk products uploaded successfully!');
+            showToast('Bulk products uploaded successfully!');
             setRows([{ name: '', description: '', price: '', stock: '', category: 'DATES', image: '' }]);
             if (onComplete) onComplete();
         } catch (err) {
-            alert('Upload failed: ' + (err.response?.data?.message || err.message));
+            showToast('Upload failed: ' + (err.response?.data?.message || err.message), 'error');
         } finally {
             setLoading(false);
         }
@@ -2998,7 +3250,7 @@ const BulkUploadTab = ({ onComplete }) => {
 
             <div className="card border-0 rounded-5 shadow-premium overflow-hidden border border-opacity-10">
                 <div className="table-responsive">
-                    <table className="table table-hover align-middle mb-0">
+                    <table className="table table-hover align-middle mb-0 admin-mobile-card-table bulk-mobile-card-table">
                         <thead className="bg-light bg-opacity-50">
                             <tr className="font-label extra-small fw-bold opacity-75 uppercase" style={{ letterSpacing: '1px' }}>
                                 <th className="ps-4">Asset Name</th>
@@ -3012,24 +3264,24 @@ const BulkUploadTab = ({ onComplete }) => {
                         <tbody>
                             {rows.map((row, idx) => (
                                 <tr key={idx} className="transition-all hover-bg-light">
-                                    <td className="ps-4 py-3" style={{ minWidth: '250px' }}>
+                                    <td className="ps-4 py-3" style={{ minWidth: '250px' }} data-label="Asset Name">
                                         <input type="text" className="form-control form-control-sm rounded-4 border-opacity-25 py-2 fw-bold" placeholder="Egyptian Medjool..." value={row.name} onChange={(e) => updateRow(idx, 'name', e.target.value)} />
                                     </td>
-                                    <td style={{ minWidth: '180px' }}>
+                                    <td style={{ minWidth: '180px' }} data-label="Category">
                                         <select className="form-select form-select-sm rounded-4 border-opacity-25 py-2 fw-bold" value={row.category} onChange={(e) => updateRow(idx, 'category', e.target.value)}>
                                             {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
                                         </select>
                                     </td>
-                                    <td style={{ width: '120px' }}>
+                                    <td style={{ width: '120px' }} data-label="Price">
                                         <input type="number" className="form-control form-control-sm rounded-4 border-opacity-25 py-2 fw-bold text-secondary" placeholder="999" value={row.price} onChange={(e) => updateRow(idx, 'price', e.target.value)} />
                                     </td>
-                                    <td style={{ width: '120px' }}>
+                                    <td style={{ width: '120px' }} data-label="Stock">
                                         <input type="number" className="form-control form-control-sm rounded-4 border-opacity-25 py-2 fw-bold" placeholder="50" value={row.stock} onChange={(e) => updateRow(idx, 'stock', e.target.value)} />
                                     </td>
-                                    <td>
+                                    <td data-label="Image URL">
                                         <input type="text" className="form-control form-control-sm rounded-4 border-opacity-25 py-2 extra-small text-muted" placeholder="https://..." value={row.image} onChange={(e) => updateRow(idx, 'image', e.target.value)} />
                                     </td>
-                                    <td className="text-center">
+                                    <td className="text-center" data-label="Control">
                                         <button className="btn btn-sm btn-white border text-danger rounded-circle p-2 shadow-sm transition-all hover-bg-danger hover-text-white" onClick={() => removeRow(idx)}>
                                             <Trash size={16} />
                                         </button>

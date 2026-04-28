@@ -7,6 +7,7 @@ import Gallery from './Gallery.js';
 import HomePage from './HomePage.js';
 import Coupon from './Coupon.js';
 import Page from './Page.js';
+import DeliveryZone from './DeliveryZone.js';
 
 export {
     User,
@@ -17,5 +18,6 @@ export {
     Gallery,
     HomePage,
     Coupon,
-    Page
+    Page,
+    DeliveryZone
 };

@@ -131,7 +131,7 @@ const Cart = () => {
                                 )}
                             </div>
 
-                            <div 
+                            <div
                                 className="border-top pt-4 d-flex justify-content-between align-items-center mb-5 border-gold-subtle summary-total-clickable"
                                 onClick={() => setShowDetails(!showDetails)}
                             >
@@ -157,11 +157,11 @@ const Cart = () => {
                                     <ShieldCheck size={16} className="text-secondary" />
                                     <span className="font-heading fw-bold tracking-widest fs-10">SECURE CHECKOUT</span>
                                 </div>
-                                <div className="payment-support-icons d-flex justify-content-center gap-3 opacity-40">
+                                {/* <div className="payment-support-icons d-flex justify-content-center gap-3 opacity-40">
                                     <img src="/images/reference/payment-visa.png" alt="Visa" height="18" />
                                     <img src="/images/reference/payment-mastercard.png" alt="Mastercard" height="18" />
                                     <img src="/images/reference/payment-paypal.png" alt="Paypal" height="18" />
-                                </div>
+                                </div> */}
                             </div>
                         </div>
                     </div>

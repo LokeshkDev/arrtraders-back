@@ -18,11 +18,30 @@ const parseJson = (val) => {
     return val;
 };
 
+const isValidAddress = (address) => {
+    return !!(
+        address &&
+        typeof address === 'object' &&
+        address._id &&
+        address.name &&
+        address.line1 &&
+        address.city &&
+        address.state &&
+        address.pincode &&
+        address.phone
+    );
+};
+
+const normalizeAddresses = (addresses) => {
+    const parsed = parseJson(addresses);
+    return Array.isArray(parsed) ? parsed.filter(isValidAddress) : [];
+};
+
 const formatResponse = (data) => {
     if (!data) return null;
     const json = data.toJSON ? data.toJSON() : data;
     const formatted = { ...json, _id: json.id || json._id };
-    if (formatted.addresses) formatted.addresses = parseJson(formatted.addresses);
+    if (formatted.addresses) formatted.addresses = normalizeAddresses(formatted.addresses);
     if (formatted.wishlist) formatted.wishlist = parseJson(formatted.wishlist);
     return formatted;
 };
@@ -184,6 +203,12 @@ export const getUserProfile = async (req, res) => {
             // Manual population of wishlist
             const userData = user.toJSON();
             const wishlistIds = parseJson(userData.wishlist) || [];
+            const cleanedAddresses = normalizeAddresses(userData.addresses);
+
+            if (JSON.stringify(parseJson(userData.addresses) || []) !== JSON.stringify(cleanedAddresses)) {
+                user.addresses = cleanedAddresses;
+                await user.save();
+            }
             
             let wishlist = [];
             if (wishlistIds.length > 0) {
@@ -250,8 +275,12 @@ export const addAddress = async (req, res) => {
         if (!user) return res.status(404).json({ message: 'User not found' });
 
         const { label, name, phone, line1, line2, city, state, pincode, isDefault } = req.body;
+
+        if (!name || !phone || !line1 || !city || !state || !pincode) {
+            return res.status(400).json({ message: 'Please fill all required address fields' });
+        }
         
-        let addresses = [...(user.addresses || [])];
+        let addresses = normalizeAddresses(user.addresses);
 
         if (isDefault) {
             addresses.forEach(a => a.isDefault = false);
@@ -262,14 +291,21 @@ export const addAddress = async (req, res) => {
 
         const newAddress = { 
             _id: generateMongoId(), 
-            label, name, phone, line1, line2, city, state, pincode, 
+            label: label || 'Home',
+            name: name.trim(),
+            phone: String(phone).trim(),
+            line1: line1.trim(),
+            line2: line2 ? line2.trim() : '',
+            city: city.trim(),
+            state: state.trim(),
+            pincode: String(pincode).trim(),
             isDefault: isDefault || addresses.length === 0 
         };
 
         addresses.push(newAddress);
         user.addresses = addresses;
         await user.save();
-        res.status(201).json(user.addresses);
+        res.status(201).json(normalizeAddresses(user.addresses));
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -282,7 +318,7 @@ export const updateAddress = async (req, res) => {
         const user = await User.findByPk(req.user.id || req.user._id);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        let addresses = [...(user.addresses || [])];
+        let addresses = normalizeAddresses(user.addresses);
         const addressIdx = addresses.findIndex(a => a._id === req.params.addressId);
         
         if (addressIdx === -1) return res.status(404).json({ message: 'Address not found' });
@@ -294,7 +330,7 @@ export const updateAddress = async (req, res) => {
         addresses[addressIdx] = { ...addresses[addressIdx], ...req.body };
         user.addresses = addresses;
         await user.save();
-        res.json(user.addresses);
+        res.json(normalizeAddresses(user.addresses));
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -307,9 +343,9 @@ export const deleteAddress = async (req, res) => {
         const user = await User.findByPk(req.user.id || req.user._id);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        user.addresses = (user.addresses || []).filter(a => a._id !== req.params.addressId);
+        user.addresses = normalizeAddresses(user.addresses).filter(a => a._id !== req.params.addressId);
         await user.save();
-        res.json(user.addresses);
+        res.json(normalizeAddresses(user.addresses));
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

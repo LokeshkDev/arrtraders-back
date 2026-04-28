@@ -17,11 +17,13 @@ import cmsRoutes from './routes/cmsRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import couponRoutes from './routes/couponRoutes.js';
+import deliveryRoutes from './routes/deliveryRoutes.js';
 import './models/sql/index.js'; // Ensure models are registered for sync
 
 dotenv.config();
 
 // Connect to Database
+// Connect to Database (SQL)
 connectMySQL();
 
 // Initialize Firebase Admin
@@ -87,6 +89,7 @@ app.use('/api/cms', cmsRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/coupons', couponRoutes);
+app.use('/api/delivery', deliveryRoutes);
 
 // Root route
 app.get('/', (req, res) => {
