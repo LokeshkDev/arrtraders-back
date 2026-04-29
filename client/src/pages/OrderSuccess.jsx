@@ -1,14 +1,59 @@
-import React, { useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { CheckCircle2, Package, Calendar, ArrowRight, Home, ShoppingBag } from 'lucide-react';
+import React, { useContext, useEffect, useState } from 'react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import axios from 'axios';
+import { CheckCircle2, Package, Calendar, ArrowRight, Home, ShoppingBag, Loader2 } from 'lucide-react';
+import { CartContext } from '../context/CartContext';
 import './OrderSuccess.css';
 
 const OrderSuccess = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const { clearCart } = useContext(CartContext);
+    const [verifying, setVerifying] = useState(!!searchParams.get('cashfree_order_id'));
 
     useEffect(() => {
         window.scrollTo(0, 0);
     }, []);
+
+    useEffect(() => {
+        const verifyPayment = async () => {
+            const cashfreeOrderId = searchParams.get('cashfree_order_id');
+            if (!cashfreeOrderId) return;
+
+            try {
+                const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/orders/${id}/verify-payment`, {
+                    cashfreeOrderId
+                });
+
+                if (!data.paid) {
+                    navigate('/order-failure', { replace: true });
+                    return;
+                }
+
+                clearCart();
+            } catch (error) {
+                console.error('Payment verification failed:', error);
+                navigate('/order-failure', { replace: true });
+            } finally {
+                setVerifying(false);
+            }
+        };
+
+        verifyPayment();
+    }, [clearCart, id, navigate, searchParams]);
+
+    if (verifying) {
+        return (
+            <div className="order-success-page min-vh-100 d-flex align-items-center py-5">
+                <div className="container text-center">
+                    <Loader2 size={48} className="text-secondary animate-spin mb-4" />
+                    <h2 className="font-headline text-primary mb-2">Verifying Payment</h2>
+                    <p className="font-body text-muted mb-0">Please wait while we confirm your payment.</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="order-success-page min-vh-100 d-flex align-items-center py-5">

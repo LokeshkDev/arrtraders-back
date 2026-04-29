@@ -33,7 +33,7 @@
 
 .location-info {
     display: flex;
-    flex-column: column;
+    flex-direction: column;
     line-height: 1.2;
 }
 
@@ -89,8 +89,15 @@
 }
 
 @keyframes modalSlideUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 .modal-header-premium {
@@ -344,43 +351,117 @@
 @media (max-width: 991px) {
     .location-trigger-btn {
         min-width: unset;
-        padding: 4px 8px;
-    }
-    .location-label {
-        display: none;
-    }
-    .location-value {
-        font-size: 11px;
-        max-width: 60px;
+        padding: 6px;
+        border: none;
+        background: transparent;
+        gap: 0;
     }
 
+    .location-trigger-btn .pin-icon {
+        color: var(--secondary);
+    }
+
+    .location-trigger-btn.mobile-active .pin-icon {
+        color: var(--primary);
+    }
+
+    /* Hide the text and arrow on mobile - icon only */
+    .location-info-desktop {
+        display: none !important;
+    }
+
+    /* Mobile inline expandable panel */
+    .mobile-location-panel {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        left: -200px;
+        z-index: 1050;
+        padding-top: 8px;
+    }
+
+    .mobile-location-panel-inner {
+        background: #fff;
+        border: 1px solid rgba(212, 175, 55, 0.15);
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        animation: mobilePanelSlide 0.2s ease-out;
+        min-width: 320px;
+    }
+
+    @keyframes mobilePanelSlide {
+        from {
+            opacity: 0;
+            transform: translateY(-8px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .mobile-loc-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--primary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .mobile-loc-close {
+        background: none;
+        border: none;
+        color: var(--secondary);
+        padding: 2px;
+        opacity: 0.6;
+    }
+
+    .mobile-location-panel .detect-location-btn {
+        padding: 10px;
+        font-size: 13px;
+        border-radius: 10px;
+    }
+
+    .mobile-location-panel .modal-divider {
+        margin: 14px 0;
+    }
+
+    .mobile-location-panel .pincode-input-wrapper input {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+
+    .mobile-location-panel .pincode-submit {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+
+    .mobile-location-panel .current-status-card {
+        margin-top: 12px;
+        padding: 10px;
+        border-radius: 10px;
+    }
+
+    .mobile-location-panel .pincode-form {
+        margin-bottom: 0;
+    }
+
+    /* Hide desktop modal on mobile */
     .location-modal-overlay {
-        align-items: flex-end;
-        justify-content: stretch;
-        padding: 0;
-    }
-
-    .location-modal-content {
-        width: 100%;
-        max-width: 100%;
-        border-radius: 16px 16px 0 0;
-        max-height: 86dvh;
-        min-height: 52dvh;
-        animation: modalSheetUp 0.24s ease-out;
-    }
-
-    .modal-header-premium {
-        position: sticky;
-        top: 0;
-        z-index: 2;
-    }
-
-    .modal-body-premium {
-        padding-bottom: calc(16px + env(safe-area-inset-bottom));
+        display: none;
     }
 }
 
 @keyframes modalSheetUp {
-    from { transform: translateY(20px); opacity: 0.9; }
-    to { transform: translateY(0); opacity: 1; }
+    from {
+        transform: translateY(20px);
+        opacity: 0.9;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }

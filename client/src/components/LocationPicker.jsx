@@ -6,9 +6,17 @@ import './LocationPicker.css';
 const LocationPicker = () => {
     const { location, setLocation, serviceable, loading, detectLocation } = useLocation();
     const [showModal, setShowModal] = useState(false);
+    const [mobileExpanded, setMobileExpanded] = useState(false);
     const [pincode, setPincode] = useState('');
     const [error, setError] = useState('');
     const [servicePopup, setServicePopup] = useState(null);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 992);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     useEffect(() => {
         const prevBody = document.body.style.overflow;
@@ -43,6 +51,7 @@ const LocationPicker = () => {
             return;
         }
         setShowModal(false);
+        setMobileExpanded(false);
     };
 
     const handleAutoDetect = async () => {
@@ -52,25 +61,101 @@ const LocationPicker = () => {
             return;
         }
         setShowModal(false);
+        setMobileExpanded(false);
     };
+
+    const handleTriggerClick = () => {
+        if (isMobile) {
+            setMobileExpanded(!mobileExpanded);
+        } else {
+            setShowModal(true);
+        }
+    };
+
+    /* Shared inline location content for mobile panel + desktop modal body */
+    const LocationContent = () => (
+        <>
+            <button className="detect-location-btn" onClick={handleAutoDetect} disabled={loading}>
+                <Navigation size={16} />
+                <span>{loading ? 'Detecting...' : 'Use current location'}</span>
+            </button>
+
+            <div className="modal-divider">
+                <span>or enter pincode</span>
+            </div>
+
+            <form onSubmit={handleManualSubmit} className="pincode-form">
+                <div className="pincode-input-wrapper">
+                    <input
+                        type="text"
+                        placeholder="Enter 6-digit pincode"
+                        maxLength="6"
+                        value={pincode}
+                        onChange={(e) => setPincode(e.target.value.replace(/\D/g, ''))}
+                        autoFocus={mobileExpanded}
+                    />
+                    <button type="submit" className="pincode-submit">Apply</button>
+                </div>
+                {error && <p className="error-text"><AlertCircle size={14} /> {error}</p>}
+            </form>
+
+            {location && (
+                <div className={`current-status-card ${serviceable ? 'serviceable' : 'not-serviceable'}`}>
+                    {serviceable ? (
+                        <>
+                            <CheckCircle size={18} className="status-icon" />
+                            <div>
+                                <p className="status-title">Serviceable at {location.pincode}</p>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <AlertCircle size={18} className="status-icon" />
+                            <div>
+                                <p className="status-title">Not Serviceable</p>
+                                <p className="status-details">Sorry, we don't deliver to {location.pincode} yet.</p>
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
+        </>
+    );
 
     return (
         <div className="location-picker-container">
+            {/* Desktop: full trigger button / Mobile: icon only */}
             <button
-                className={`location-trigger-btn ${!serviceable && location ? 'not-serviceable' : ''}`}
-                onClick={() => setShowModal(true)}
+                className={`location-trigger-btn ${!serviceable && location ? 'not-serviceable' : ''} ${mobileExpanded ? 'mobile-active' : ''}`}
+                onClick={handleTriggerClick}
             >
                 <MapPin size={18} className="pin-icon" />
-                <div className="location-info">
+                <div className="location-info location-info-desktop">
                     <span className="location-label">Deliver to</span>
                     <span className="location-value">
                         {location ? (location.pincode || location.city || 'Select Location') : 'Select Location'}
                     </span>
                 </div>
-                <ChevronDown size={14} className="arrow-icon" />
+                <ChevronDown size={14} className="arrow-icon location-info-desktop" />
             </button>
 
-            {showModal && (
+            {/* Mobile: Inline expandable panel (show/hide like search) */}
+            {mobileExpanded && isMobile && (
+                <div className="mobile-location-panel d-lg-none">
+                    <div className="mobile-location-panel-inner">
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                            <span className="mobile-loc-title">Delivery Location</span>
+                            <button className="mobile-loc-close" onClick={() => setMobileExpanded(false)}>
+                                <X size={16} />
+                            </button>
+                        </div>
+                        <LocationContent />
+                    </div>
+                </div>
+            )}
+
+            {/* Desktop: Modal popup (unchanged) */}
+            {showModal && !isMobile && (
                 <div className="location-modal-overlay" onClick={() => setShowModal(false)}>
                     <div className="location-modal-content shadow-premium" onClick={e => e.stopPropagation()}>
                         <div className="modal-header-premium">
@@ -79,56 +164,11 @@ const LocationPicker = () => {
                                 <X size={20} />
                             </button>
                         </div>
-
                         <div className="modal-body-premium">
                             <p className="modal-description">
                                 Select a delivery location to see product availability.
                             </p>
-
-                            <button className="detect-location-btn" onClick={handleAutoDetect} disabled={loading}>
-                                <Navigation size={18} />
-                                <span>{loading ? 'Detecting...' : 'Use current location'}</span>
-                            </button>
-
-                            <div className="modal-divider">
-                                <span>or enter a pincode</span>
-                            </div>
-
-                            <form onSubmit={handleManualSubmit} className="pincode-form">
-                                <div className="pincode-input-wrapper">
-                                    <input
-                                        type="text"
-                                        placeholder="Enter 6-digit pincode"
-                                        maxLength="6"
-                                        value={pincode}
-                                        onChange={(e) => setPincode(e.target.value.replace(/\D/g, ''))}
-                                    />
-                                    <button type="submit" className="pincode-submit">Apply</button>
-                                </div>
-                                {error && <p className="error-text"><AlertCircle size={14} /> {error}</p>}
-                            </form>
-
-                            {location && (
-                                <div className={`current-status-card ${serviceable ? 'serviceable' : 'not-serviceable'}`}>
-                                    {serviceable ? (
-                                        <>
-                                            <CheckCircle size={18} className="status-icon" />
-                                            <div>
-                                                <p className="status-title">Serviceable at {location.pincode}</p>
-                                                {/* <p className="status-details">Delivery Charge: ₹{location.deliveryCharge}</p> */}
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <AlertCircle size={18} className="status-icon" />
-                                            <div>
-                                                <p className="status-title">Not Serviceable</p>
-                                                <p className="status-details">Sorry, we don't deliver to {location.pincode} yet.</p>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            )}
+                            <LocationContent />
                         </div>
                     </div>
                 </div>

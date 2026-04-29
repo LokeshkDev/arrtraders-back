@@ -408,7 +408,27 @@
     }
 
     .profile-header-premium {
+        display: flex !important;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding-bottom: 0.75rem !important;
+        margin-bottom: 1rem !important;
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .profile-header-premium > div > .font-label,
+    .profile-header-premium h1 {
         display: none !important;
+    }
+
+    .profile-header-premium > div > .d-flex {
+        margin-top: 0 !important;
+    }
+
+    .profile-header-premium .btn {
+        padding: 0.4rem 1rem !important;
+        font-size: 11px !important;
     }
 
     .prof-side-anchor {

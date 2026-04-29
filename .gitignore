@@ -41,6 +41,12 @@ yarn-debug.log*
 yarn-error.log*
 server/logs/
 
+# Test & Debug Scripts
+scratch/
+server/test_*.js
+server/test_*.json
+
 # Local Storage/Uploads (Optional - remove if you want to track images)
 # server/uploads/
 # server/images/
+

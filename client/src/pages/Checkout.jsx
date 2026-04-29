@@ -254,6 +254,52 @@ const Checkout = () => {
         setCouponError('');
     };
 
+    const loadCashfreeSdk = () => {
+        return new Promise((resolve, reject) => {
+            if (window.Cashfree) {
+                resolve(window.Cashfree);
+                return;
+            }
+
+            const existingScript = document.querySelector('script[src="https://sdk.cashfree.com/js/v3/cashfree.js"]');
+            if (existingScript) {
+                existingScript.addEventListener('load', () => resolve(window.Cashfree), { once: true });
+                existingScript.addEventListener('error', () => reject(new Error('Failed to load Cashfree SDK')), { once: true });
+                // If script already loaded but Cashfree not yet on window, wait a bit
+                setTimeout(() => {
+                    if (window.Cashfree) resolve(window.Cashfree);
+                    else reject(new Error('Cashfree SDK timed out'));
+                }, 5000);
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
+            script.async = true;
+            
+            const timeout = setTimeout(() => {
+                reject(new Error('Cashfree SDK load timed out'));
+            }, 10000);
+
+            script.onload = () => {
+                clearTimeout(timeout);
+                // Small delay to ensure Cashfree is initialized on window
+                setTimeout(() => {
+                    if (window.Cashfree) {
+                        resolve(window.Cashfree);
+                    } else {
+                        reject(new Error('Cashfree SDK loaded but not initialized'));
+                    }
+                }, 200);
+            };
+            script.onerror = () => {
+                clearTimeout(timeout);
+                reject(new Error('Failed to load Cashfree SDK script'));
+            };
+            document.body.appendChild(script);
+        });
+    };
+
     const handlePlaceOrder = async () => {
         if (!selectedAddress) return alert('Please select a delivery address');
 
@@ -279,12 +325,48 @@ const Checkout = () => {
                 couponCode: couponApplied?.code || null
             };
 
+            console.log('[CHECKOUT] Creating order with method:', paymentMethod);
             const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/orders`, orderData);
+            console.log('[CHECKOUT] Order created:', data._id, 'Payment Session:', data.paymentSessionId ? 'YES' : 'NO');
             orderPlacedRef.current = true;
+
+            if (paymentMethod === 'CASHFREE') {
+                if (!data.paymentSessionId) {
+                    console.error('[CHECKOUT] No paymentSessionId in response');
+                    navigate('/order-failure');
+                    return;
+                }
+
+                try {
+                    console.log('[CHECKOUT] Loading Cashfree SDK...');
+                    const Cashfree = await loadCashfreeSdk();
+                    console.log('[CHECKOUT] Cashfree SDK loaded, mode:', data.cashfreeMode || 'sandbox');
+                    
+                    const cashfree = Cashfree({ mode: data.cashfreeMode || 'sandbox' });
+                    console.log('[CHECKOUT] Initiating checkout redirect...');
+                    
+                    const result = await cashfree.checkout({
+                        paymentSessionId: data.paymentSessionId,
+                        redirectTarget: '_self'
+                    });
+                    
+                    // If checkout returns (redirect didn't happen), handle the result
+                    if (result?.error) {
+                        console.error('[CHECKOUT] Cashfree checkout error:', result.error);
+                        navigate('/order-failure');
+                    }
+                } catch (sdkError) {
+                    console.error('[CHECKOUT] Cashfree SDK Error:', sdkError);
+                    navigate('/order-failure');
+                }
+                setLoading(false);
+                return;
+            }
+
             clearCart();
             navigate(`/order-success/${data._id}`);
         } catch (error) {
-            console.error('Order Error:', error);
+            console.error('Order Error:', error?.response?.data || error);
             navigate('/order-failure');
         } finally {
             setLoading(false);
@@ -527,15 +609,18 @@ const Checkout = () => {
                                         <Truck size={32} className="text-secondary opacity-25" />
                                     </div>
 
-                                    <div className="check-pay-card disabled-luxury p-4 d-flex align-items-center gap-4">
-                                        <div className="flex-shrink-0 opacity-40">
-                                            <ShieldCheck size={20} className="text-muted" />
+                                    <div
+                                        className={`check-pay-card luxury-card p-4 d-flex align-items-center gap-4 pointer transition-all ${paymentMethod === 'CASHFREE' ? 'selected' : ''}`}
+                                        onClick={() => setPaymentMethod('CASHFREE')}
+                                    >
+                                        <div className={`premium-radio-input ${paymentMethod === 'CASHFREE' ? 'active' : ''}`}>
+                                            <div className="pay-check-inner"></div>
                                         </div>
                                         <div className="flex-grow-1">
-                                            <div className="fw-bold font-headline text-muted fs-5">Online Transfer</div>
-                                            <div className="extra-small text-secondary font-heading tracking-widest fw-bold mt-1 uppercase">Coming Soon</div>
+                                            <div className="fw-bold font-headline text-primary fs-5">Online Payment</div>
+                                            <div className="small text-muted font-body">Pay securely with UPI, cards, net banking, or wallets.</div>
                                         </div>
-                                        <CreditCard size={32} className="text-muted opacity-40" />
+                                        <CreditCard size={32} className="text-secondary opacity-25" />
                                     </div>
                                 </div>
                                 <div className="d-flex flex-column flex-md-row gap-3">

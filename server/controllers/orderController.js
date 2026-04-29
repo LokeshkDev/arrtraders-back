@@ -1,6 +1,8 @@
 import Order from '../models/sql/Order.js';
 import User from '../models/sql/User.js';
 import Coupon from '../models/sql/Coupon.js';
+import { DataTypes } from 'sequelize';
+import { createCashfreeOrder, getCashfreeMode, getCashfreeOrder } from '../utils/cashfree.js';
 
 // Helper to format ID for responses and parse JSON fields
 const parseJson = (val) => {
@@ -39,6 +41,84 @@ const generateMongoId = () => {
     }).toLowerCase();
 };
 
+export const ensureOrderPaymentSchema = async () => {
+    const queryInterface = Order.sequelize.getQueryInterface();
+    const table = await queryInterface.describeTable(Order.getTableName());
+
+    const columns = {
+        cashfreeOrderId: {
+            type: DataTypes.STRING(100),
+            allowNull: true
+        },
+        cashfreePaymentSessionId: {
+            type: DataTypes.TEXT,
+            allowNull: true
+        },
+        paymentStatus: {
+            type: DataTypes.STRING(50),
+            allowNull: false,
+            defaultValue: 'PENDING'
+        },
+        paymentDetails: {
+            type: DataTypes.JSON,
+            allowNull: true
+        }
+    };
+
+    for (const [name, definition] of Object.entries(columns)) {
+        if (!table[name]) {
+            await queryInterface.addColumn(Order.getTableName(), name, definition);
+        }
+    }
+};
+
+const getClientUrl = () => {
+    return process.env.CLIENT_URL || process.env.FRONTEND_URL || process.env.ALLOWED_ORIGINS?.split(',')[0] || 'http://localhost:5173';
+};
+
+const normalizePhone = (phone) => {
+    const digits = String(phone || '').replace(/\D/g, '');
+    const last10 = digits.slice(-10);
+    if (!last10 || last10.length < 10) return '+919999999999';
+    return `+91${last10}`;
+};
+
+const formatAmount = (amount) => {
+    return Math.max(1, Math.round(Number(amount || 0) * 100) / 100);
+};
+
+const buildCashfreePayload = (order, user) => {
+    const address = parseJson(order.shippingAddress) || {};
+    const returnUrl = `${getClientUrl().replace(/\/$/, '')}/order-success/${order.id}?cashfree_order_id={order_id}`;
+    const notifyUrl = process.env.CASHFREE_NOTIFY_URL;
+
+    return {
+        order_id: order.id,
+        order_amount: formatAmount(order.totalPrice),
+        order_currency: 'INR',
+        customer_details: {
+            customer_id: String(user.id || user._id || order.userId),
+            customer_name: address.name || user.name || 'Customer',
+            customer_email: user.email || undefined,
+            customer_phone: normalizePhone(address.phone || user.phone)
+        },
+        order_meta: {
+            return_url: returnUrl,
+            ...(notifyUrl ? { notify_url: notifyUrl } : {})
+        },
+        order_note: `AR Rahman order ${order.id}`
+    };
+};
+
+const incrementCouponUsage = async (couponCode) => {
+    if (!couponCode) return;
+    try {
+        await Coupon.increment('usedCount', { by: 1, where: { code: couponCode.toUpperCase() } });
+    } catch (e) {
+        console.error('Coupon usage increment error:', e.message);
+    }
+};
+
 // @desc    Create new order
 // @route   POST /api/orders
 export const createOrder = async (req, res) => {
@@ -49,7 +129,7 @@ export const createOrder = async (req, res) => {
             return res.status(400).json({ message: 'No order items' });
         }
 
-        const order = await Order.create({
+        const orderData = {
             id: generateMongoId(),
             userId: req.user.id || req.user._id,
             orderItems,
@@ -60,18 +140,99 @@ export const createOrder = async (req, res) => {
             discountAmount,
             totalPrice,
             couponCode: couponCode || null,
-        });
+            paymentStatus: paymentMethod === 'COD' ? 'COD' : 'PENDING',
+        };
 
-        // Increment coupon usage if a coupon was used
-        if (couponCode) {
+        console.log('[DEBUG] Attempting to create order with data:', JSON.stringify(orderData, null, 2));
+        
+        const order = await Order.create(orderData);
+
+        if (paymentMethod === 'CASHFREE') {
+            let cashfreeOrder;
+
             try {
-                await Coupon.increment('usedCount', { by: 1, where: { code: couponCode.toUpperCase() } });
-            } catch (e) {
-                console.error('Coupon usage increment error:', e.message);
+                cashfreeOrder = await createCashfreeOrder(
+                    buildCashfreePayload(order, req.user),
+                    order.id
+                );
+            } catch (error) {
+                await order.destroy();
+                throw error;
             }
+
+            order.cashfreeOrderId = cashfreeOrder.order_id;
+            order.cashfreePaymentSessionId = cashfreeOrder.payment_session_id;
+            order.paymentDetails = cashfreeOrder;
+            await order.save();
+
+            return res.status(201).json({
+                ...formatResponse(order),
+                paymentSessionId: cashfreeOrder.payment_session_id,
+                cashfreeOrderId: cashfreeOrder.order_id,
+                cashfreeMode: getCashfreeMode()
+            });
         }
 
+        await incrementCouponUsage(couponCode);
+
         res.status(201).json(formatResponse(order));
+    } catch (error) {
+        console.error('[ORDER CREATE ERROR]:', error);
+        res.status(500).json({ 
+            message: error.message,
+            stack: process.env.NODE_ENV === 'production' ? null : error.stack
+        });
+    }
+};
+
+// @desc    Verify Cashfree payment and mark order paid
+// @route   POST /api/orders/:id/verify-payment
+export const verifyCashfreePayment = async (req, res) => {
+    try {
+        await ensureOrderPaymentSchema();
+        const order = await Order.findByPk(req.params.id);
+
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        if ((req.user.id || req.user._id) !== order.userId && !req.user.isAdmin) {
+            return res.status(403).json({ message: 'Not authorized to verify this order' });
+        }
+
+        if (order.paymentMethod !== 'CASHFREE') {
+            return res.json(formatResponse(order));
+        }
+
+        const expectedCashfreeOrderId = order.cashfreeOrderId || order.id;
+        const requestedCashfreeOrderId = req.body.cashfreeOrderId;
+
+        if (requestedCashfreeOrderId && requestedCashfreeOrderId !== expectedCashfreeOrderId) {
+            return res.status(400).json({ message: 'Payment verification order mismatch' });
+        }
+
+        const cashfreeOrderId = expectedCashfreeOrderId;
+        const cashfreeOrder = await getCashfreeOrder(cashfreeOrderId);
+        const isPaid = cashfreeOrder.order_status === 'PAID';
+
+        order.cashfreeOrderId = cashfreeOrder.order_id || order.cashfreeOrderId;
+        order.paymentStatus = cashfreeOrder.order_status || order.paymentStatus;
+        order.paymentDetails = cashfreeOrder;
+
+        if (isPaid && !order.isPaid) {
+            order.isPaid = true;
+            order.paidAt = new Date();
+            order.status = 'Confirmed';
+            await incrementCouponUsage(order.couponCode);
+        }
+
+        await order.save();
+
+        res.json({
+            ...formatResponse(order),
+            paid: order.isPaid,
+            paymentStatus: order.paymentStatus
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -81,6 +242,7 @@ export const createOrder = async (req, res) => {
 // @route   GET /api/orders/myorders
 export const getMyOrders = async (req, res) => {
     try {
+        await ensureOrderPaymentSchema();
         const orders = await Order.findAll({ 
             where: { userId: req.user.id || req.user._id },
             order: [['createdAt', 'DESC']]
@@ -95,6 +257,7 @@ export const getMyOrders = async (req, res) => {
 // @route   GET /api/orders/:id
 export const getOrderById = async (req, res) => {
     try {
+        await ensureOrderPaymentSchema();
         const order = await Order.findByPk(req.params.id, {
             include: [{ model: User, as: 'user', attributes: ['id', 'name', 'email'] }]
         });
@@ -112,6 +275,7 @@ export const getOrderById = async (req, res) => {
 // @route   GET /api/orders
 export const getOrders = async (req, res) => {
     try {
+        await ensureOrderPaymentSchema();
         const orders = await Order.findAll({
             include: [{ model: User, as: 'user', attributes: ['id', 'name', 'email'] }],
             order: [['createdAt', 'DESC']]
@@ -126,6 +290,7 @@ export const getOrders = async (req, res) => {
 // @route   PUT /api/orders/:id/status
 export const updateOrderStatus = async (req, res) => {
     try {
+        await ensureOrderPaymentSchema();
         const order = await Order.findByPk(req.params.id);
         if (order) {
             order.status = req.body.status || order.status;
@@ -150,6 +315,7 @@ export const updateOrderStatus = async (req, res) => {
 // @route   GET /api/orders/stats
 export const getOrderStats = async (req, res) => {
     try {
+        await ensureOrderPaymentSchema();
         const totalOrders = await Order.count();
         const processingOrders = await Order.count({ where: { status: 'Processing' } });
         const deliveredOrders = await Order.count({ where: { status: 'Delivered' } });
@@ -178,6 +344,7 @@ export const getOrderStats = async (req, res) => {
 // @route   DELETE /api/orders/:id
 export const deleteOrder = async (req, res) => {
     try {
+        await ensureOrderPaymentSchema();
         const order = await Order.findByPk(req.params.id);
         if (order) {
             await order.destroy();

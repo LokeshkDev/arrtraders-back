@@ -1,5 +1,7 @@
-import express from 'express';
 import dotenv from 'dotenv';
+dotenv.config();
+
+import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import cookieParser from 'cookie-parser';
@@ -19,15 +21,21 @@ import orderRoutes from './routes/orderRoutes.js';
 import couponRoutes from './routes/couponRoutes.js';
 import deliveryRoutes from './routes/deliveryRoutes.js';
 import './models/sql/index.js'; // Ensure models are registered for sync
+import { ensureOrderPaymentSchema } from './controllers/orderController.js';
 
-dotenv.config();
+// Connect to Database & Initialize services
+const initializeApp = async () => {
+    try {
+        await connectMySQL();
+        await initializeFirebaseAdmin();
+        await ensureOrderPaymentSchema();
+        console.log('Core services initialized successfully');
+    } catch (error) {
+        console.error('Initialization Error:', error.message);
+    }
+};
 
-// Connect to Database
-// Connect to Database (SQL)
-connectMySQL();
-
-// Initialize Firebase Admin
-initializeFirebaseAdmin();
+initializeApp();
 
 const app = express();
 
@@ -68,7 +76,55 @@ app.use(cors({
     credentials: true,
 }));
 app.use(helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" }
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginOpenerPolicy: { policy: "unsafe-none" },
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: [
+                "'self'",
+                "'unsafe-inline'",
+                "'unsafe-eval'",
+                "https://sdk.cashfree.com",
+                "https://*.cashfree.com",
+                "https://fonts.googleapis.com",
+                "https://cdn.jsdelivr.net"
+            ],
+            styleSrc: [
+                "'self'",
+                "'unsafe-inline'",
+                "https://fonts.googleapis.com",
+                "https://cdn.jsdelivr.net"
+            ],
+            fontSrc: ["'self'", "https://fonts.gstatic.com", "https://fonts.googleapis.com"],
+            imgSrc: ["'self'", "data:", "blob:", "https:", "http:"],
+            connectSrc: [
+                "'self'",
+                "https://sdk.cashfree.com",
+                "https://*.cashfree.com",
+                "https://sandbox.cashfree.com",
+                "https://api.cashfree.com",
+                "http://localhost:*",
+                "ws://localhost:*"
+            ],
+            frameSrc: [
+                "'self'",
+                "https://sdk.cashfree.com",
+                "https://*.cashfree.com",
+                "https://sandbox.cashfree.com",
+                "https://api.cashfree.com"
+            ],
+            formAction: [
+                "'self'",
+                "https://sdk.cashfree.com",
+                "https://*.cashfree.com",
+                "https://sandbox.cashfree.com",
+                "https://api.cashfree.com"
+            ],
+            frameAncestors: ["'self'"],
+            objectSrc: ["'none'"]
+        }
+    }
 }));
 app.use('/api/users/login', authLimiter);
 app.use('/api/users/register', authLimiter);

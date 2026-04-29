@@ -70,6 +70,23 @@ const Order = sequelize.define('Order', {
         type: DataTypes.STRING(50),
         allowNull: true,
         defaultValue: null
+    },
+    cashfreeOrderId: {
+        type: DataTypes.STRING(100),
+        allowNull: true
+    },
+    cashfreePaymentSessionId: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    paymentStatus: {
+        type: DataTypes.STRING(50),
+        allowNull: false,
+        defaultValue: 'PENDING'
+    },
+    paymentDetails: {
+        type: DataTypes.JSON,
+        allowNull: true
     }
 }, {
     timestamps: true
