@@ -72,8 +72,13 @@ export const ensureOrderPaymentSchema = async () => {
     }
 };
 
-const getClientUrl = () => {
-    return process.env.CLIENT_URL || process.env.FRONTEND_URL || process.env.ALLOWED_ORIGINS?.split(',')[0] || 'http://localhost:5173';
+const getClientUrl = (req) => {
+    // Priority: Env Var > Request Origin (Dynamic) > Fallback
+    if (process.env.CLIENT_URL) return process.env.CLIENT_URL;
+    if (process.env.FRONTEND_URL) return process.env.FRONTEND_URL;
+    if (req && req.headers.origin) return req.headers.origin;
+    if (process.env.ALLOWED_ORIGINS) return process.env.ALLOWED_ORIGINS.split(',')[0];
+    return 'http://localhost:5173';
 };
 
 const normalizePhone = (phone) => {
@@ -87,9 +92,10 @@ const formatAmount = (amount) => {
     return Math.max(1, Math.round(Number(amount || 0) * 100) / 100);
 };
 
-const buildCashfreePayload = (order, user) => {
+const buildCashfreePayload = (order, user, req) => {
     const address = parseJson(order.shippingAddress) || {};
-    const returnUrl = `${getClientUrl().replace(/\/$/, '')}/order-success/${order.id}?cashfree_order_id={order_id}`;
+    const clientUrl = getClientUrl(req).replace(/\/$/, '');
+    const returnUrl = `${clientUrl}/order-success/${order.id}?cashfree_order_id={order_id}`;
     const notifyUrl = process.env.CASHFREE_NOTIFY_URL;
 
     return {
@@ -152,7 +158,7 @@ export const createOrder = async (req, res) => {
 
             try {
                 cashfreeOrder = await createCashfreeOrder(
-                    buildCashfreePayload(order, req.user),
+                    buildCashfreePayload(order, req.user, req),
                     order.id
                 );
             } catch (error) {
@@ -219,11 +225,19 @@ export const verifyCashfreePayment = async (req, res) => {
         order.paymentStatus = cashfreeOrder.order_status || order.paymentStatus;
         order.paymentDetails = cashfreeOrder;
 
-        if (isPaid && !order.isPaid) {
-            order.isPaid = true;
-            order.paidAt = new Date();
-            order.status = 'Confirmed';
-            await incrementCouponUsage(order.couponCode);
+        if (isPaid) {
+            if (!order.isPaid) {
+                order.isPaid = true;
+                order.paidAt = new Date();
+                order.status = 'Confirmed';
+                await incrementCouponUsage(order.couponCode);
+            }
+        } else if (cashfreeOrder.order_status === 'FAILED') {
+            order.status = 'Failed';
+            order.isPaid = false;
+        } else if (['CANCELLED', 'EXPIRED'].includes(cashfreeOrder.order_status)) {
+            order.status = 'Cancelled';
+            order.isPaid = false;
         }
 
         await order.save();
