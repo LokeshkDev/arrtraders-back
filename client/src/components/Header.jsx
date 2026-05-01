@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useContext, useRef } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Search, Menu, X, Heart, ShoppingBag, User, LayoutGrid, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CartContext } from '../context/CartContext';
+import { ShopContext } from '../context/ShopContext';
 import SideCategoryMenu from './SideCategoryMenu';
 import LocationPicker from './LocationPicker';
 import './Header.css';
@@ -20,8 +21,47 @@ const Header = () => {
   const [promos, setPromos] = useState([]);
 
   const location = useLocation();
+  const navigate = useNavigate();
   const cartContext = useContext(CartContext);
   const getCartCount = cartContext?.getCartCount || (() => 0);
+  const { products } = useContext(ShopContext) || { products: [] };
+
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchWrapperRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchWrapperRef.current && !searchWrapperRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (searchQuery.trim().length > 1) {
+      const q = searchQuery.toLowerCase();
+      const filtered = (products || []).filter(p => 
+        p.name.toLowerCase().includes(q) || (p.category && p.category.toLowerCase().includes(q))
+      ).slice(0, 5);
+      setSearchSuggestions(filtered);
+      setShowSuggestions(true);
+    } else {
+      setSearchSuggestions([]);
+      setShowSuggestions(false);
+    }
+  }, [searchQuery, products]);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/categories?search=${encodeURIComponent(searchQuery.trim())}`);
+      setShowSuggestions(false);
+      setMobileSearchOpen(false);
+    }
+  };
 
   useEffect(() => {
     const fetchUserInfo = () => {
@@ -106,8 +146,44 @@ const Header = () => {
     </div>
   );
 
+  const SearchSuggestionsDropdown = () => {
+    if (!showSuggestions || searchSuggestions.length === 0) return null;
+    return (
+      <div className="search-suggestions-dropdown shadow-lg rounded-4 border bg-white position-absolute w-100 overflow-hidden" style={{ top: '100%', left: 0, zIndex: 1050, marginTop: '10px' }}>
+        <ul className="list-unstyled mb-0">
+          {searchSuggestions.map((product) => (
+            <li key={product._id || product.id} className="border-bottom">
+              <Link 
+                to={`/${(product.category ? product.category.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-') : 'all')}/${product.slug || product.name.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-')}`}
+                className="d-flex align-items-center gap-3 p-3 text-decoration-none text-dark hover-bg-light transition-all"
+                onClick={() => { setShowSuggestions(false); setMobileSearchOpen(false); }}
+              >
+                <img src={product.img || product.image || '/images/reference/product-thumb-1.png'} alt={product.name} className="rounded-3 object-fit-cover shadow-sm" style={{ width: '40px', height: '40px' }} />
+                <div className="flex-grow-1">
+                  <h6 className="mb-0 font-headline fw-bold text-truncate" style={{ fontSize: '14px' }}>{product.name}</h6>
+                  <p className="mb-0 text-muted small font-label uppercase" style={{ letterSpacing: '1px', fontSize: '10px' }}>{product.category}</p>
+                </div>
+                <div className="text-primary fw-bold font-headline" style={{ fontSize: '14px' }}>₹{parseFloat(String(product.price).replace(/[^0-9.]/g, '')).toFixed(2)}</div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <div className="bg-light p-2 text-center border-top">
+          <button 
+            className="btn btn-link text-primary fw-bold font-label uppercase extra-small text-decoration-none"
+            onClick={handleSearchSubmit}
+          >
+            View all results for "{searchQuery}"
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className={`header-wrapper ${scrolled ? 'header-sticky' : ''}`}>
+    <>
+      <div className="header-placeholder"></div>
+      <div className={`header-wrapper ${scrolled ? 'header-sticky' : ''}`}>
       {/* Layer 1: Top Utility Bar */}
       <div className="top-utility-bar">
         <div className="container-lg d-flex justify-content-between align-items-center py-0" style={{ minHeight: '40px' }}>
@@ -160,17 +236,19 @@ const Header = () => {
 
             {/* Centered Search Bar (Desktop) */}
             <div className="col-lg-4 d-none d-lg-block">
-              <div className="trendy-search-container">
-                <div className="search-bar-inner">
+              <div className="trendy-search-container position-relative" ref={searchWrapperRef}>
+                <form className="search-bar-inner" onSubmit={handleSearchSubmit}>
                   <Search size={18} className="search-icon" />
                   <input
                     type="text"
                     placeholder="Search..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => { if (searchQuery.length > 1) setShowSuggestions(true); }}
                   />
-                  <button className="search-submit-btn">Search</button>
-                </div>
+                  <button type="submit" className="search-submit-btn">Search</button>
+                </form>
+                <SearchSuggestionsDropdown />
               </div>
             </div>
 
@@ -217,23 +295,26 @@ const Header = () => {
 
           {/* Mobile Search - Expandable overlay */}
           {mobileSearchOpen && (
-            <div className="mobile-search-expanded d-lg-none">
-              <div className="mobile-search-bar">
+            <div className="mobile-search-expanded d-lg-none" ref={searchWrapperRef}>
+              <form className="mobile-search-bar position-relative" onSubmit={handleSearchSubmit}>
                 <Search size={16} />
                 <input
                   type="text"
                   placeholder="Search..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => { if (searchQuery.length > 1) setShowSuggestions(true); }}
                   autoFocus
                 />
                 <button
+                  type="button"
                   className="mobile-search-close border-0 bg-transparent p-0"
                   onClick={() => setMobileSearchOpen(false)}
                 >
                   <X size={18} className="text-muted" />
                 </button>
-              </div>
+                <SearchSuggestionsDropdown />
+              </form>
             </div>
           )}
         </div>
@@ -281,7 +362,8 @@ const Header = () => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

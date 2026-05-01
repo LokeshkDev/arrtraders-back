@@ -39,7 +39,7 @@
   transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
   z-index: 1000;
-  overflow: hidden;
+  overflow: visible; /* Allowed overflow so the toggle button is not cut in half */
 }
 
 .admin-sidebar.collapsed {
@@ -64,6 +64,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  overflow: visible; /* Added to ensure toggle btn is visible */
 }
 
 .brand-text {
@@ -100,10 +101,10 @@
 
 .sidebar-toggle-btn {
   position: absolute;
-  right: -12px;
-  top: 40px;
-  width: 24px;
-  height: 24px;
+  right: -15px;
+  top: 45px;
+  width: 32px;
+  height: 32px;
   background-color: var(--admin-accent);
   border: none;
   border-radius: 50%;
@@ -112,19 +113,14 @@
   justify-content: center;
   color: var(--primary);
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-  z-index: 10;
-  transition: all 0.3s ease;
+  z-index: 1100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .sidebar-toggle-btn:hover {
   transform: scale(1.1);
-  background-color: #fff;
-}
-
-.admin-sidebar.collapsed .sidebar-toggle-btn {
-  right: 50%;
-  transform: translateX(50%);
+  background-color: #ffffff;
 }
 
 /* Navigation */
@@ -383,8 +379,8 @@
 .order-detail-overlay {
   position: fixed;
   inset: 0;
-  z-index: 9999;
-  background: rgba(0, 0, 0, 0.8);
+  z-index: 20000;
+  background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
   display: flex;
@@ -454,13 +450,30 @@
 /* Responsive Mobile Sidebar */
 @media (max-width: 991px) {
   .admin-sidebar {
-    position: fixed;
-    left: -280px;
-    height: 100vh;
+    position: fixed !important;
+    left: -280px !important;
+    width: 280px !important; /* Force full width on mobile */
+    height: 100vh !important;
+    transform: none !important;
+  }
+
+  /* Always show labels on mobile regardless of collapsed state */
+  .admin-sidebar.collapsed .nav-label,
+  .admin-sidebar.collapsed .brand-text,
+  .admin-sidebar.collapsed .brand-subtext {
+    opacity: 1 !important;
+    visibility: visible !important;
+    width: auto !important;
+  }
+
+  .admin-sidebar.collapsed .admin-nav-btn {
+    justify-content: flex-start !important;
+    padding: 14px 20px !important;
+    gap: 15px !important;
   }
 
   .sidebar-open {
-    left: 0;
+    left: 0 !important;
   }
 
   .admin-header {
@@ -1083,18 +1096,26 @@
   }
 
   .order-detail-panel {
-    max-height: 96dvh !important;
-    border-radius: 18px !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
   }
 
   .order-detail-header {
-    padding: 0.75rem !important;
-    align-items: flex-start !important;
-    gap: 0.5rem !important;
+    padding: 1rem !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.75rem !important;
   }
 
-  .order-detail-header > div {
-    width: 100%;
+  .order-detail-header > div:first-child {
+    flex: 1;
+    min-width: 0;
   }
 
   .order-detail-header .btn-primary {
@@ -1113,7 +1134,9 @@
 
   .admin-modal-body {
     padding: 0.75rem !important;
-    max-height: calc(96dvh - 130px) !important;
+    max-height: none !important;
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
   }
 
   .admin-modal-body .row.g-5 {
@@ -1447,56 +1470,7 @@
 
 }
 
-@media (max-width: 991px) {
-  .order-detail-overlay {
-    inset: 0 !important;
-    width: 100vw !important;
-    height: 100dvh !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    align-items: flex-end !important;
-    justify-content: center !important;
-    overflow: hidden !important;
-  }
-
-  .order-detail-overlay .order-detail-panel {
-    width: 100vw !important;
-    max-width: 100vw !important;
-    min-height: 72dvh !important;
-    height: min(88dvh, 760px) !important;
-    max-height: 88dvh !important;
-    margin: 0 !important;
-    border-radius: 18px 18px 0 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    overflow: hidden !important;
-    animation: orderSheetUp 220ms ease-out;
-  }
-
-  .order-detail-overlay .order-detail-header {
-    flex-shrink: 0;
-  }
-
-  .order-detail-overlay .admin-modal-body {
-    flex: 1 1 auto;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)) !important;
-  }
-}
-
-@keyframes orderSheetUp {
-  from {
-    transform: translateY(28px);
-    opacity: 0.9;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
+/* Order Details Popup Styles Removed */
 
 /* Form Validation States */
 .is-invalid {
@@ -1548,4 +1522,620 @@
   .modal.show .modal-dialog {
     animation: slideUpModal 0.3s ease-out;
   }
+}
+
+/* Order Mobile Sheet Design (Screenshot-based) */
+.order-detail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30000 !important;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.order-mobile-sheet {
+  background: #ffffff;
+  width: 100%;
+  max-width: 500px;
+  border-radius: 32px 32px 0 0;
+  padding: 2rem 1.5rem;
+  max-height: 94vh;
+  overflow-y: auto;
+  position: relative;
+  z-index: 30001;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: slideUpSheet 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes slideUpSheet {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@media (min-width: 992px) {
+  .order-detail-overlay {
+    align-items: center;
+  }
+  
+  .order-mobile-sheet {
+    border-radius: 32px;
+    max-height: 85vh;
+  }
+}
+
+.sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.label-top {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #888;
+  letter-spacing: 1px;
+}
+
+.order-id-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin: 0.25rem 0;
+}
+
+.meta-info {
+  font-size: 0.85rem;
+  color: #555;
+  font-weight: 600;
+}
+
+.via-label {
+  font-size: 0.7rem;
+  color: #999;
+  text-transform: uppercase;
+  margin-top: 0.2rem;
+}
+
+.btn-close-sheet {
+  background: #f1f1f1;
+  border: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
+  transition: all 0.2s;
+  margin-bottom: 1rem;
+  margin-left: auto;
+}
+
+.status-pill-sheet {
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.status-pill-sheet.processing { background: #ffecb5; color: #856404; }
+.status-pill-sheet.shipped { background: #d1ecf1; color: #0c5460; }
+.status-pill-sheet.delivered { background: #d4edda; color: #155724; }
+
+.customer-sheet-card {
+  background: #f8f8f8;
+  border-radius: 24px;
+  padding: 1.5rem;
+}
+
+.customer-info-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.avatar-sheet {
+  width: 44px;
+  height: 44px;
+  background: #3e2723;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.customer-details .name {
+  font-weight: 800;
+  font-size: 1rem;
+  color: #1a1a1a;
+}
+
+.customer-details .phone {
+  font-size: 0.8rem;
+  color: #777;
+  font-weight: 600;
+}
+
+.address-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.pin-icon {
+  color: #888;
+  margin-top: 0.2rem;
+}
+
+.address-text {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #444;
+  font-weight: 600;
+}
+
+.section-title {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #1a1a1a;
+  letter-spacing: 0.5px;
+  margin-bottom: 1rem;
+}
+
+.items-list-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.item-card-sheet {
+  background: white;
+  border-radius: 20px;
+  padding: 0.75rem;
+  display: flex;
+  gap: 1rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.item-img-box img {
+  width: 80px;
+  height: 80px;
+  border-radius: 16px;
+  object-fit: cover;
+}
+
+.item-info-sheet {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.item-info-sheet .item-name {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #1a1a1a;
+}
+
+.item-info-sheet .item-sub {
+  font-size: 0.75rem;
+  color: #888;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.item-bottom-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.qty-label {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #1a1a1a;
+}
+
+.price-label {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #1a1a1a;
+}
+
+/* Standardized Premium Admin Sheet Pattern (Mobile-First) */
+.admin-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30000 !important;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: flex-end; /* Bottom anchored on mobile */
+  justify-content: center;
+  overflow: hidden;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.admin-sheet-container {
+  background: #ffffff;
+  width: 100%;
+  max-width: 600px;
+  border-radius: 32px 32px 0 0;
+  padding: 2.5rem 1.75rem;
+  max-height: 94vh;
+  overflow-y: auto;
+  position: relative;
+  z-index: 30001;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: slideUpSheet 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.admin-sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.admin-sheet-header .header-left {
+  flex: 1;
+}
+
+.admin-sheet-header .sheet-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  color: #a3be4c;
+  letter-spacing: 2px;
+  margin-bottom: 0.5rem;
+}
+
+.admin-sheet-header .sheet-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #2d1b18;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.admin-sheet-header .sheet-subtitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #888;
+  margin-top: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.admin-sheet-header .btn-close-sheet {
+  background: #f5f5f5;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #555;
+  transition: all 0.2s;
+}
+
+.admin-sheet-header .btn-close-sheet:hover {
+  background: #2d1b18;
+  color: white;
+}
+
+.admin-sheet-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.admin-sheet-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+/* Field Group for Sheets */
+.sheet-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sheet-field-group label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding-left: 0.5rem;
+}
+
+.sheet-field-group input, 
+.sheet-field-group select, 
+.sheet-field-group textarea {
+  background: #f9f9f9;
+  border: 2px solid #f0f0f0;
+  border-radius: 18px;
+  padding: 1rem 1.25rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #2d1b18;
+  transition: all 0.2s;
+}
+
+.sheet-field-group input:focus {
+  border-color: #2d1b18;
+  background: #ffffff;
+  outline: none;
+}
+
+.sheet-toggle-card {
+  background: #f1f8ee;
+  border: 2px solid #e1eedb;
+  border-radius: 20px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Button variants for sheets */
+.btn-sheet-primary {
+  background: #2d1b18;
+  color: white;
+  border: none;
+  padding: 1.15rem;
+  border-radius: 20px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  box-shadow: 0 10px 20px rgba(45, 27, 24, 0.2);
+  transition: all 0.2s;
+}
+
+.btn-sheet-secondary {
+  background: #f5f5f5;
+  color: #2d1b18;
+  border: none;
+  padding: 1.15rem;
+  border-radius: 20px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+
+.btn-sheet-danger {
+  background: #b91c1c;
+  color: white;
+  border: none;
+  padding: 1.15rem;
+  border-radius: 20px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  box-shadow: 0 10px 20px rgba(185, 28, 28, 0.2);
+  transition: all 0.2s;
+}
+
+@media (min-width: 992px) {
+  .admin-sheet-overlay {
+    align-items: center;
+  }
+  .admin-sheet-container {
+    border-radius: 40px;
+    max-height: 85vh;
+    padding: 3.5rem;
+    width: 600px;
+  }
+}
+
+/* Enhanced Product UI Styles */
+.hover-zoom {
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.hover-zoom:hover {
+  transform: scale(1.1) rotate(2deg);
+}
+
+.group:hover .group-hover-white {
+  color: white !important;
+}
+
+.hover-scale-xs:hover {
+  background-color: rgba(212, 175, 55, 0.02) !important;
+}
+
+.cat-accordion .accordion-item {
+  transition: all 0.3s ease;
+}
+
+.cat-accordion .accordion-item:hover {
+  border-color: var(--admin-accent) !important;
+}
+
+.products-table-wrap {
+  background: white;
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.products-table thead th {
+  background: #fdfdfd;
+  color: #888;
+  font-size: 0.65rem;
+  letter-spacing: 1.5px;
+  border-top: none;
+}
+
+.progress-bar.bg-success {
+  background: linear-gradient(90deg, #6bb252, #a3be4c) !important;
+}
+
+.progress-bar.bg-danger {
+  background: linear-gradient(90deg, #ef4444, #b91c1c) !important;
+}
+
+.badge.bg-secondary {
+  background-color: var(--admin-accent) !important;
+  color: var(--primary) !important;
+}
+
+/* Sidebar Mobile Overrides - Ensure labels are ALWAYS visible on mobile when sidebar is open */
+@media (max-width: 991px) {
+  .admin-sidebar {
+    width: 280px !important;
+    transform: translateX(-100%);
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.3);
+  }
+
+  .admin-sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+
+  .admin-sidebar .nav-label,
+  .admin-sidebar .brand-text,
+  .admin-sidebar .brand-subtext,
+  .admin-sidebar .profile-info,
+  .admin-sidebar .sidebar-toggle-btn {
+    opacity: 1 !important;
+    visibility: visible !important;
+    width: auto !important;
+    display: flex !important;
+    transform: none !important;
+  }
+  
+  .admin-sidebar .brand-text {
+    display: block !important;
+  }
+
+  .admin-sidebar.collapsed {
+    width: 280px !important;
+  }
+
+  .admin-sidebar .admin-nav-btn {
+    justify-content: flex-start !important;
+    padding: 14px 20px !important;
+    gap: 15px !important;
+  }
+
+  .admin-sidebar .admin-user-profile {
+    margin: 20px 12px !important;
+    padding: 16px !important;
+  }
+}
+
+/* Premium Search Focus & Accordion Polish */
+.search-results-focus {
+  animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.accordion-item.active {
+  transform: translateY(-4px);
+  border: 1px solid var(--admin-accent-subtle) !important;
+}
+
+.cat-thumb img {
+  transition: transform 0.5s ease;
+}
+
+.accordion-item:hover .cat-thumb img {
+  transform: scale(1.1);
+}
+
+.hover-shadow-md:hover {
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08) !important;
+}
+
+.btn-link:hover {
+  color: var(--primary) !important;
+  opacity: 1 !important;
+}
+
+/* Admin Page Loader */
+.admin-loader-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.8s ease-in-out, visibility 0.8s;
+}
+
+.admin-loader-overlay.fade-out {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.loader-brand {
+  color: white;
+  font-family: var(--font-headline);
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: 4px;
+  margin-bottom: 20px;
+  animation: pulseBrand 2s infinite ease-in-out;
+}
+
+.loader-progress {
+  width: 200px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.loader-progress::after {
+  content: '';
+  position: absolute;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: white;
+  animation: loaderProgress 1.5s infinite ease-in-out;
+}
+
+@keyframes pulseBrand {
+  0%, 100% { opacity: 0.5; transform: scale(0.98); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes loaderProgress {
+  0% { left: -100%; }
+  50% { left: 0; }
+  100% { left: 100%; }
 }

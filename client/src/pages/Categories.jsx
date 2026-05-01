@@ -34,12 +34,16 @@ const Categories = () => {
 
   const [searchParams] = useSearchParams();
   const selectedFromUrl = searchParams.get('selected');
+  const searchFromUrl = searchParams.get('search');
 
   useEffect(() => {
     if (selectedFromUrl) {
       setActiveCategory(selectedFromUrl);
     }
-  }, [selectedFromUrl]);
+    if (searchFromUrl) {
+      setSearchQuery(searchFromUrl);
+    }
+  }, [selectedFromUrl, searchFromUrl]);
 
   const toggleExpand = (id) => {
     setExpandedCatId(expandedCatId === id ? null : id);
@@ -48,7 +52,9 @@ const Categories = () => {
   const filteredProducts = useMemo(() => {
     const dataSource = products && products.length > 0 ? products : ALL_PRODUCTS; // Fallback to mock if API empty for development preview
     let result = dataSource.filter(p => {
-      const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const q = searchQuery.toLowerCase();
+      const matchSearch = p.name.toLowerCase().includes(q) || (p.category && p.category.toLowerCase().includes(q));
+      
       let matchCat = false;
       if (activeCategory === 'All') {
         matchCat = true;

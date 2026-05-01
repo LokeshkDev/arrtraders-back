@@ -431,134 +431,184 @@ const DeliveryZoneTab = ({ showToast, setConfirmModal }) => {
             )}
 
             {deliverySubTab === 'zones' && (showForm || bulkMode) && (
-                <div className="admin-modal-overlay">
-                    <div className="admin-modal-content p-5 rounded-4 shadow-lg border border-opacity-50 bg-white" style={{ maxWidth: '680px', width: '100%' }}>
-                        <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-                            <h4 className="font-headline text-primary m-0 fw-bold">
-                                {bulkMode ? 'Bulk Upload Pincodes' : (editId ? 'Edit Delivery Zone' : 'Create New Zone')}
-                            </h4>
-                            <button className="btn-close-admin" onClick={() => { setShowForm(false); setBulkMode(false); resetForm(); }}>
-                                <X size={24} />
+                <div className="admin-sheet-overlay">
+                    <div className="admin-sheet-container">
+                        <div className="admin-sheet-header">
+                            <div className="header-left">
+                                <span className="sheet-label">LOGISTICS CONFIGURATION</span>
+                                <h2 className="sheet-title">
+                                    {bulkMode ? 'Bulk Upload Pincodes' : (editId ? 'Edit Delivery Zone' : 'Create New Zone')}
+                                </h2>
+                                {editId && <p className="sheet-subtitle">ZONE ID: {editId}</p>}
+                            </div>
+                            <button className="btn-close-sheet" onClick={() => { setShowForm(false); setBulkMode(false); resetForm(); }}>
+                                <X size={20} />
                             </button>
                         </div>
 
                         {bulkMode ? (
                             <form onSubmit={handleBulkSubmit}>
-                                <div className="mb-4">
-                                    <label className="admin-label-sm fw-bold mb-2 text-muted uppercase extra-small font-label">Zone Name (Optional)</label>
-                                    <input ref={bulkFirstInputRef} type="text" className="form-control rounded-4 py-3" placeholder="e.g. South Chennai" value={bulkData.name} onChange={(e) => setBulkData({ ...bulkData, name: e.target.value })} />
+                                <div className="admin-sheet-body">
+                                    <div className="sheet-field-group">
+                                        <label>Zone Name (Optional)</label>
+                                        <input 
+                                            ref={bulkFirstInputRef} 
+                                            type="text" 
+                                            placeholder="e.g. South Chennai" 
+                                            value={bulkData.name} 
+                                            onChange={(e) => setBulkData({ ...bulkData, name: e.target.value })} 
+                                        />
+                                    </div>
+                                    <div className="sheet-field-group">
+                                        <label>Pincode Registry</label>
+                                        <textarea 
+                                            className={formErrors.bulkPincodes ? 'is-invalid' : ''} 
+                                            rows="5" 
+                                            placeholder="600001, 600002, 600003..." 
+                                            value={bulkData.pincodes} 
+                                            onChange={(e) => {
+                                                setBulkData({ ...bulkData, pincodes: e.target.value.replace(/[^\d,\s]/g, '') });
+                                                if (formErrors.bulkPincodes) setFormErrors({ ...formErrors, bulkPincodes: null });
+                                            }} 
+                                            required 
+                                        />
+                                        {formErrors.bulkPincodes && <div className="invalid-feedback d-block">{formErrors.bulkPincodes}</div>}
+                                        <small className="text-muted d-block mt-1">Use 6-digit pincodes separated by comma or new line.</small>
+                                    </div>
+                                    <div className="sheet-field-group">
+                                        <label>Standard Delivery Fee (₹)</label>
+                                        <input 
+                                            type="number" 
+                                            value={bulkData.deliveryCharge} 
+                                            onChange={(e) => setBulkData({ ...bulkData, deliveryCharge: e.target.value })} 
+                                        />
+                                    </div>
                                 </div>
-                                <div className="mb-4">
-                                    <label className="admin-label-sm fw-bold mb-2 text-muted uppercase extra-small font-label">Pincodes</label>
-                                    <textarea className={`form-control rounded-4 ${formErrors.bulkPincodes ? 'is-invalid' : ''}`} rows="5" placeholder="600001, 600002, 600003..." value={bulkData.pincodes} onChange={(e) => {
-                                        setBulkData({ ...bulkData, pincodes: e.target.value.replace(/[^\d,\s]/g, '') });
-                                        if (formErrors.bulkPincodes) setFormErrors({ ...formErrors, bulkPincodes: null });
-                                    }} required />
-                                    {formErrors.bulkPincodes && <div className="invalid-feedback d-block">{formErrors.bulkPincodes}</div>}
-                                    <small className="text-muted d-block mt-2">Use 6-digit pincodes separated by comma or new line.</small>
+                                <div className="admin-sheet-footer">
+                                    <button type="submit" className="btn-sheet-primary" disabled={isSaving || bulkParsedPincodes.length === 0 || !!formErrors.bulkPincodes}>
+                                        {isSaving ? 'PROCESSING UPLOAD...' : 'START BULK INGESTION'}
+                                    </button>
+                                    <button type="button" className="btn-sheet-secondary" onClick={() => setBulkMode(false)}>
+                                        CANCEL
+                                    </button>
                                 </div>
-                                <div className="mb-4">
-                                    <label className="admin-label-sm fw-bold mb-2 text-muted uppercase extra-small font-label">Delivery Charge (Rs.)</label>
-                                    <input type="number" className="form-control rounded-4 py-3" value={bulkData.deliveryCharge} onChange={(e) => setBulkData({ ...bulkData, deliveryCharge: e.target.value })} />
-                                </div>
-                                <button type="submit" className="btn btn-primary w-100 py-3 rounded-pill fw-bold uppercase tracking-widest font-label extra-small shadow-md border-0 mt-3" disabled={isSaving || bulkParsedPincodes.length === 0 || !!formErrors.bulkPincodes}>{isSaving ? 'PROCESSING...' : 'START BULK UPLOAD'}</button>
                             </form>
                         ) : (
                             <form onSubmit={handleSubmit}>
-                                <div className="row g-4">
-                                    <div className="col-md-6">
-                                         <label className="admin-label-sm fw-bold mb-2 text-muted uppercase extra-small font-label">Zone Name</label>
-                                         <input 
-                                             type="text" 
-                                             className={`form-control rounded-4 py-3 ${formErrors.name ? 'is-invalid' : ''}`} 
-                                             ref={firstInputRef}
-                                             value={formData.name} 
-                                             onChange={(e) => {
-                                                 setFormData({ ...formData, name: e.target.value });
-                                                 if(formErrors.name) setFormErrors({...formErrors, name: null});
-                                             }} 
-                                         />
-                                         {formErrors.name && <div className="invalid-feedback">{formErrors.name}</div>}
-                                     </div>
-                                    <div className="col-md-6">
-                                        <label className="admin-label-sm fw-bold mb-2 text-muted uppercase extra-small font-label">Coverage</label>
-                                        <select className="form-select rounded-4 py-3" value={coverage} onChange={(e) => handleCoverageChange(e.target.value)}>
-                                            <option value="india">All India default fallback</option>
-                                            <option value="state">All pincodes in selected state</option>
-                                            <option value="district">All pincodes in selected district</option>
-                                            <option value="pincodes">Only selected pincodes</option>
-                                        </select>
-                                    </div>
-
-                                    {coverage !== 'india' && (
+                                <div className="admin-sheet-body">
+                                    <div className="row g-3">
                                         <div className="col-md-6">
-                                            <label className="admin-label-sm fw-bold mb-2 text-muted uppercase extra-small font-label">State</label>
-                                            <select className="form-select rounded-4 py-3" value={selectedState} onChange={(e) => handleStateChange(e.target.value)}>
-                                                {STATE_OPTIONS.map((state) => (
-                                                    <option key={state.name} value={state.name}>{state.name}</option>
-                                                ))}
-                                            </select>
+                                            <div className="sheet-field-group">
+                                                <label>Zone Name</label>
+                                                <input 
+                                                    type="text" 
+                                                    className={formErrors.name ? 'is-invalid' : ''} 
+                                                    ref={firstInputRef}
+                                                    value={formData.name} 
+                                                    onChange={(e) => {
+                                                        setFormData({ ...formData, name: e.target.value });
+                                                        if(formErrors.name) setFormErrors({...formErrors, name: null});
+                                                    }} 
+                                                />
+                                                {formErrors.name && <div className="invalid-feedback">{formErrors.name}</div>}
+                                            </div>
                                         </div>
-                                    )}
-
-                                    {coverage === 'district' && (
                                         <div className="col-md-6">
-                                            <label className="admin-label-sm fw-bold mb-2 text-muted uppercase extra-small font-label">District</label>
-                                            <select className="form-select rounded-4 py-3" value={selectedDistrict} onChange={(e) => {
-                                                setSelectedDistrict(e.target.value);
-                                                setFormData((prev) => ({ ...prev, type: 'City', value: e.target.value, name: prev.name || `${e.target.value} Delivery` }));
-                                            }}>
-                                                {currentState.districts.map((district) => (
-                                                    <option key={district} value={district}>{district}</option>
-                                                ))}
-                                            </select>
+                                            <div className="sheet-field-group">
+                                                <label>Coverage Scope</label>
+                                                <select value={coverage} onChange={(e) => handleCoverageChange(e.target.value)}>
+                                                    <option value="india">All India (Default)</option>
+                                                    <option value="state">Specific State</option>
+                                                    <option value="district">Specific District</option>
+                                                    <option value="pincodes">Manual Pincodes</option>
+                                                </select>
+                                            </div>
                                         </div>
-                                    )}
+
+                                        {coverage !== 'india' && (
+                                            <div className="col-md-6">
+                                                <div className="sheet-field-group">
+                                                    <label>Target State</label>
+                                                    <select value={selectedState} onChange={(e) => handleStateChange(e.target.value)}>
+                                                        {STATE_OPTIONS.map((state) => (
+                                                            <option key={state.name} value={state.name}>{state.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {coverage === 'district' && (
+                                            <div className="col-md-6">
+                                                <div className="sheet-field-group">
+                                                    <label>Target District</label>
+                                                    <select value={selectedDistrict} onChange={(e) => {
+                                                        setSelectedDistrict(e.target.value);
+                                                        setFormData((prev) => ({ ...prev, type: 'City', value: e.target.value, name: prev.name || `${e.target.value} Delivery` }));
+                                                    }}>
+                                                        {currentState.districts.map((district) => (
+                                                            <option key={district} value={district}>{district}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        )}
 
                                         <div className="col-12">
-                                            <label className="admin-label-sm fw-bold mb-2 text-muted uppercase extra-small font-label">Selected Pincodes</label>
-                                            <textarea
-                                                className={`form-control rounded-4 ${formErrors.pincodes ? 'is-invalid' : ''}`}
-                                                rows="4"
-                                                placeholder={`Example: ${currentState.pincodeHint}`}
-                                                value={pincodeList}
-                                                onChange={(e) => {
-                                                    setPincodeList(e.target.value.replace(/[^\d,\s]/g, ''));
-                                                    if(formErrors.pincodes) setFormErrors({...formErrors, pincodes: null});
-                                                }}
-                                            />
-                                            {formErrors.pincodes && <div className="invalid-feedback">{formErrors.pincodes}</div>}
-                                            <small className="text-muted d-block mt-2">Separate multiple pincodes with commas or new lines.</small>
+                                            <div className="sheet-field-group">
+                                                <label>Pincode Range</label>
+                                                <textarea
+                                                    className={formErrors.pincodes ? 'is-invalid' : ''}
+                                                    rows="3"
+                                                    placeholder={`Example: ${currentState.pincodeHint}`}
+                                                    value={pincodeList}
+                                                    onChange={(e) => {
+                                                        setPincodeList(e.target.value.replace(/[^\d,\s]/g, ''));
+                                                        if(formErrors.pincodes) setFormErrors({...formErrors, pincodes: null});
+                                                    }}
+                                                />
+                                                {formErrors.pincodes && <div className="invalid-feedback">{formErrors.pincodes}</div>}
+                                            </div>
                                         </div>
 
-                                    <div className="col-12">
-                                        <div className="zone-preview-box">
-                                            <span className="zone-preview-label">Saved as</span>
-                                            <strong>{coverage === 'india' ? 'All India' : coverage === 'state' ? 'State' : coverage === 'district' ? 'City/District' : 'Pincode'}</strong>
-                                            <span>{coverage === 'india' ? 'India fallback' : coverage === 'state' ? selectedState : coverage === 'district' ? selectedDistrict : (pincodeList || 'Selected pincodes')}</span>
+                                        <div className="col-12">
+                                            <div className="zone-preview-box">
+                                                <span className="zone-preview-label">ACTIVE SCOPE</span>
+                                                <strong>{coverage === 'india' ? 'All India' : coverage === 'state' ? 'State' : coverage === 'district' ? 'District' : 'Pincode'}</strong>
+                                                <span className="text-truncate">{coverage === 'india' ? 'India fallback' : coverage === 'state' ? selectedState : coverage === 'district' ? selectedDistrict : (pincodeList || 'No selection')}</span>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div className="col-md-6">
-                                        <label className="admin-label-sm fw-bold mb-2 text-muted uppercase extra-small font-label">Delivery Charge (Rs.)</label>
-                                        <input type="number" className="form-control rounded-4 py-3" required value={formData.deliveryCharge} onChange={(e) => setFormData({ ...formData, deliveryCharge: e.target.value })} />
-                                    </div>
-                                    <div className="col-md-6">
-                                        <label className="admin-label-sm fw-bold mb-2 text-muted uppercase extra-small font-label">Est. Days</label>
-                                        <input type="text" className="form-control rounded-4 py-3" value={formData.estimatedDeliveryDays} onChange={(e) => setFormData({ ...formData, estimatedDeliveryDays: e.target.value })} />
-                                    </div>
-                                    <div className="col-12">
-                                        <div className="form-check form-switch p-0 d-flex align-items-center gap-3">
-                                            <input className="form-check-input ms-0" type="checkbox" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />
-                                            <label className="form-check-label admin-label-sm fw-bold text-muted uppercase extra-small font-label mb-0">Enable delivery for this zone</label>
+                                        <div className="col-md-6">
+                                            <div className="sheet-field-group">
+                                                <label>Delivery Fee (₹)</label>
+                                                <input type="number" required value={formData.deliveryCharge} onChange={(e) => setFormData({ ...formData, deliveryCharge: e.target.value })} />
+                                            </div>
+                                        </div>
+                                        <div className="col-md-6">
+                                            <div className="sheet-field-group">
+                                                <label>Estimated TAT (Days)</label>
+                                                <input type="text" value={formData.estimatedDeliveryDays} onChange={(e) => setFormData({ ...formData, estimatedDeliveryDays: e.target.value })} />
+                                            </div>
+                                        </div>
+                                        <div className="col-12">
+                                            <div className="sheet-toggle-card py-2 px-3">
+                                                <div className="form-check form-switch m-0">
+                                                    <input className="form-check-input" type="checkbox" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />
+                                                </div>
+                                                <label className="fw-bold text-primary small mb-0 ms-2">Enable Logistics for this Zone</label>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <button type="submit" className="btn btn-primary w-100 py-3 rounded-pill fw-bold uppercase tracking-widest font-label extra-small shadow-md border-0 mt-5 d-flex align-items-center justify-content-center gap-2" disabled={isSaving || !formData.name.trim() || (coverage === 'pincodes' && parsedPincodes.length === 0)}>
-                                    {isSaving ? (
-                                        <><span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> PROCESSING...</>
-                                    ) : (editId ? 'UPDATE ZONE' : 'SAVE ZONE')}
-                                </button>
+                                <div className="admin-sheet-footer">
+                                    <button type="submit" className="btn-sheet-primary" disabled={isSaving || !formData.name.trim() || (coverage === 'pincodes' && parsedPincodes.length === 0)}>
+                                        {isSaving ? 'UPDATING...' : (editId ? 'UPDATE LOGISTICS ZONE' : 'ESTABLISH NEW ZONE')}
+                                    </button>
+                                    <button type="button" className="btn-sheet-secondary" onClick={() => { setShowForm(false); resetForm(); }}>
+                                        DISCARD
+                                    </button>
+                                </div>
                             </form>
                         )}
                     </div>
@@ -671,24 +721,6 @@ const DeliveryZoneTab = ({ showToast, setConfirmModal }) => {
             </div>}
 
             <style>{`
-                .admin-modal-overlay {
-                    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-                    background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
-                    display: flex; align-items: center; justify-content: center;
-                    z-index: 10000;
-                    padding: 1rem;
-                }
-                .admin-modal-content {
-                    max-height: 90vh;
-                    overflow-y: auto;
-                }
-                @media (max-width: 768px) {
-                    .admin-modal-content { padding: 1.5rem !important; }
-                }
-                .btn-close-admin {
-                    background: transparent; border: none; color: #999;
-                    transition: color 0.3s;
-                }
                 .btn-close-admin:hover { color: #333; }
                 .zone-icon-circle {
                     width: 40px; height: 40px; border-radius: 12px;

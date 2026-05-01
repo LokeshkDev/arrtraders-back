@@ -21,7 +21,9 @@ import {
     Phone,
     Home,
     Briefcase,
-    Heart
+    Heart,
+    Calendar,
+    Download
 } from 'lucide-react';
 import axios from 'axios';
 import './Profile.css';
@@ -147,14 +149,6 @@ const Profile = () => {
                     <div>
                         <span className="font-label text-secondary small uppercase tracking-widest fw-bold mb-2 d-inline-block">Your Account</span>
                         <h1 className="font-headline text-primary m-0 display-4">Profile Details</h1>
-                        <div className="d-flex flex-wrap align-items-center gap-2 mt-3">
-                            <Link to="/wishlist" className="btn btn-outline-secondary rounded-pill px-4 py-2 font-label fw-bold small d-inline-flex align-items-center gap-2">
-                                <Heart size={16} /> WISHLIST
-                            </Link>
-                            <button onClick={handleLogout} className="btn btn-outline-danger rounded-pill px-4 py-2 font-label fw-bold small d-inline-flex align-items-center gap-2">
-                                <LogOut size={16} /> LOGOUT
-                            </button>
-                        </div>
                     </div>
                 </header>
 
@@ -171,7 +165,15 @@ const Profile = () => {
                                 </div>
                                 <div className="prof-identity-copy">
                                     <h5 className="font-headline text-primary mb-1">{user?.name}</h5>
-                                    <p className="font-body text-muted small m-0">{user?.email}</p>
+                                    <p className="font-body text-muted small m-0 mb-3">{user?.email}</p>
+                                    <div className="d-flex flex-wrap align-items-center justify-content-center gap-2 mt-2">
+                                        <Link to="/wishlist" className="btn btn-outline-secondary rounded-pill px-3 py-1 font-label fw-bold text-uppercase d-inline-flex align-items-center gap-1" style={{ fontSize: '10px', letterSpacing: '1px' }}>
+                                            <Heart size={12} /> WISHLIST
+                                        </Link>
+                                        <button onClick={handleLogout} className="btn btn-outline-danger rounded-pill px-3 py-1 font-label fw-bold text-uppercase d-inline-flex align-items-center gap-1" style={{ fontSize: '10px', letterSpacing: '1px' }}>
+                                            <LogOut size={12} /> LOGOUT
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -217,7 +219,7 @@ const Profile = () => {
                                     </div>
                                 ) : (
                                     <div className="orders-timeline-stack d-flex flex-column gap-4">
-                                        {orders.map(order => (
+                                        {[...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map(order => (
                                             <div key={order._id} className="premium-order-row bg-white rounded-5 border p-4 shadow-sm hover-reveal overflow-hidden position-relative">
                                                 <div className="row align-items-center g-4">
                                                     <div className="col-md-3">
@@ -252,7 +254,7 @@ const Profile = () => {
                                                     {order.orderItems.length > 5 && <span className="more-count">+{order.orderItems.length - 5}</span>}
                                                 </div>
                                             </div>
-                                        )).reverse()}
+                                        ))}
                                     </div>
                                 )}
                             </div>
@@ -423,125 +425,122 @@ const Profile = () => {
                     </div>
                 )}
 
-                {/* Premium Manifest Modal */}
                 {showOrderModal && selectedOrder && (
-                    <div className="art-modal-overlay order-modal-overlay d-flex align-items-center justify-content-center">
-                        <div className="art-modal-content order-manifest-modal bg-white p-0 rounded-5 shadow-premium animated fadeInUp overflow-hidden" style={{ maxWidth: '800px', width: '95%', maxHeight: '90vh' }}>
-                            {/* Custom Modal Header */}
-                            <div className="manifest-modal-head bg-primary p-4 p-md-5 text-white position-relative">
-                                <button className="art-modal-close border-0 bg-transparent text-white opacity-75 position-absolute top-0 end-0 m-3 m-md-4" onClick={() => setShowOrderModal(false)}>
-                                    <X size={24} />
-                                </button>
-                                <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-end gap-3 mt-4 mt-md-0">
-                                    <div>
-                                        <span className="font-label extra-small fw-bold uppercase tracking-widest opacity-75 mb-1 mb-md-2 d-inline-block">ORDER SUMMARY</span>
-                                        <h3 className="font-headline text-secondary m-0 fw-bold display-6 fs-3">Order #{selectedOrder._id.substring(selectedOrder._id.length - 8).toUpperCase()}</h3>
+                    <div className="frontend-sheet-overlay animate-fade-in">
+                        <div className="frontend-sheet-container">
+                            <div className="frontend-sheet-header">
+                                <div className="header-left">
+                                    <span className="sheet-label">OFFICIAL MANIFEST</span>
+                                    <h3 className="sheet-title">Order #{selectedOrder._id.substring(selectedOrder._id.length - 8).toUpperCase()}</h3>
+                                    <div className="meta-info-row d-flex align-items-center gap-3 mt-2">
+                                        <div className="meta-item d-flex align-items-center gap-1 opacity-75">
+                                            <Calendar size={12} />
+                                            <span className="extra-small fw-bold">{new Date(selectedOrder.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                        </div>
+                                        <div className="meta-item d-flex align-items-center gap-1 opacity-75">
+                                            <Clock size={12} />
+                                            <span className="extra-small fw-bold">{new Date(selectedOrder.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
+                                        </div>
                                     </div>
-                                    <div className="text-start text-md-end">
-                                        <span className="font-label extra-small fw-bold uppercase tracking-widest opacity-75 mb-1 mb-md-2 d-inline-block">TOTAL VALUE</span>
-                                        <p className="font-headline fs-2 m-0 fw-bold">₹{selectedOrder.totalPrice}</p>
+                                </div>
+                                <div className="header-right text-end">
+                                    <button className="btn-close-sheet mb-2" onClick={() => setShowOrderModal(false)}>
+                                        <X size={20} />
+                                    </button>
+                                    <div className={`status-pill-sheet ${selectedOrder.status?.toLowerCase() || 'pending'}`}>
+                                        {selectedOrder.status?.toUpperCase() || 'RECEIVED'}
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="manifest-modal-body p-4 p-md-5 overflow-auto custom-scrollbar" style={{ maxHeight: 'calc(90vh - 140px)' }}>
-                                <div className="row g-5 mb-5">
-                                    <div className="col-md-4">
-                                        <div className="manifest-info-card border-start-thick ps-3">
-                                            <label className="font-label extra-small text-muted fw-bold uppercase tracking-widest mb-1 d-block">DATE & TIME</label>
-                                            <p className="font-body small text-primary m-0 fw-bold">{new Date(selectedOrder.createdAt).toLocaleString(undefined, { month: 'long', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                                        </div>
+                            <div className="frontend-customer-card bg-light bg-opacity-50 rounded-4 p-4 border border-opacity-10">
+                                <div className="d-flex align-items-center gap-3 mb-3">
+                                    <div className="avatar-mini bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style={{ width: '32px', height: '32px', fontSize: '12px' }}>
+                                        {selectedOrder.shippingAddress?.name?.charAt(0).toUpperCase()}
                                     </div>
-                                    <div className="col-md-4">
-                                        <div className="manifest-info-card border-start-thick ps-3">
-                                            <label className="font-label extra-small text-muted fw-bold uppercase tracking-widest mb-1 d-block">SETTLEMENT</label>
-                                            <p className="font-body small text-primary m-0 fw-bold">
-                                                {selectedOrder.paymentMethod === 'COD' ? 'CASH ON DELIVERY' : 'ONLINE'}
-                                                <span className={`ms-2 small-dot ${selectedOrder.isPaid ? 'bg-success' : 'bg-warning'}`}></span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-4">
-                                        <div className="manifest-info-card border-start-thick ps-3">
-                                            <label className="font-label extra-small text-muted fw-bold uppercase tracking-widest mb-1 d-block">LOGISTICS</label>
-                                            <p className="font-body small text-primary m-0 fw-bold">{selectedOrder.status || 'Received'}</p>
-                                        </div>
+                                    <div>
+                                        <p className="font-headline small text-primary mb-0 fw-bold">{selectedOrder.shippingAddress?.name}</p>
+                                        <p className="extra-small text-muted mb-0 fw-bold uppercase tracking-widest">Delivery Recipient</p>
                                     </div>
                                 </div>
-
-                                <div className="manifest-address-strip bg-light p-3 p-md-4 rounded-4 mb-4 mb-md-5 d-flex flex-column flex-md-row gap-3 gap-md-4">
-                                    <div className="d-flex gap-3 align-items-start">
-                                        <div className="strip-icon text-primary mt-1"><Truck size={20} /></div>
-                                        <div className="strip-content flex-grow-1">
-                                            <label className="font-label extra-small text-muted fw-bold uppercase tracking-widest mb-1 mb-md-2 d-block">DESTINATION</label>
-                                            <p className="font-headline small text-primary mb-1 fw-bold">{selectedOrder.shippingAddress?.name}</p>
-                                            <p className="font-body extra-small text-muted mb-0">{selectedOrder.shippingAddress?.line1}, {selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.state}</p>
-                                        </div>
-                                    </div>
-                                    <div className="strip-phone text-start text-md-end mt-2 mt-md-0 ms-0 ms-md-auto ps-4 ps-md-0 ms-3 ms-md-0">
-                                        <label className="font-label extra-small text-muted fw-bold uppercase tracking-widest mb-1 mb-md-2 d-block">CONTACT</label>
-                                        <p className="font-body small text-primary fw-bold mb-0">{selectedOrder.shippingAddress?.phone}</p>
-                                    </div>
+                                <div className="address-box d-flex gap-2">
+                                    <MapPin size={14} className="text-secondary flex-shrink-0 mt-1" />
+                                    <p className="font-body extra-small text-muted m-0 lh-base">
+                                        {selectedOrder.shippingAddress?.line1}, {selectedOrder.shippingAddress?.city},<br />
+                                        {selectedOrder.shippingAddress?.state} - {selectedOrder.shippingAddress?.pincode}
+                                    </p>
                                 </div>
+                                <div className="mt-3 d-flex align-items-center gap-2 text-primary font-label extra-small fw-bold">
+                                    <Phone size={12} /> {selectedOrder.shippingAddress?.phone}
+                                </div>
+                            </div>
 
-                                <div className="manifest-items-catalog">
-                                    <h6 className="font-label text-secondary fw-bold uppercase tracking-widest mb-4 border-bottom pb-2">PRODUCT CATALOGUE</h6>
-                                    <div className="d-flex flex-column gap-3">
-                                        {selectedOrder.orderItems.map((item, i) => (
-                                            <div key={i} className="manifest-item-row d-flex align-items-center gap-4 py-3 border-bottom border-light hover-bg-light transition-all rounded-3 px-2">
+                            <div className="frontend-items-section mt-2">
+                                <div className="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 className="font-label text-muted fw-bold extra-small uppercase tracking-widest m-0">Consignment Details</h6>
+                                    <span className="badge bg-secondary bg-opacity-10 text-primary border border-primary border-opacity-10 extra-small fw-bold px-3 py-1 rounded-pill">{selectedOrder.orderItems.length} ITEMS</span>
+                                </div>
+                                <div className="items-list-custom custom-scrollbar" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                                    {selectedOrder.orderItems.map((item, i) => (
+                                        <div key={i} className="frontend-item-card-premium d-flex align-items-center gap-3 p-3 rounded-4 mb-2 border border-transparent hover-bg-light transition-all">
+                                            <div className="item-img-box rounded-3 overflow-hidden border shadow-sm" style={{ width: '56px', height: '56px' }}>
                                                 <img
                                                     src={item.image?.startsWith('http') ? item.image : `${import.meta.env.VITE_API_URL}${item.image}`}
                                                     alt=""
-                                                    className="img-art shadow-sm border object-fit-cover rounded-3"
-                                                    style={{ width: '60px', height: '60px' }}
+                                                    className="w-100 h-100 object-fit-cover"
                                                 />
-                                                <div className="flex-grow-1">
-                                                    <p className="font-headline small text-primary m-0 fw-bold d-flex align-items-center gap-2">
-                                                        {item.name}
-                                                        {item.variant && <span className="badge bg-primary bg-opacity-10 text-secondary border border-primary border-opacity-20 rounded-pill px-2 py-1 fw-bold" style={{ fontSize: '11px' }}>📦 {item.variant}</span>}
-                                                    </p>
-                                                    <p className="font-label extra-small text-muted m-0 uppercase tracking-wide">QUANTITY: {item.qty}</p>
-                                                </div>
-                                                <div className="text-end">
-                                                    <p className="font-headline small text-secondary m-0 fw-bold">₹{item.qty * item.price}</p>
-                                                    <p className="font-label extra-small text-muted m-0">₹{item.price} / unit</p>
+                                            </div>
+                                            <div className="flex-grow-1">
+                                                <p className="font-body fw-bold text-primary mb-0 small">{item.name}</p>
+                                                <div className="d-flex align-items-center gap-2 mt-1">
+                                                    <span className="extra-small text-muted fw-bold">{item.qty} × ₹{item.price}</span>
+                                                    {item.variant && <span className="badge bg-light text-muted border extra-small fw-normal">{item.variant}</span>}
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="manifest-financial-summary mt-5 pt-4 border-top">
-                                    <div className="row justify-content-end">
-                                        <div className="col-md-5">
-                                            <div className="d-flex justify-content-between mb-2">
-                                                <span className="font-label small text-muted">Sub-Total Value</span>
-                                                <span className="font-body small fw-bold text-primary">₹{selectedOrder.itemsPrice || selectedOrder.totalPrice - (selectedOrder.shippingPrice || 0)}</span>
-                                            </div>
-                                            <div className="d-flex justify-content-between mb-4">
-                                                <span className="font-label small text-muted">Logistics Fee</span>
-                                                <span className="font-body small fw-bold text-success">{selectedOrder.shippingPrice > 0 ? `₹${selectedOrder.shippingPrice}` : 'FREE'}</span>
-                                            </div>
-                                            <div className="d-flex justify-content-between pt-3 border-top">
-                                                <h5 className="font-headline text-primary fw-bold m-0 fs-4">GRAND TOTAL</h5>
-                                                <h5 className="font-headline text-secondary fw-bold m-0 fs-3">₹{selectedOrder.totalPrice}</h5>
+                                            <div className="text-end">
+                                                <p className="font-headline fw-bold text-secondary m-0 small">₹{item.qty * item.price}</p>
                                             </div>
                                         </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="financial-summary-premium border-top pt-4 mt-2">
+                                <div className="d-flex justify-content-between mb-2">
+                                    <span className="font-label extra-small text-muted uppercase fw-bold">Payment Method</span>
+                                    <span className="font-body extra-small fw-bold text-primary">{selectedOrder.paymentMethod === 'COD' ? 'CASH ON DELIVERY' : 'PREPAID ONLINE'}</span>
+                                </div>
+                                <div className="d-flex justify-content-between mb-2">
+                                    <span className="font-label extra-small text-muted uppercase fw-bold">Cart Subtotal</span>
+                                    <span className="font-body extra-small fw-bold text-primary">₹{selectedOrder.totalPrice - (selectedOrder.shippingPrice || 0)}</span>
+                                </div>
+                                <div className="d-flex justify-content-between mb-4">
+                                    <span className="font-label extra-small text-muted uppercase fw-bold">Logistics Fee</span>
+                                    <span className="font-body extra-small fw-bold text-success">{selectedOrder.shippingPrice > 0 ? `₹${selectedOrder.shippingPrice}` : 'COMPLIMENTARY'}</span>
+                                </div>
+                                <div className="total-reveal-card bg-primary p-4 rounded-4 shadow-lg d-flex justify-content-between align-items-center text-white">
+                                    <div>
+                                        <p className="extra-small fw-bold uppercase tracking-widest mb-0 opacity-75">Settlement Total</p>
+                                        <h4 className="font-headline fw-bold m-0 h5">Final Amount</h4>
+                                    </div>
+                                    <div className="text-end">
+                                        <h3 className="font-headline fw-bold m-0 h2">₹{selectedOrder.totalPrice}</h3>
                                     </div>
                                 </div>
+                            </div>
 
-                                <div className="manifest-footer-action mt-4 mt-md-5 pt-3 pt-md-4 border-top d-flex flex-column flex-md-row gap-2 gap-md-3">
-                                    <button className="btn btn-primary rounded-pill flex-grow-1 py-3 fw-bold font-label tracking-widest shadow-lg d-flex align-items-center justify-content-center gap-2" onClick={() => window.print()}>
-                                        GENERATE DOCUMENT
-                                    </button>
-                                    <button className="btn btn-outline-secondary rounded-pill px-4 px-md-5 py-3 fw-bold font-label small" onClick={() => setShowOrderModal(false)}>
-                                        CLOSE VIEW
-                                    </button>
-                                </div>
+                            <div className="frontend-sheet-footer d-flex gap-3 mt-4">
+                                <button className="btn btn-primary rounded-pill flex-grow-1 py-3 fw-bold font-label tracking-widest shadow-sm border-0 d-flex align-items-center justify-content-center gap-2" onClick={() => window.print()}>
+                                    <Download size={18} /> DOWNLOAD INVOICE
+                                </button>
+                                <button className="btn btn-light border rounded-pill px-4 py-3 fw-bold font-label small" onClick={() => setShowOrderModal(false)}>
+                                    CLOSE
+                                </button>
                             </div>
                         </div>
                     </div>
                 )}
+
             </div>
         </div>
     );

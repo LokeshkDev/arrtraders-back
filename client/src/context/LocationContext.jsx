@@ -48,33 +48,39 @@ export const LocationProvider = ({ children }) => {
             navigator.geolocation.getCurrentPosition(async (position) => {
                 const { latitude, longitude } = position.coords;
                 try {
-                    // Using a reverse geocoding API (could be Google Maps or a free one like Nominatim)
-                    // For now, we'll simulate or use a public one
-                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`);
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`, {
+                        headers: { 'Accept-Language': 'en-US,en;q=0.9' }
+                    });
                     const data = await response.json();
-                    if (data.address) {
+                    if (data && data.address) {
+                        const pincode = data.address.postcode;
+                        if (!pincode) {
+                            resolve({ serviceable: false, message: 'We detected your area, but could not find the exact pincode. Please enter it manually.' });
+                            return;
+                        }
                         const newLoc = {
-                            pincode: data.address.postcode,
-                            city: data.address.city || data.address.town || data.address.village,
-                            state: data.address.state,
+                            pincode: pincode,
+                            city: data.address.city || data.address.town || data.address.village || data.address.county || '',
+                            state: data.address.state || '',
                             address: data.display_name
                         };
                         const validationResult = await validateLocation(newLoc);
-                        resolve(validationResult);
+                        // validateLocation might return null if something went wrong, so ensure we resolve an object
+                        resolve(validationResult || { serviceable: false, message: 'Could not validate the detected pincode. Please enter it manually.' });
                     } else {
-                        resolve({ serviceable: false, message: 'Unable to detect your pincode. Please enter it manually.' });
+                        resolve({ serviceable: false, message: 'Unable to detect your pincode from your location. Please enter it manually.' });
                     }
                 } catch (error) {
                     console.error('Reverse geocoding failed:', error);
-                    resolve({ serviceable: false, message: 'Unable to detect your pincode. Please enter it manually.' });
+                    resolve({ serviceable: false, message: 'Network error while detecting location. Please enter it manually.' });
                 } finally {
                     setLoading(false);
                 }
             }, (error) => {
                 console.error('Geolocation failed:', error);
                 setLoading(false);
-                resolve({ serviceable: false, message: 'Location permission failed. Please enter your pincode manually.' });
-            });
+                resolve({ serviceable: false, message: 'Location permission failed or timed out. Please enter your pincode manually.' });
+            }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
         });
     };
 

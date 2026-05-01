@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from './components/Header';
@@ -73,7 +73,7 @@ const Layout = ({ children }) => {
     <div className="app-container d-flex flex-column min-vh-100 pb-5 pb-md-0">
       <ScrollToTop />
       <Header />
-      <div className="flex-grow-1 w-100">
+      <div className="flex-grow-1 mt-3 w-100">
         {children}
       </div>
       <Footer />
@@ -84,12 +84,39 @@ const Layout = ({ children }) => {
   );
 };
 
+const GlobalLoader = () => {
+  const [loading, setLoading] = useState(true);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    // Hide loader after a short delay to simulate app initialization
+    const timer = setTimeout(() => {
+      setLoading(false);
+      setTimeout(() => setVisible(false), 500); // 500ms fade out transition
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!visible) return null;
+
+  return (
+    <div className={`global-site-loader ${!loading ? 'fade-out' : ''}`}>
+      <div className="loader-content">
+        <img src="/loader-giff.gif" alt="Loading" className="loader-gif" />
+        <h2 className="loader-brand-name">AR RAHMAN</h2>
+        <p className="loader-brand-subtitle">PREMIUM DATES & NUTS</p>
+      </div>
+    </div>
+  );
+};
+
 function App() {
   return (
     <LocationProvider>
       <ShopProvider>
         <CartProvider>
           <WishlistProvider>
+            <GlobalLoader />
             <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               <Layout>
                 <Routes>

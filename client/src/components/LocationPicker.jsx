@@ -73,7 +73,7 @@ const LocationPicker = () => {
     };
 
     /* Shared inline location content for mobile panel + desktop modal body */
-    const LocationContent = () => (
+    const locationContentJSX = (
         <>
             <button className="detect-location-btn" onClick={handleAutoDetect} disabled={loading}>
                 <Navigation size={16} />
@@ -88,11 +88,12 @@ const LocationPicker = () => {
                 <div className="pincode-input-wrapper">
                     <input
                         type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         placeholder="Enter 6-digit pincode"
                         maxLength="6"
                         value={pincode}
                         onChange={(e) => setPincode(e.target.value.replace(/\D/g, ''))}
-                        autoFocus={mobileExpanded}
                     />
                     <button type="submit" className="pincode-submit">Apply</button>
                 </div>
@@ -149,7 +150,7 @@ const LocationPicker = () => {
                                 <X size={16} />
                             </button>
                         </div>
-                        <LocationContent />
+                        {locationContentJSX}
                     </div>
                 </div>
             )}
@@ -168,7 +169,7 @@ const LocationPicker = () => {
                             <p className="modal-description">
                                 Select a delivery location to see product availability.
                             </p>
-                            <LocationContent />
+                            {locationContentJSX}
                         </div>
                     </div>
                 </div>

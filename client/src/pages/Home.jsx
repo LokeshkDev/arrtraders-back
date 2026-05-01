@@ -69,69 +69,27 @@ const Home = () => {
     }
   };
 
-  const defaultHeroSlides = [
-    {
-      title: "Estate <span>Reserve</span> Selection",
-      subtitle: "AR RAHMAN EXCLUSIVE",
-      text: "Indulge in our curated treasury of hand-picked seasonal treasures, sourced for the discerning palate.",
-      img: "/images/reference/hero-slide-3.jpg",
-      bgImg: "/images/reference/hero-slide-3.jpg",
-      btnText: "Explore Reserve"
-    },
-    {
-      title: "Artisan <span>Gift</span> Treasures",
-      subtitle: "CELEBRATION HAMPERS",
-      text: "Elevate your gifting experience with our bespoke artisanal collections, designed for royal moments.",
-      img: "/images/reference/hero-slide-4.jpg",
-      bgImg: "/images/reference/hero-slide-4.jpg",
-      btnText: "Discover Gifting"
-    }
-  ];
-
   const heroSlides = cmsData?.heroSlides?.length > 0 ? cmsData.heroSlides.map(s => ({
     title: s.title,
     subtitle: s.subtitle,
     text: s.text,
-    img: s.productImg || "/images/reference/product-large-1.jpg",
-    bgImg: s.bgImg || "/images/reference/banner-1.jpg",
+    img: s.productImg || "",
+    bgImg: s.bgImg || "",
     btnText: s.btnText,
     btnLink: s.btnLink || '/categories'
-  })) : defaultHeroSlides;
+  })) : [];
 
   const lucideIcons = { ShieldCheck, Star, Truck, RefreshCcw };
-
-  const defaultFeatures = [
-    { icon: ShieldCheck, title: "Farm to Table", desc: "100% Certified Organic" },
-    { icon: Star, title: "Premium Quality", desc: "Hand-picked Selection" },
-    { icon: Truck, title: "Express Shipping", desc: "Free on orders above ₹999" },
-    { icon: RefreshCcw, title: "Easy Returns", desc: "No questions asked policy" }
-  ];
 
   const features = cmsData?.features?.length > 0 ? cmsData.features.map(f => ({
     icon: lucideIcons[f.icon] || Star,
     title: f.title,
     desc: f.desc
-  })) : defaultFeatures;
+  })) : [];
 
-  const defaultCategoryItems = [
-    { name: "Premium Dates", img: "/images/reference/category-thumb-1.jpg", count: "12 Items" },
-    { name: "Exotic Nuts", img: "/images/reference/category-thumb-2.jpg", count: "15 Items" },
-    { name: "Gifting Hampers", img: "/images/reference/category-thumb-5.jpg", count: "8 Items" },
-    { name: "Wellness Mix", img: "/images/reference/category-thumb-4.jpg", count: "10 Items" },
-    { name: "Organic Honey", img: "/images/reference/category-thumb-6.jpg", count: "5 Items" }
-  ];
+  const categoryItems = cmsData?.categoryItems?.length > 0 ? cmsData.categoryItems : [];
 
-  const categoryItems = cmsData?.categoryItems?.length > 0 ? cmsData.categoryItems : defaultCategoryItems;
-
-  const experienceBanners = cmsData?.experienceBanners?.length > 0 ? cmsData.experienceBanners : [
-    {
-      title: 'Luxury Gifting <span class="text-primary">Collection</span>',
-      text: 'Exquisite artisanal hampers for royal celebrations and corporate excellence.',
-      img: '/images/reference/banner-ad-1.jpg',
-      btnText: 'Discover Gifting Art',
-      btnStyle: 'primary'
-    }
-  ];
+  const experienceBanners = cmsData?.experienceBanners?.length > 0 ? cmsData.experienceBanners : [];
 
   const [bestSellers, setBestSellers] = useState([]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -163,7 +121,7 @@ const Home = () => {
   return (
     <main className={`home-page animate-fade-in ${loading ? 'opacity-50' : ''}`}>
       {/* Hero Billboard - Fit to Screen */}
-      {(cmsData?.showHero !== false) && (
+      {(cmsData?.showHero !== false) && heroSlides.length > 0 && (
         <section className="billboard">
           {loading ? (
             <div className="hero-slide-content bg-light d-flex align-items-center justify-content-center">
@@ -215,7 +173,7 @@ const Home = () => {
       )}
 
       {/* Features Section - High Density - HIDDEN ON MOBILE */}
-      {(cmsData?.showFeatures !== false) && (
+      {(cmsData?.showFeatures !== false) && features.length > 0 && (
         <section className="padding-medium bg-white border-bottom shadow-sm position-relative d-none d-lg-block" style={{ zIndex: 10, marginTop: '-40px', borderRadius: '40px 40px 0 0' }}>
           <div className="container-lg">
             <div className="row g-4">
@@ -238,7 +196,7 @@ const Home = () => {
       )}
 
       {/* Category Grid - fit to screen */}
-      {(cmsData?.showCategories !== false) && (
+      {(cmsData?.showCategories !== false) && categoryItems.length > 0 && (
         <section className=" category-section-refined" style={{ paddingBottom: "80px", paddingTop: "50px" }}>
           <div className="container-lg">
             <div className="text-center mb-5 pb-3">
@@ -421,7 +379,7 @@ const Home = () => {
       )}
 
       {/* Wellness & Gifting Experience */}
-      {(cmsData?.showExperience !== false) && (
+      {(cmsData?.showExperience !== false) && experienceBanners.length > 0 && (
         <section className="py-2 py-lg-5">
           <div className="container-lg">
             <div className="row g-4 g-lg-5">
