@@ -12,8 +12,8 @@ router.get('/', getProducts);
 router.post('/bulk', protect, admin, createMultipleProducts);
 router.get('/slug/:categorySlug/:productSlug', getProductBySlug);
 router.get('/:id', getProductById);
-router.post('/', protect, admin, memoryUpload.array('images', 5), createProduct);
-router.put('/:id', protect, admin, memoryUpload.array('images', 5), updateProduct);
+router.post('/', protect, admin, memoryUpload.array('images', 8), createProduct);
+router.put('/:id', protect, admin, memoryUpload.array('images', 8), updateProduct);
 router.delete('/:id', protect, admin, deleteProduct);
 
 export default router;

@@ -1100,7 +1100,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
         try {
             const formData = new FormData();
             Object.keys(prodForm).forEach(key => {
-                if (key === 'availableWeights' || key === 'nutrition') {
+                if (key === 'availableWeights' || key === 'nutrition' || key === 'images') {
                     formData.append(key, JSON.stringify(prodForm[key]));
                 } else {
                     formData.append(key, prodForm[key]);
@@ -1160,7 +1160,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                 <div className="d-flex gap-2">
                     <button onClick={() => setShowBulkImport(!showBulkImport)} className="btn btn-white border rounded-pill px-4 fw-bold extra-small">Bulk Import</button>
                     <button onClick={() => { setCatForm({ name: '', description: '', image: '', parent: '', isActive: true }); setView('addCategory'); }} className="btn btn-white border rounded-pill px-4 fw-bold extra-small">Add Category</button>
-                    <button onClick={() => { setProdForm({ name: '', description: '', category: '', price: '', stock: '', isActive: true }); setView('addProduct'); }} className="btn btn-primary rounded-pill px-4 fw-bold extra-small shadow-md">Add New Product</button>
+                    <button onClick={() => { setProdForm({ name: '', description: '', category: '', price: '', originalPrice: '', flashSale: false, discount: '', stock: '', isBestSeller: false, isTopRated: false, isFeatured: false, color: '', weight: '', unit: 'gram', availableWeights: [], nutrition: {}, isActive: true }); setEditId(null); setFiles([]); setFormErrors({}); setView('addProduct'); }} className="btn btn-primary rounded-pill px-4 fw-bold extra-small shadow-md">Add New Product</button>
                 </div>
             </div>
 
@@ -1286,16 +1286,54 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
 
                             {/* Images */}
                             <div className="col-12">
-                                <label className="form-label fw-bold small text-muted">Product Images</label>
-                                <div className="bg-light rounded-4 p-4 border text-center">
-                                    <input type="file" multiple accept="image/*" className="form-control rounded-4" onChange={e => setFiles(Array.from(e.target.files))} />
+                                <label className="form-label fw-bold small text-muted">Product Images (Up to 8)</label>
+                                <div className="bg-light rounded-4 p-4 border">
+                                    <div className="text-center mb-3">
+                                        <label className="btn btn-white border rounded-pill px-4 py-2 cursor-pointer shadow-sm">
+                                            <Plus size={16} className="me-2" /> Add Images
+                                            <input type="file" multiple accept="image/*" className="d-none" onChange={e => {
+                                                const newFiles = Array.from(e.target.files);
+                                                setFiles(prev => [...prev, ...newFiles].slice(0, 8));
+                                            }} />
+                                        </label>
+                                        <p className="text-muted extra-small mt-2">Select 3-4 high-quality photos for better presentation</p>
+                                    </div>
+
+                                    {/* Selected Files (New) */}
                                     {files.length > 0 && (
-                                        <div className="d-flex gap-2 mt-3 flex-wrap">
-                                            {files.map((f, idx) => (
-                                                <div key={idx} className="position-relative">
-                                                    <img src={URL.createObjectURL(f)} className="rounded-3 border shadow-sm" style={{ width: 60, height: 60, objectFit: 'cover' }} alt="" />
-                                                </div>
-                                            ))}
+                                        <div className="mb-4">
+                                            <h6 className="extra-small fw-bold text-muted uppercase mb-3">New Images to Upload</h6>
+                                            <div className="d-flex gap-3 flex-wrap">
+                                                {files.map((f, idx) => (
+                                                    <div key={idx} className="position-relative group">
+                                                        <img src={URL.createObjectURL(f)} className="rounded-3 border shadow-sm" style={{ width: 80, height: 80, objectFit: 'cover' }} alt="" />
+                                                        <button type="button" className="btn btn-danger btn-sm rounded-circle position-absolute top-0 end-0 p-1 shadow-sm" style={{ transform: 'translate(50%, -50%)', width: 24, height: 24 }} onClick={() => setFiles(files.filter((_, i) => i !== idx))}>
+                                                            <X size={12} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Existing Images (When Editing) */}
+                                    {view === 'editProduct' && prodForm.images && prodForm.images.length > 0 && (
+                                        <div>
+                                            <h6 className="extra-small fw-bold text-muted uppercase mb-3">Current Images</h6>
+                                            <div className="d-flex gap-3 flex-wrap">
+                                                {prodForm.images.map((img, idx) => (
+                                                    <div key={idx} className="position-relative group">
+                                                        <img src={img} className="rounded-3 border shadow-sm bg-white" style={{ width: 80, height: 80, objectFit: 'cover' }} alt="" />
+                                                        <button type="button" className="btn btn-danger btn-sm rounded-circle position-absolute top-0 end-0 p-1 shadow-sm" style={{ transform: 'translate(50%, -50%)', width: 24, height: 24 }} onClick={() => {
+                                                            const newImages = prodForm.images.filter((_, i) => i !== idx);
+                                                            setProdForm({ ...prodForm, images: newImages });
+                                                        }}>
+                                                            <Trash size={12} />
+                                                        </button>
+                                                        {idx === 0 && <span className="badge bg-primary position-absolute bottom-0 start-50 translate-middle-x mb-1 extra-small">Primary</span>}
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
                                 </div>

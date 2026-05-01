@@ -32,7 +32,8 @@ const Product = sequelize.define('Product', {
     },
     image: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true,
+        defaultValue: ''
     },
     images: {
         type: DataTypes.JSON,
@@ -45,7 +46,7 @@ const Product = sequelize.define('Product', {
         type: DataTypes.FLOAT
     },
     unit: {
-        type: DataTypes.ENUM('kg', 'gram', 'ml', 'litre')
+        type: DataTypes.ENUM('kg', 'gram', 'ml', 'litre', 'piece')
     },
     availableWeights: {
         type: DataTypes.JSON,

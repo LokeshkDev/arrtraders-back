@@ -227,7 +227,16 @@ export const updateProduct = async (req, res) => {
             }
 
             if (req.files && req.files.length > 0 || req.body.images) {
-                const existingImages = req.body.images ? (typeof req.body.images === 'string' ? JSON.parse(req.body.images) : req.body.images) : (product.images || []);
+                let existingImages = [];
+                if (req.body.images) {
+                    try {
+                        existingImages = typeof req.body.images === 'string' ? JSON.parse(req.body.images) : req.body.images;
+                    } catch (e) {
+                        existingImages = product.images || [];
+                    }
+                } else {
+                    existingImages = product.images || [];
+                }
                 
                 let newlyUploaded = [];
                 if (req.files && req.files.length > 0) {
