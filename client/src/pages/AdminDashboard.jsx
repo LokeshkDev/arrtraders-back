@@ -1164,7 +1164,205 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                 </div>
             </div>
 
-            {showBulkImport ? (
+            {(view === 'addProduct' || view === 'editProduct') ? (
+                <div className="bg-white rounded-5 shadow-sm border p-4 p-md-5 animate-fade-in">
+                    <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                        <h4 className="fw-bold text-primary m-0 font-headline">{view === 'editProduct' ? 'Edit Product' : 'Add New Product'}</h4>
+                        <button className="btn btn-light rounded-pill px-4 fw-bold d-flex align-items-center gap-2" onClick={() => { setView('list'); setEditId(null); setFiles([]); setFormErrors({}); }}>
+                            <ArrowLeft size={16} /> Back to List
+                        </button>
+                    </div>
+                    <form onSubmit={handleCreateProduct}>
+                        <div className="row g-4">
+                            <div className="col-md-6">
+                                <label className="form-label fw-bold small text-muted">Product Name *</label>
+                                <input ref={firstInputRef} type="text" className={`form-control rounded-4 py-3 ${formErrors.name ? 'is-invalid' : ''}`} placeholder="e.g. Premium Ajwa Dates" value={prodForm.name} onChange={e => setProdForm({ ...prodForm, name: e.target.value })} />
+                                {formErrors.name && <div className="invalid-feedback">{formErrors.name}</div>}
+                            </div>
+                            <div className="col-md-6">
+                                <label className="form-label fw-bold small text-muted">Category *</label>
+                                <select className={`form-select rounded-4 py-3 ${formErrors.category ? 'is-invalid' : ''}`} value={prodForm.category} onChange={e => setProdForm({ ...prodForm, category: e.target.value })}>
+                                    <option value="">Select Category</option>
+                                    {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
+                                </select>
+                                {formErrors.category && <div className="invalid-feedback">{formErrors.category}</div>}
+                            </div>
+                            <div className="col-12">
+                                <label className="form-label fw-bold small text-muted">Description *</label>
+                                <textarea className={`form-control rounded-4 py-3 ${formErrors.description ? 'is-invalid' : ''}`} rows="3" placeholder="Product description..." value={prodForm.description} onChange={e => setProdForm({ ...prodForm, description: e.target.value })} />
+                                {formErrors.description && <div className="invalid-feedback">{formErrors.description}</div>}
+                            </div>
+                            <div className="col-md-3">
+                                <label className="form-label fw-bold small text-muted">Price (₹) *</label>
+                                <input type="number" className={`form-control rounded-4 py-3 ${formErrors.price ? 'is-invalid' : ''}`} placeholder="e.g. 1250" value={prodForm.price} onChange={e => setProdForm({ ...prodForm, price: e.target.value })} />
+                                {formErrors.price && <div className="invalid-feedback">{formErrors.price}</div>}
+                            </div>
+                            <div className="col-md-3">
+                                <label className="form-label fw-bold small text-muted">Original Price (₹)</label>
+                                <input type="number" className="form-control rounded-4 py-3" placeholder="e.g. 1500 (MRP)" value={prodForm.originalPrice} onChange={e => setProdForm({ ...prodForm, originalPrice: e.target.value })} />
+                            </div>
+                            <div className="col-md-3">
+                                <label className="form-label fw-bold small text-muted">Weight *</label>
+                                <input type="number" className={`form-control rounded-4 py-3 ${formErrors.weight ? 'is-invalid' : ''}`} placeholder="e.g. 500" value={prodForm.weight} onChange={e => setProdForm({ ...prodForm, weight: e.target.value })} />
+                                {formErrors.weight && <div className="invalid-feedback">{formErrors.weight}</div>}
+                            </div>
+                            <div className="col-md-3">
+                                <label className="form-label fw-bold small text-muted">Unit</label>
+                                <select className="form-select rounded-4 py-3" value={prodForm.unit} onChange={e => setProdForm({ ...prodForm, unit: e.target.value })}>
+                                    <option value="gram">Gram (g)</option>
+                                    <option value="kg">Kilogram (kg)</option>
+                                    <option value="ml">Millilitre (ml)</option>
+                                    <option value="litre">Litre (L)</option>
+                                    <option value="piece">Piece</option>
+                                </select>
+                            </div>
+                            <div className="col-md-4">
+                                <label className="form-label fw-bold small text-muted">Stock Quantity</label>
+                                <input type="number" className="form-control rounded-4 py-3" placeholder="e.g. 100" value={prodForm.stock} onChange={e => setProdForm({ ...prodForm, stock: e.target.value })} />
+                            </div>
+                            <div className="col-md-4">
+                                <label className="form-label fw-bold small text-muted">Discount (%)</label>
+                                <input type="number" className="form-control rounded-4 py-3" placeholder="e.g. 10" value={prodForm.discount} onChange={e => setProdForm({ ...prodForm, discount: e.target.value })} />
+                            </div>
+                            <div className="col-md-4">
+                                <label className="form-label fw-bold small text-muted">Color Tag</label>
+                                <input type="text" className="form-control rounded-4 py-3" placeholder="e.g. Dark Brown" value={prodForm.color} onChange={e => setProdForm({ ...prodForm, color: e.target.value })} />
+                            </div>
+
+                            {/* Weight Variations */}
+                            <div className="col-12">
+                                <label className="form-label fw-bold small text-muted">Weight Variations</label>
+                                <div className="bg-light rounded-4 p-3 border">
+                                    <div className="d-flex gap-2 flex-wrap mb-3">
+                                        {(prodForm.availableWeights || []).map((v, idx) => (
+                                            <div key={idx} className="badge bg-white border text-primary fw-bold px-3 py-2 d-flex align-items-center gap-2 rounded-pill">
+                                                {typeof v === 'object' ? `${v.value} — ₹${v.price}` : v}
+                                                <button type="button" className="btn-close" style={{ fontSize: '8px' }} onClick={() => {
+                                                    const newWeights = [...prodForm.availableWeights];
+                                                    newWeights.splice(idx, 1);
+                                                    setProdForm({ ...prodForm, availableWeights: newWeights });
+                                                }}></button>
+                                                <button type="button" className="btn btn-sm btn-link text-primary p-0 ms-1" title="Promote to Primary" onClick={() => promoteToPrimary(idx)}>
+                                                    <ArrowUpCircle size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="d-flex gap-2 align-items-end flex-wrap">
+                                        <input type="text" className="form-control form-control-sm rounded-pill" style={{ maxWidth: '120px' }} placeholder="Weight (e.g. 1000)" value={customVar} onChange={e => handleCustomVarChange(e.target.value)} />
+                                        <input type="number" className="form-control form-control-sm rounded-pill" style={{ maxWidth: '120px' }} placeholder="Price" value={varPrice} onChange={e => setVarPrice(e.target.value)} />
+                                        <input type="number" className="form-control form-control-sm rounded-pill" style={{ maxWidth: '120px' }} placeholder="Original Price" value={varOriginalPrice} onChange={e => setVarOriginalPrice(e.target.value)} />
+                                        <button type="button" className="btn btn-sm btn-primary rounded-pill px-3" onClick={addVariation}><Plus size={14} /> Add</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Flags */}
+                            <div className="col-12">
+                                <label className="form-label fw-bold small text-muted">Product Flags</label>
+                                <div className="d-flex gap-4 flex-wrap bg-light rounded-4 p-3 border">
+                                    <div className="form-check form-switch">
+                                        <input className="form-check-input" type="checkbox" checked={prodForm.isBestSeller} onChange={e => setProdForm({ ...prodForm, isBestSeller: e.target.checked })} />
+                                        <label className="form-check-label small fw-bold">Best Seller</label>
+                                    </div>
+                                    <div className="form-check form-switch">
+                                        <input className="form-check-input" type="checkbox" checked={prodForm.isFeatured} onChange={e => setProdForm({ ...prodForm, isFeatured: e.target.checked })} />
+                                        <label className="form-check-label small fw-bold">Featured</label>
+                                    </div>
+                                    <div className="form-check form-switch">
+                                        <input className="form-check-input" type="checkbox" checked={prodForm.isTopRated} onChange={e => setProdForm({ ...prodForm, isTopRated: e.target.checked })} />
+                                        <label className="form-check-label small fw-bold">Top Rated</label>
+                                    </div>
+                                    <div className="form-check form-switch">
+                                        <input className="form-check-input" type="checkbox" checked={prodForm.flashSale} onChange={e => setProdForm({ ...prodForm, flashSale: e.target.checked })} />
+                                        <label className="form-check-label small fw-bold">Flash Sale</label>
+                                    </div>
+                                    <div className="form-check form-switch">
+                                        <input className="form-check-input" type="checkbox" checked={prodForm.isActive} onChange={e => setProdForm({ ...prodForm, isActive: e.target.checked })} />
+                                        <label className="form-check-label small fw-bold">Active</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Images */}
+                            <div className="col-12">
+                                <label className="form-label fw-bold small text-muted">Product Images</label>
+                                <div className="bg-light rounded-4 p-4 border text-center">
+                                    <input type="file" multiple accept="image/*" className="form-control rounded-4" onChange={e => setFiles(Array.from(e.target.files))} />
+                                    {files.length > 0 && (
+                                        <div className="d-flex gap-2 mt-3 flex-wrap">
+                                            {files.map((f, idx) => (
+                                                <div key={idx} className="position-relative">
+                                                    <img src={URL.createObjectURL(f)} className="rounded-3 border shadow-sm" style={{ width: 60, height: 60, objectFit: 'cover' }} alt="" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="d-flex gap-3 justify-content-end mt-5 pt-4 border-top">
+                            <button type="button" className="btn btn-light rounded-pill px-5 py-3 fw-bold" onClick={() => { setView('list'); setEditId(null); setFiles([]); setFormErrors({}); }}>Cancel</button>
+                            <button type="submit" className="btn btn-primary rounded-pill px-5 py-3 fw-bold shadow-md" disabled={isSaving}>
+                                {isSaving ? <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</> : (view === 'editProduct' ? 'Update Product' : 'Create Product')}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+            ) : (view === 'addCategory' || view === 'editCategory') ? (
+                <div className="bg-white rounded-5 shadow-sm border p-4 p-md-5 animate-fade-in">
+                    <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                        <h4 className="fw-bold text-primary m-0 font-headline">{view === 'editCategory' ? 'Edit Category' : 'Add New Category'}</h4>
+                        <button className="btn btn-light rounded-pill px-4 fw-bold d-flex align-items-center gap-2" onClick={() => { setView('list'); setEditCatId(null); setCatFile(null); setFormErrors({}); }}>
+                            <ArrowLeft size={16} /> Back to List
+                        </button>
+                    </div>
+                    <form onSubmit={view === 'editCategory' ? handleUpdateCategory : handleCreateCategory}>
+                        <div className="row g-4">
+                            <div className="col-md-6">
+                                <label className="form-label fw-bold small text-muted">Category Name *</label>
+                                <input ref={firstInputRef} type="text" className={`form-control rounded-4 py-3 ${formErrors.name ? 'is-invalid' : ''}`} placeholder="e.g. Premium Dates" value={catForm.name} onChange={e => setCatForm({ ...catForm, name: e.target.value })} />
+                                {formErrors.name && <div className="invalid-feedback">{formErrors.name}</div>}
+                            </div>
+                            <div className="col-md-6">
+                                <label className="form-label fw-bold small text-muted">Parent Category (Optional)</label>
+                                <select className="form-select rounded-4 py-3" value={catForm.parent} onChange={e => setCatForm({ ...catForm, parent: e.target.value })}>
+                                    <option value="">None (Top-Level)</option>
+                                    {categories.filter(c => !c.parent).map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                                </select>
+                            </div>
+                            <div className="col-12">
+                                <label className="form-label fw-bold small text-muted">Description</label>
+                                <textarea className="form-control rounded-4 py-3" rows="3" placeholder="Category description..." value={catForm.description} onChange={e => setCatForm({ ...catForm, description: e.target.value })} />
+                            </div>
+                            <div className="col-md-6">
+                                <label className="form-label fw-bold small text-muted">Thumbnail Image {view === 'addCategory' ? '*' : ''}</label>
+                                <input type="file" accept="image/*" className={`form-control rounded-4 py-3 ${formErrors.image ? 'is-invalid' : ''}`} onChange={e => setCatFile(e.target.files[0])} />
+                                {formErrors.image && <div className="invalid-feedback">{formErrors.image}</div>}
+                                {catFile && (
+                                    <div className="mt-2">
+                                        <img src={URL.createObjectURL(catFile)} className="rounded-3 border shadow-sm" style={{ width: 80, height: 80, objectFit: 'cover' }} alt="preview" />
+                                    </div>
+                                )}
+                            </div>
+                            <div className="col-md-6 d-flex align-items-end">
+                                <div className="form-check form-switch">
+                                    <input className="form-check-input" type="checkbox" checked={catForm.isActive} onChange={e => setCatForm({ ...catForm, isActive: e.target.checked })} />
+                                    <label className="form-check-label small fw-bold">Active & Visible</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="d-flex gap-3 justify-content-end mt-5 pt-4 border-top">
+                            <button type="button" className="btn btn-light rounded-pill px-5 py-3 fw-bold" onClick={() => { setView('list'); setEditCatId(null); setCatFile(null); setFormErrors({}); }}>Cancel</button>
+                            <button type="submit" className="btn btn-primary rounded-pill px-5 py-3 fw-bold shadow-md" disabled={isSaving}>
+                                {isSaving ? <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</> : (view === 'editCategory' ? 'Update Category' : 'Create Category')}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+            ) : showBulkImport ? (
                 <BulkUploadTab onComplete={() => { setShowBulkImport(false); fetchData(); }} showToast={showToast} setConfirmModal={setConfirmModal} />
             ) : (
                 <React.Fragment>
