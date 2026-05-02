@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { auth, googleProvider } from '../firebase';
 import { signInWithPopup } from 'firebase/auth';
 import axios from 'axios';
@@ -10,13 +10,18 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Extract redirect path from URL
+  const searchParams = new URLSearchParams(location.search);
+  const redirectPath = searchParams.get('redirect');
 
   useEffect(() => {
     const userInfo = localStorage.getItem('userInfo');
     if (userInfo) {
-      navigate('/profile');
+      navigate(redirectPath || '/profile');
     }
-  }, [navigate]);
+  }, [navigate, redirectPath]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -29,7 +34,10 @@ const Login = () => {
       if (data.token) localStorage.setItem('userToken', data.token);
 
       window.dispatchEvent(new Event('storage'));
-      window.location.href = data.isAdmin ? '/admin' : '/';
+      
+      // Handle redirection
+      const nextPath = redirectPath || (data.isAdmin ? '/admin' : '/');
+      window.location.href = nextPath;
     } catch (error) {
       console.error('Login error:', error);
       alert(error.response?.data?.message || 'Login failed');
@@ -51,7 +59,10 @@ const Login = () => {
       if (data.token) localStorage.setItem('userToken', data.token);
       
       window.dispatchEvent(new Event('storage'));
-      window.location.href = '/'; // Social login is for customers only
+      
+      // Handle redirection
+      const nextPath = redirectPath || '/';
+      window.location.href = nextPath;
     } catch (error) {
       console.error('Google Auth Error:', error);
       if (error.code !== 'auth/popup-closed-by-user') {
@@ -72,37 +83,6 @@ const Login = () => {
               <h2 className="fw-bold font-headline text-primary mb-2 display-6">Login</h2>
               <p className="text-muted small font-body">Enter your email and password to access your account.</p>
             </div>
-          <form onSubmit={handleLogin}>
-            <div className="mb-4">
-              <label className="form-label fw-bold small text-muted">Email Address</label>
-              <input 
-                type="email" 
-                className="form-control login-input" 
-                placeholder="admin@arrahman.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div className="mb-4">
-              <label className="form-label fw-bold small text-muted">Password</label>
-              <input 
-                type="password" 
-                className="form-control login-input" 
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            <button type="submit" className="btn btn-primary w-100 fw-bold mb-3 login-btn" disabled={loading}>
-              {loading ? (
-                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-              ) : null}
-              Sign In
-            </button>
-
-            <div className="google-divider my-4">
-              <span>OR</span>
-            </div>
 
             <button 
               type="button" 
@@ -119,10 +99,42 @@ const Login = () => {
               Continue with Google
             </button>
 
-            <div className="text-center">
-              <a href="#" className="small text-decoration-none text-muted">Forgot password?</a>
+            <div className="google-divider my-4">
+              <span>OR</span>
             </div>
-          </form>
+
+            <form onSubmit={handleLogin}>
+              <div className="mb-4">
+                <label className="form-label fw-bold small text-muted">Email Address</label>
+                <input 
+                  type="email" 
+                  className="form-control login-input" 
+                  placeholder="admin@arrahman.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <div className="mb-4">
+                <label className="form-label fw-bold small text-muted">Password</label>
+                <input 
+                  type="password" 
+                  className="form-control login-input" 
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              <button type="submit" className="btn btn-primary w-100 fw-bold mb-3 login-btn" disabled={loading}>
+                {loading ? (
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                ) : null}
+                Sign In
+              </button>
+
+              <div className="text-center">
+                <a href="#" className="small text-decoration-none text-muted">Forgot password?</a>
+              </div>
+            </form>
         </div>
       </div>
     </div>

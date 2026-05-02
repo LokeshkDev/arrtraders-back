@@ -55,7 +55,8 @@ import {
     ChevronLeft,
     FileText,
     MapPin,
-    HelpCircle
+    HelpCircle,
+    Printer
 } from 'lucide-react';
 import './AdminDashboard.css';
 import PagesCMS from '../components/PagesCMS.jsx';
@@ -142,6 +143,238 @@ const AdminDashboard = () => {
             setOrders(data);
         } catch (error) {
             console.error('Global orders fetch error:', error);
+        }
+    };
+
+    const updateOrderStatus = async (id, status) => {
+        try {
+            await axios.put(`${import.meta.env.VITE_API_URL}/api/orders/${id}/status`, { status });
+            fetchOrders();
+            showToast('Order status updated');
+        } catch (error) { showToast('Order status update failed', 'error'); }
+    };
+
+    const generateInvoice = (order) => {
+        const doc = new jsPDF();
+
+        // Header Branding
+        doc.setFillColor(54, 65, 39);
+        doc.rect(0, 0, 210, 40, 'F');
+
+        doc.setFontSize(24);
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.text('AR RAHMAN', 20, 26);
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text('DATES AND NUTS - PREMIUM QUALITY', 20, 32);
+
+        doc.setFontSize(14);
+        doc.text('TAX INVOICE', 190, 28, { align: 'right' });
+
+        // Invoice Info
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('INVOICE TO:', 20, 60);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${order.shippingAddress?.name || 'Valued Customer'}`, 20, 65);
+        doc.text(`${order.shippingAddress?.line1 || ''}`, 20, 70);
+        doc.text(`${order.shippingAddress?.city}, ${order.shippingAddress?.state} - ${order.shippingAddress?.pincode}`, 20, 75);
+        doc.text(`Phone: ${order.shippingAddress?.phone || 'N/A'}`, 20, 80);
+
+        doc.setFont('helvetica', 'bold');
+        doc.text('INVOICE DETAILS:', 190, 60, { align: 'right' });
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Invoice ID: #INV-${order._id.substring(order._id.length - 8).toUpperCase()}`, 190, 65, { align: 'right' });
+        doc.text(`Order Date: ${new Date(order.createdAt).toLocaleDateString('en-IN')}`, 190, 70, { align: 'right' });
+        doc.text(`Status: ${order.isPaid ? 'PAID' : 'PENDING'}`, 190, 75, { align: 'right' });
+
+        // Table
+        const tableColumn = ["Product Description", "Variant", "Price", "Qty", "Total"];
+        const tableRows = order.orderItems.map(item => [
+            item.name,
+            item.variant || 'Standard',
+            `Rs. ${item.price.toLocaleString()}`,
+            item.qty,
+            `Rs. ${(item.price * item.qty).toLocaleString()}`
+        ]);
+
+        autoTable(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: 95,
+            theme: 'striped',
+            headStyles: {
+                fillColor: [54, 65, 39],
+                textColor: [255, 255, 255],
+                fontSize: 10,
+                fontStyle: 'bold',
+                halign: 'center'
+            },
+            bodyStyles: {
+                fontSize: 9,
+                halign: 'center'
+            },
+            columnStyles: {
+                0: { halign: 'left', fontStyle: 'bold' },
+                1: { halign: 'center' }
+            }
+        });
+
+        // Financials
+        const finalY = doc.lastAutoTable.finalY + 10;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+
+        const summaryX = 140;
+        doc.text('Subtotal:', summaryX, finalY);
+        doc.text(`Rs. ${order.itemsPrice.toLocaleString()}`, 190, finalY, { align: 'right' });
+
+        doc.text('Shipping Fee:', summaryX, finalY + 7);
+        doc.text(`Rs. ${order.deliveryPrice.toLocaleString()}`, 190, finalY + 7, { align: 'right' });
+
+        if (order.discountAmount > 0) {
+            doc.text('Discount:', summaryX, finalY + 14);
+            doc.text(`- Rs. ${order.discountAmount.toLocaleString()}`, 190, finalY + 14, { align: 'right' });
+        }
+
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(54, 65, 39);
+        doc.text('GRAND TOTAL:', summaryX, finalY + 27);
+        doc.text(`Rs. ${order.totalPrice.toLocaleString()}`, 190, finalY + 27, { align: 'right' });
+
+        // Footer
+        const pageHeight = doc.internal.pageSize.height;
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.setFont('helvetica', 'italic');
+        doc.text('This is a computer generated invoice. No signature required.', 105, pageHeight - 15, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.text('Thank you for shopping with AR Rahman Dates and Nuts!', 105, pageHeight - 10, { align: 'center' });
+
+        doc.save(`AR_Rahman_Invoice_${order._id.substring(order._id.length - 8).toUpperCase()}.pdf`);
+    };
+
+    const generateReceipt = (order, shouldPrint = false) => {
+        // Calculate dynamic height for thermal printer (80mm width)
+        const headerH = 45;
+        const itemsH = order.orderItems.length * 8;
+        const totalH = 45;
+        const footerH = 25;
+        const finalH = headerH + itemsH + totalH + footerH + 10;
+
+        const doc = new jsPDF({
+            unit: 'mm',
+            format: [80, finalH]
+        });
+
+        // Store Header
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('AR RAHMAN', 40, 12, { align: 'center' });
+        
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.text('PREMIUM DATES & NUTS', 40, 16, { align: 'center' });
+        doc.text('Tambaram, Chennai', 40, 19, { align: 'center' });
+        doc.text('Phone: +91 9551236099', 40, 22, { align: 'center' });
+        
+        doc.setLineWidth(0.1);
+        doc.line(5, 25, 75, 25);
+
+        // Order Summary
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`ORD: #INV-${order._id.substring(order._id.length - 6).toUpperCase()}`, 5, 31);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Date: ${new Date(order.createdAt).toLocaleDateString('en-IN')}`, 70, 31, { align: 'right' });
+        doc.text(`Customer: ${order.shippingAddress?.name || 'Valued Customer'}`, 5, 36);
+        doc.text(`Phone: ${order.shippingAddress?.phone || 'N/A'}`, 5, 40);
+
+        // Items Table
+        const tableColumn = ["Item", "Qty", "Price", "Total"];
+        const tableRows = order.orderItems.map(item => [
+            item.name,
+            item.qty,
+            item.price.toLocaleString(),
+            (item.price * item.qty).toLocaleString()
+        ]);
+
+        autoTable(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: 42,
+            margin: { left: 5, right: 10 },
+            theme: 'plain',
+            styles: {
+                fontSize: 7,
+                cellPadding: 0.5,
+                overflow: 'linebreak',
+                font: 'helvetica'
+            },
+            headStyles: {
+                fontStyle: 'bold',
+                borderBottom: { lineWidth: 0.1 }
+            },
+            columnStyles: {
+                0: { cellWidth: 30 },
+                1: { halign: 'center', cellWidth: 8 },
+                2: { halign: 'right', cellWidth: 12 },
+                3: { halign: 'right', cellWidth: 15 }
+            }
+        });
+
+        // Totals Section
+        const finalY = doc.lastAutoTable.finalY + 8;
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        
+        doc.text('Subtotal:', 10, finalY);
+        doc.text(`Rs. ${order.itemsPrice.toLocaleString()}`, 70, finalY, { align: 'right' });
+
+        doc.text('Shipping:', 10, finalY + 5);
+        doc.text(`Rs. ${order.deliveryPrice.toLocaleString()}`, 70, finalY + 5, { align: 'right' });
+
+        let currentY = finalY + 5;
+        if (order.discountAmount > 0) {
+            currentY += 5;
+            doc.text('Discount:', 10, currentY);
+            doc.text(`-Rs. ${order.discountAmount.toLocaleString()}`, 70, currentY, { align: 'right' });
+        }
+
+        currentY += 10;
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text('GRAND TOTAL:', 10, currentY);
+        doc.text(`Rs. ${order.totalPrice.toLocaleString()}`, 70, currentY, { align: 'right' });
+
+        // Footer
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setLineWidth(0.1);
+        doc.line(10, currentY + 10, 70, currentY + 10);
+        doc.text('Thank you for shopping with us!', 40, currentY + 16, { align: 'center' });
+        doc.text('Quality You Can Trust', 40, currentY + 21, { align: 'center' });
+
+        if (shouldPrint) {
+            doc.autoPrint();
+            const hiddFrame = document.createElement('iframe');
+            hiddFrame.style.position = 'fixed';
+            hiddFrame.style.width = '1px';
+            hiddFrame.style.height = '1px';
+            hiddFrame.style.opacity = '0.01';
+            const pdfBlob = doc.output('blob');
+            hiddFrame.src = URL.createObjectURL(pdfBlob);
+            document.body.appendChild(hiddFrame);
+            setTimeout(() => {
+                hiddFrame.contentWindow.focus();
+                hiddFrame.contentWindow.print();
+            }, 500);
+        } else {
+            doc.save(`Receipt_${order._id.substring(order._id.length - 6).toUpperCase()}.pdf`);
         }
     };
 
@@ -303,6 +536,9 @@ const AdminDashboard = () => {
                             setSelectedOrder={setSelectedOrder}
                             showModal={showModal}
                             setShowModal={setShowModal}
+                            updateOrderStatus={updateOrderStatus}
+                            generateInvoice={generateInvoice}
+                            generateReceipt={generateReceipt}
                         />
                     )}
                     {activeTab === 'Products' && <ProductsTab showToast={showToast} setConfirmModal={setConfirmModal} />}
@@ -457,12 +693,24 @@ const AdminDashboard = () => {
                         </div>
 
                         <div className="admin-sheet-footer">
-                            <button className="btn-sheet-primary" onClick={() => { /* Handle Shipped */ }}>
-                                MARK AS SHIPPED
-                            </button>
-                            <button className="btn-sheet-secondary" onClick={() => generateInvoice(selectedOrder)}>
-                                PRINT INVOICE
-                            </button>
+                            <div className="d-flex gap-2 w-100 mb-2">
+                                <button className="btn-sheet-primary flex-grow-1 d-flex align-items-center justify-content-center" onClick={() => generateReceipt(selectedOrder, true)}>
+                                    <Printer size={18} className="me-2" /> PRINT RECEIPT
+                                </button>
+                                {selectedOrder.status === 'Processing' && (
+                                    <button className="btn-sheet-secondary flex-grow-1 d-flex align-items-center justify-content-center" style={{background: '#e8f5e9', color: '#2e7d32'}} onClick={() => { updateOrderStatus(selectedOrder._id, 'Shipped'); setShowModal(false); }}>
+                                        <Truck size={18} className="me-2" /> MARK SHIPPED
+                                    </button>
+                                )}
+                            </div>
+                            <div className="d-flex gap-2 w-100">
+                                <button className="btn-sheet-secondary flex-grow-1 d-flex align-items-center justify-content-center" onClick={() => generateReceipt(selectedOrder)}>
+                                    <Download size={16} className="me-2" /> RECEIPT (SHOP)
+                                </button>
+                                <button className="btn-sheet-secondary flex-grow-1 d-flex align-items-center justify-content-center" onClick={() => generateInvoice(selectedOrder)}>
+                                    <FileText size={16} className="me-2" /> A4 INVOICE
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1723,7 +1971,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
     );
 };
 
-const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled, showToast, setConfirmModal, selectedOrder, setSelectedOrder, showModal, setShowModal }) => {
+const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled, showToast, setConfirmModal, selectedOrder, setSelectedOrder, showModal, setShowModal, updateOrderStatus, generateInvoice, generateReceipt }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
     const [currentPage, setCurrentPage] = useState(1);
@@ -1731,14 +1979,6 @@ const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled, sh
 
     // Reset page when filters change
     useEffect(() => { setCurrentPage(1); }, [searchQuery, statusFilter]);
-
-    const updateOrderStatus = async (id, status) => {
-        try {
-            await axios.put(`${import.meta.env.VITE_API_URL}/api/orders/${id}/status`, { status });
-            fetchOrders();
-            showToast('Order status updated');
-        } catch (error) { showToast('Order status update failed', 'error'); }
-    };
 
     const handleDeleteOrder = async (id) => {
         setConfirmModal({
@@ -1756,110 +1996,6 @@ const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled, sh
                 }
             }
         });
-    };
-
-    const generateInvoice = (order) => {
-        const doc = new jsPDF();
-
-        // Header Branding
-        doc.setFillColor(54, 65, 39);
-        doc.rect(0, 0, 210, 40, 'F');
-
-        doc.setFontSize(24);
-        doc.setTextColor(255, 255, 255);
-        doc.setFont('helvetica', 'bold');
-        doc.text('AR RAHMAN', 20, 26);
-
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text('DATES AND NUTS - PREMIUM QUALITY', 20, 32);
-
-        doc.setFontSize(14);
-        doc.text('TAX INVOICE', 190, 28, { align: 'right' });
-
-        // Invoice Info
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text('INVOICE TO:', 20, 60);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`${order.shippingAddress?.name || 'Valued Customer'}`, 20, 65);
-        doc.text(`${order.shippingAddress?.line1 || ''}`, 20, 70);
-        doc.text(`${order.shippingAddress?.city}, ${order.shippingAddress?.state} - ${order.shippingAddress?.pincode}`, 20, 75);
-        doc.text(`Phone: ${order.shippingAddress?.phone || 'N/A'}`, 20, 80);
-
-        doc.setFont('helvetica', 'bold');
-        doc.text('INVOICE DETAILS:', 190, 60, { align: 'right' });
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Invoice ID: #INV-${order._id.substring(order._id.length - 8).toUpperCase()}`, 190, 65, { align: 'right' });
-        doc.text(`Order Date: ${new Date(order.createdAt).toLocaleDateString('en-IN')}`, 190, 70, { align: 'right' });
-        doc.text(`Status: ${order.isPaid ? 'PAID' : 'PENDING'}`, 190, 75, { align: 'right' });
-
-        // Table
-        const tableColumn = ["Product Description", "Variant", "Price", "Qty", "Total"];
-        const tableRows = order.orderItems.map(item => [
-            item.name,
-            item.variant || 'Standard',
-            `Rs. ${item.price.toLocaleString()}`,
-            item.qty,
-            `Rs. ${(item.price * item.qty).toLocaleString()}`
-        ]);
-
-        autoTable(doc, {
-            head: [tableColumn],
-            body: tableRows,
-            startY: 95,
-            theme: 'striped',
-            headStyles: {
-                fillColor: [54, 65, 39],
-                textColor: [255, 255, 255],
-                fontSize: 10,
-                fontStyle: 'bold',
-                halign: 'center'
-            },
-            bodyStyles: {
-                fontSize: 9,
-                halign: 'center'
-            },
-            columnStyles: {
-                0: { halign: 'left', fontStyle: 'bold' },
-                1: { halign: 'center' }
-            }
-        });
-
-        // Financials
-        const finalY = doc.lastAutoTable.finalY + 10;
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-
-        const summaryX = 140;
-        doc.text('Subtotal:', summaryX, finalY);
-        doc.text(`Rs. ${order.itemsPrice.toLocaleString()}`, 190, finalY, { align: 'right' });
-
-        doc.text('Shipping Fee:', summaryX, finalY + 7);
-        doc.text(`Rs. ${order.deliveryPrice.toLocaleString()}`, 190, finalY + 7, { align: 'right' });
-
-        if (order.discountAmount > 0) {
-            doc.text('Discount:', summaryX, finalY + 14);
-            doc.text(`- Rs. ${order.discountAmount.toLocaleString()}`, 190, finalY + 14, { align: 'right' });
-        }
-
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(54, 65, 39);
-        doc.text('GRAND TOTAL:', summaryX, finalY + 27);
-        doc.text(`Rs. ${order.totalPrice.toLocaleString()}`, 190, finalY + 27, { align: 'right' });
-
-        // Footer
-        const pageHeight = doc.internal.pageSize.height;
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        doc.setFont('helvetica', 'italic');
-        doc.text('This is a computer generated invoice. No signature required.', 105, pageHeight - 15, { align: 'center' });
-        doc.setFont('helvetica', 'normal');
-        doc.text('Thank you for shopping with AR Rahman Dates and Nuts!', 105, pageHeight - 10, { align: 'center' });
-
-        doc.save(`AR_Rahman_Invoice_${order._id.substring(order._id.length - 8).toUpperCase()}.pdf`);
     };
 
     const sortedOrders = [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -2059,7 +2195,8 @@ const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled, sh
                         </select>
                         <div className="admin-row-actions justify-content-end mt-3">
                             <button className="admin-icon-btn view" onClick={() => { setSelectedOrder(order); setShowModal(true); }}><Eye size={15} /></button>
-                            <button className="admin-icon-btn invoice" onClick={() => generateInvoice(order)}><Download size={15} /></button>
+                            <button className="admin-icon-btn invoice" onClick={() => generateReceipt(order)} title="Download Receipt"><Ticket size={15} /></button>
+                            <button className="admin-icon-btn invoice" onClick={() => generateInvoice(order)} title="Download Invoice"><Download size={15} /></button>
                             <button className="admin-icon-btn danger" onClick={() => handleDeleteOrder(order._id)}><Trash size={15} /></button>
                         </div>
                     </article>
