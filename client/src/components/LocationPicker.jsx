@@ -57,7 +57,7 @@ const LocationPicker = () => {
     const handleAutoDetect = async () => {
         const result = await detectLocation();
         if (result && !result.serviceable) {
-            showServiceUnavailablePopup('Service is not available at this time. Please try another pincode.');
+            showServiceUnavailablePopup(result.message);
             return;
         }
         setShowModal(false);

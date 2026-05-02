@@ -44,43 +44,75 @@ export const LocationProvider = ({ children }) => {
         }
 
         setLoading(true);
-        return new Promise((resolve) => {
-            navigator.geolocation.getCurrentPosition(async (position) => {
-                const { latitude, longitude } = position.coords;
-                try {
-                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`, {
-                        headers: { 'Accept-Language': 'en-US,en;q=0.9' }
-                    });
-                    const data = await response.json();
-                    if (data && data.address) {
-                        const pincode = data.address.postcode;
-                        if (!pincode) {
-                            resolve({ serviceable: false, message: 'We detected your area, but could not find the exact pincode. Please enter it manually.' });
-                            return;
-                        }
-                        const newLoc = {
-                            pincode: pincode,
-                            city: data.address.city || data.address.town || data.address.village || data.address.county || '',
-                            state: data.address.state || '',
-                            address: data.display_name
-                        };
-                        const validationResult = await validateLocation(newLoc);
-                        // validateLocation might return null if something went wrong, so ensure we resolve an object
-                        resolve(validationResult || { serviceable: false, message: 'Could not validate the detected pincode. Please enter it manually.' });
-                    } else {
-                        resolve({ serviceable: false, message: 'Unable to detect your pincode from your location. Please enter it manually.' });
+
+        const getPosition = (options) => {
+            return new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, options);
+            });
+        };
+
+        const performReverseGeocoding = async (latitude, longitude) => {
+            try {
+                // Nominatim requires a User-Agent and a valid contact email/app name
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`, {
+                    headers: { 
+                        'Accept-Language': 'en-US,en;q=0.9',
+                        'User-Agent': 'ARRahman-Ecommerce-App'
                     }
-                } catch (error) {
-                    console.error('Reverse geocoding failed:', error);
-                    resolve({ serviceable: false, message: 'Network error while detecting location. Please enter it manually.' });
-                } finally {
-                    setLoading(false);
+                });
+                const data = await response.json();
+                
+                if (data && data.address) {
+                    const pincode = data.address.postcode;
+                    if (!pincode) {
+                        return { serviceable: false, message: 'We detected your area, but could not find the exact pincode. Please enter it manually.' };
+                    }
+                    const newLoc = {
+                        pincode: pincode,
+                        city: data.address.city || data.address.town || data.address.village || data.address.county || '',
+                        state: data.address.state || '',
+                        address: data.display_name
+                    };
+                    const validationResult = await validateLocation(newLoc);
+                    return validationResult || { serviceable: false, message: 'Could not validate the detected pincode. Please enter it manually.' };
                 }
-            }, (error) => {
+                return { serviceable: false, message: 'Unable to detect your pincode from your location. Please enter it manually.' };
+            } catch (error) {
+                console.error('Reverse geocoding failed:', error);
+                return { serviceable: false, message: 'Network error while detecting location. Please enter it manually.' };
+            }
+        };
+
+        return new Promise(async (resolve) => {
+            try {
+                // Try with high accuracy first, but with a shorter timeout
+                try {
+                    const position = await getPosition({ enableHighAccuracy: true, timeout: 8000, maximumAge: 0 });
+                    const result = await performReverseGeocoding(position.coords.latitude, position.coords.longitude);
+                    resolve(result);
+                } catch (err) {
+                    // Fallback to low accuracy if high accuracy fails or times out
+                    console.warn('High accuracy geolocation failed, trying low accuracy...', err);
+                    const position = await getPosition({ enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
+                    const result = await performReverseGeocoding(position.coords.latitude, position.coords.longitude);
+                    resolve(result);
+                }
+            } catch (error) {
                 console.error('Geolocation failed:', error);
+                let message = 'Location detection failed. Please enter your pincode manually.';
+                
+                if (error.code === 1) { // PERMISSION_DENIED
+                    message = 'Location permission denied. Please enable location services in your browser settings.';
+                } else if (error.code === 3) { // TIMEOUT
+                    message = 'Location detection timed out. Please try again or enter your pincode manually.';
+                } else if (error.code === 2) { // POSITION_UNAVAILABLE
+                    message = 'Location information is unavailable on this device. Please enter manually.';
+                }
+                
+                resolve({ serviceable: false, message });
+            } finally {
                 setLoading(false);
-                resolve({ serviceable: false, message: 'Location permission failed or timed out. Please enter your pincode manually.' });
-            }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+            }
         });
     };
 
