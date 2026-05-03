@@ -1392,6 +1392,22 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
         setCustomVar(''); setVarPrice(''); setVarOriginalPrice('');
     };
 
+    const fillPresetWeight = (w) => {
+        if (!prodForm.weight || !prodForm.price) {
+            showToast('Set base weight & price first', 'error');
+            return;
+        }
+        const baseW = parseFloat(prodForm.weight);
+        const baseP = parseFloat(prodForm.price);
+        const baseOP = parseFloat(prodForm.originalPrice || prodForm.price);
+        const ratio = w / baseW;
+
+        const formattedValue = w >= 1000 ? `${w / 1000}KG` : `${w}G`;
+        setCustomVar(formattedValue);
+        setVarPrice(Math.round(baseP * ratio));
+        setVarOriginalPrice(Math.round(baseOP * ratio));
+    };
+
     const addPresetWeight = (w) => {
         if (!prodForm.weight || !prodForm.price) {
             showToast('Set base weight & price first', 'error');
@@ -1658,10 +1674,10 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                             </div>
                                         </div>
                                         <div className="mt-2 d-flex gap-2">
-                                            <button type="button" className="btn btn-outline-secondary rounded-pill px-3 py-1 extra-small fw-bold" onClick={() => addPresetWeight(250)}>+ 250G</button>
-                                            <button type="button" className="btn btn-outline-secondary rounded-pill px-3 py-1 extra-small fw-bold" onClick={() => addPresetWeight(500)}>+ 500G</button>
-                                            <button type="button" className="btn btn-outline-secondary rounded-pill px-3 py-1 extra-small fw-bold" onClick={() => addPresetWeight(1000)}>+ 1KG</button>
-                                            <button type="button" className="btn btn-outline-secondary rounded-pill px-3 py-1 extra-small fw-bold" onClick={() => addPresetWeight(2000)}>+ 2KG</button>
+                                            <button type="button" className="btn btn-outline-secondary rounded-pill px-3 py-1 extra-small fw-bold" onClick={() => fillPresetWeight(250)}>+ 250G</button>
+                                            <button type="button" className="btn btn-outline-secondary rounded-pill px-3 py-1 extra-small fw-bold" onClick={() => fillPresetWeight(500)}>+ 500G</button>
+                                            <button type="button" className="btn btn-outline-secondary rounded-pill px-3 py-1 extra-small fw-bold" onClick={() => fillPresetWeight(1000)}>+ 1KG</button>
+                                            <button type="button" className="btn btn-outline-secondary rounded-pill px-3 py-1 extra-small fw-bold" onClick={() => fillPresetWeight(2000)}>+ 2KG</button>
                                         </div>
                                     </div>
                                 </div>
