@@ -1543,7 +1543,11 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                     <option value="kg">Kilogram (kg)</option>
                                     <option value="ml">Millilitre (ml)</option>
                                     <option value="litre">Litre (L)</option>
-                                    <option value="piece">Piece</option>
+                                    <option value="piece">Piece (pc)</option>
+                                    <option value="cup">Cup</option>
+                                    <option value="box">Box</option>
+                                    <option value="packet">Packet</option>
+                                    <option value="bottle">Bottle</option>
                                 </select>
                             </div>
                             <div className="col-md-4">
@@ -1562,7 +1566,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                             {/* Weight Variations */}
                             <div className="col-12">
                                 <div className="d-flex justify-content-between align-items-center mb-2">
-                                    <label className="form-label fw-bold small text-muted m-0">Weight Variations</label>
+                                    <label className="form-label fw-bold small text-muted m-0">Product Variations (Weights/Quantities)</label>
                                     <div className="d-flex gap-2">
                                         <button type="button" className="btn btn-link text-primary p-0 extra-small fw-bold text-decoration-none" onClick={loadDefaultPresets}>+ LOAD PRESETS (250g, 500g, 1kg)</button>
                                         <button type="button" className="btn btn-link text-danger p-0 extra-small fw-bold text-decoration-none ms-2" onClick={() => setProdForm({ ...prodForm, availableWeights: [] })}>CLEAR ALL</button>
@@ -1661,7 +1665,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                         <h6 className="extra-small fw-bold text-muted uppercase mb-2">Add Custom Variation</h6>
                                         <div className="row g-2 align-items-end">
                                             <div className="col-md-3">
-                                                <input type="text" className="form-control form-control-sm rounded-4 bg-white border-opacity-50" placeholder="Weight (e.g. 1KG)" value={customVar} onChange={e => handleCustomVarChange(e.target.value)} />
+                                                <input type="text" className="form-control form-control-sm rounded-4 bg-white border-opacity-50" placeholder="Variant (e.g. 1KG or 1 Piece)" value={customVar} onChange={e => handleCustomVarChange(e.target.value)} />
                                             </div>
                                             <div className="col-md-3">
                                                 <input type="number" className="form-control form-control-sm rounded-4 bg-white border-opacity-50" placeholder="Price" value={varPrice} onChange={e => setVarPrice(e.target.value)} />
@@ -1673,11 +1677,14 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                                 <button type="button" className="btn btn-sm btn-primary w-100 rounded-pill fw-bold d-flex align-items-center justify-content-center gap-1" onClick={addVariation}><Plus size={14} /> ADD VARIATION</button>
                                             </div>
                                         </div>
-                                        <div className="mt-2 d-flex gap-2">
+                                        <div className="mt-2 d-flex gap-2 flex-wrap">
+                                            <div className="extra-small fw-bold text-muted w-100 mb-1">QUICK PRESETS</div>
                                             <button type="button" className="btn btn-outline-secondary rounded-pill px-3 py-1 extra-small fw-bold" onClick={() => fillPresetWeight(250)}>+ 250G</button>
                                             <button type="button" className="btn btn-outline-secondary rounded-pill px-3 py-1 extra-small fw-bold" onClick={() => fillPresetWeight(500)}>+ 500G</button>
                                             <button type="button" className="btn btn-outline-secondary rounded-pill px-3 py-1 extra-small fw-bold" onClick={() => fillPresetWeight(1000)}>+ 1KG</button>
-                                            <button type="button" className="btn btn-outline-secondary rounded-pill px-3 py-1 extra-small fw-bold" onClick={() => fillPresetWeight(2000)}>+ 2KG</button>
+                                            <button type="button" className="btn btn-outline-secondary rounded-pill px-3 py-1 extra-small fw-bold border-primary text-primary" onClick={() => { setCustomVar('1 Piece'); setVarPrice(prodForm.price); setVarOriginalPrice(prodForm.originalPrice); }}>+ 1 Piece</button>
+                                            <button type="button" className="btn btn-outline-secondary rounded-pill px-3 py-1 extra-small fw-bold border-primary text-primary" onClick={() => { setCustomVar('6 Cups'); setVarPrice(Math.round(prodForm.price * 6)); setVarOriginalPrice(Math.round((prodForm.originalPrice || prodForm.price) * 6)); }}>+ 6 Cups</button>
+                                            <button type="button" className="btn btn-outline-secondary rounded-pill px-3 py-1 extra-small fw-bold border-primary text-primary" onClick={() => { setCustomVar('1 Box'); setVarPrice(prodForm.price); setVarOriginalPrice(prodForm.originalPrice); }}>+ 1 Box</button>
                                         </div>
                                     </div>
                                 </div>
@@ -2908,6 +2915,14 @@ const CMSContentTab = ({ showToast, setConfirmModal }) => {
     const [timerValue, setTimerValue] = useState({ hours: 0, minutes: 0 });
     const [isDirty, setIsDirty] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [categories, setCategories] = useState([]);
+
+    const fetchCategories = async () => {
+        try {
+            const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/cms/categories`);
+            setCategories(data);
+        } catch (error) { console.error('Fetch categories error:', error); }
+    };
 
     const fetchCMS = async () => {
         try {
@@ -2919,7 +2934,10 @@ const CMSContentTab = ({ showToast, setConfirmModal }) => {
         } catch (error) { console.error('CMS fetch error:', error); } finally { setLoading(false); }
     };
 
-    useEffect(() => { fetchCMS(); }, []);
+    useEffect(() => { 
+        fetchCMS(); 
+        fetchCategories();
+    }, []);
 
     useEffect(() => {
         if (cmsData && initialCmsData) {
@@ -3322,22 +3340,51 @@ const CMSContentTab = ({ showToast, setConfirmModal }) => {
                                             <div className="cat-thumb-mini border border-opacity-10 rounded-4 overflow-hidden mb-3 shadow-sm bg-white" style={{ width: '100%', height: '100px' }}>
                                                 <img src={cat.img || '/Reference/images/category-thumb-1.jpg'} className="w-100 h-100 object-fit-cover" alt="" />
                                             </div>
-                                            <label className="extra-small text-muted fw-bold mb-1 d-block font-label">Image URL</label>
-                                            <input type="text" className="form-control form-control-sm rounded-pill shadow-sm" value={cat.img} onChange={(e) => {
-                                                const nci = [...cmsData.categoryItems]; nci[idx].img = e.target.value; setCmsData({ ...cmsData, categoryItems: nci });
-                                            }} />
+                                            <div className="d-flex gap-2 align-items-center mb-3">
+                                                <input type="text" className="form-control form-control-sm rounded-pill shadow-sm" placeholder="Image URL" value={cat.img} onChange={(e) => {
+                                                    const nci = [...cmsData.categoryItems]; nci[idx].img = e.target.value; setCmsData({ ...cmsData, categoryItems: nci });
+                                                }} />
+                                                <label className="btn btn-primary btn-sm rounded-circle p-2 shadow-sm m-0" style={{ cursor: 'pointer' }} title="Upload Image">
+                                                    <ImageIcon size={14} className="text-white" />
+                                                    <input type="file" accept="image/*" className="d-none" onChange={async (e) => {
+                                                        const file = e.target.files[0];
+                                                        if (!file) return;
+                                                        const formData = new FormData();
+                                                        formData.append('image', file);
+                                                        try {
+                                                            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/cms/hero-bg`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+                                                            const nci = [...cmsData.categoryItems];
+                                                            nci[idx].img = data.url;
+                                                            setCmsData({ ...cmsData, categoryItems: nci });
+                                                        } catch (err) { showToast('Upload failed', 'error'); }
+                                                    }} />
+                                                </label>
+                                            </div>
                                         </div>
-                                        <div className="mb-2">
-                                            <label className="extra-small text-muted fw-bold mb-1 d-block font-label">Name</label>
-                                            <input type="text" className="form-control form-control-sm rounded-pill shadow-sm" value={cat.name} onChange={(e) => {
-                                                const nci = [...cmsData.categoryItems]; nci[idx].name = e.target.value; setCmsData({ ...cmsData, categoryItems: nci });
-                                            }} />
+                                        <div className="mb-3">
+                                            <label className="extra-small text-muted fw-bold mb-1 d-block font-label uppercase ls-sm opacity-75">Category Name</label>
+                                            <select 
+                                                className="form-select form-select-sm rounded-pill shadow-sm fw-bold text-primary" 
+                                                value={cat.name} 
+                                                onChange={(e) => {
+                                                    const nci = [...cmsData.categoryItems];
+                                                    const selectedCat = categories.find(c => c.name === e.target.value);
+                                                    nci[idx].name = e.target.value;
+                                                    if (selectedCat) {
+                                                        nci[idx].count = `${selectedCat.productCount} Items`;
+                                                        if (!nci[idx].img) nci[idx].img = selectedCat.image;
+                                                    }
+                                                    setCmsData({ ...cmsData, categoryItems: nci });
+                                                }}
+                                            >
+                                                <option value="">Select Category</option>
+                                                {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
+                                                {!categories.find(c => c.name === cat.name) && cat.name && <option value={cat.name}>{cat.name} (Custom)</option>}
+                                            </select>
                                         </div>
                                         <div>
-                                            <label className="extra-small text-muted fw-bold mb-1 d-block font-label">Item Count Tag</label>
-                                            <input type="text" className="form-control form-control-sm rounded-pill shadow-sm" value={cat.count} onChange={(e) => {
-                                                const nci = [...cmsData.categoryItems]; nci[idx].count = e.target.value; setCmsData({ ...cmsData, categoryItems: nci });
-                                            }} />
+                                            <label className="extra-small text-muted fw-bold mb-1 d-block font-label uppercase ls-sm opacity-75">Item Count Tag</label>
+                                            <input type="text" className="form-control form-control-sm rounded-pill shadow-sm" value={cat.count} readOnly />
                                         </div>
                                     </div>
                                 </div>

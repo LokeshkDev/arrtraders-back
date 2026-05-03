@@ -1,8 +1,10 @@
 import Category from '../models/sql/Category.js';
+import Product from '../models/sql/Product.js';
 import News from '../models/sql/News.js';
 import Gallery from '../models/sql/Gallery.js';
 import HomePage from '../models/sql/HomePage.js';
 import Page from '../models/sql/Page.js';
+import sequelize from '../config/mysql.js';
 
 // Helper to create URL-friendly slugs
 const createSlug = (text) => {
@@ -61,7 +63,24 @@ export const getCategories = async (req, res) => {
         const isAdminRequest = req.query.admin === 'true';
         const filter = isAdminRequest ? {} : { isActive: true };
         const categories = await Category.findAll({ where: filter });
-        res.json(formatResponse(categories));
+        
+        // Fetch product counts
+        const productCounts = await Product.findAll({
+            attributes: ['category', [sequelize.fn('COUNT', sequelize.col('id')), 'count']],
+            group: ['category']
+        });
+
+        const countsMap = {};
+        productCounts.forEach(pc => {
+            countsMap[pc.category] = pc.get('count');
+        });
+
+        const formatted = formatResponse(categories).map(cat => ({
+            ...cat,
+            productCount: countsMap[cat.name] || 0
+        }));
+
+        res.json(formatted);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
