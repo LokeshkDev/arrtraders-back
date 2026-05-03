@@ -254,6 +254,8 @@ export const updateProduct = async (req, res) => {
             }
 
             if (req.files && req.files.length > 0 || req.body.images) {
+                const { uploadToR2, deleteFromR2 } = await import('../config/cloudflareR2.js');
+                
                 let existingImages = [];
                 if (req.body.images) {
                     try {
@@ -264,10 +266,17 @@ export const updateProduct = async (req, res) => {
                 } else {
                     existingImages = product.images || [];
                 }
+
+                // Delete images that are no longer in the product
+                const oldImages = product.images || [];
+                const imagesToDelete = oldImages.filter(img => !existingImages.includes(img));
+                if (imagesToDelete.length > 0) {
+                    console.log(`[CLEANUP] Deleting ${imagesToDelete.length} removed images...`);
+                    await Promise.all(imagesToDelete.map(img => deleteFromR2(img)));
+                }
                 
                 let newlyUploaded = [];
                 if (req.files && req.files.length > 0) {
-                    const { uploadToR2 } = await import('../config/cloudflareR2.js');
                     const uploadPromises = req.files.map(file => uploadToR2(file.buffer, file.originalname, 'products'));
                     newlyUploaded = await Promise.all(uploadPromises);
                 }
@@ -302,6 +311,16 @@ export const deleteProduct = async (req, res) => {
     try {
         const product = await Product.findByPk(req.params.id);
         if (product) {
+            // Delete images from R2
+            if (product.images && product.images.length > 0) {
+                try {
+                    const { deleteFromR2 } = await import('../config/cloudflareR2.js');
+                    await Promise.all(product.images.map(img => deleteFromR2(img)));
+                    console.log(`[CLEANUP] Deleted ${product.images.length} images for product: ${product.id}`);
+                } catch (e) {
+                    console.error('[CLEANUP] Failed to delete product images from R2:', e);
+                }
+            }
             await product.destroy();
             res.json({ message: 'Product removed' });
         } else {

@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import path from 'path';
 import sharp from 'sharp';
 
@@ -58,6 +58,44 @@ export const uploadToR2 = async (fileBuffer, originalName, folder = 'hero') => {
     // Return the public URL
     const publicUrl = `${process.env.R2_PUBLIC_URL}/${uniqueName}`;
     return publicUrl;
+};
+
+/**
+ * Deletes a file from Cloudflare R2 given its public URL.
+ * @param {string} publicUrl - The public URL of the file to delete
+ */
+export const deleteFromR2 = async (publicUrl) => {
+    if (!publicUrl || typeof publicUrl !== 'string') return;
+
+    try {
+        // Extract the key from the public URL
+        // Example: https://pub-xxxx.r2.dev/products/123.webp -> products/123.webp
+        const baseUrl = process.env.R2_PUBLIC_URL;
+        let key = '';
+        
+        if (publicUrl.startsWith(baseUrl)) {
+            key = publicUrl.replace(`${baseUrl}/`, '');
+        } else {
+            // Fallback: take everything after the last '/' if baseUrl mismatch
+            const urlParts = publicUrl.split('/');
+            // If it's a structured URL like folder/file, we might need more than just last part
+            // But usually the key is the path after the domain
+            const urlObj = new URL(publicUrl);
+            key = urlObj.pathname.startsWith('/') ? urlObj.pathname.substring(1) : urlObj.pathname;
+        }
+
+        if (!key) return;
+
+        console.log(`[R2] Deleting object with key: ${key}`);
+        const command = new DeleteObjectCommand({
+            Bucket: process.env.R2_BUCKET_NAME,
+            Key: key,
+        });
+
+        await r2Client.send(command);
+    } catch (error) {
+        console.error('[R2] Delete failed:', error);
+    }
 };
 
 function getContentType(ext) {

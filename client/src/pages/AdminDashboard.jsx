@@ -1202,7 +1202,6 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
     const [varPrice, setVarPrice] = useState('');
     const [varOriginalPrice, setVarOriginalPrice] = useState('');
     const [editId, setEditId] = useState(null);
-    const [files, setFiles] = useState([]);
     const [catFile, setCatFile] = useState(null);
     const [showBulkImport, setShowBulkImport] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -1349,12 +1348,23 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
             const formData = new FormData();
             Object.keys(prodForm).forEach(key => {
                 if (key === 'availableWeights' || key === 'nutrition' || key === 'images') {
-                    formData.append(key, JSON.stringify(prodForm[key]));
+                    // Filter out File objects from prodForm.images for the JSON string
+                    const existingImages = (prodForm.images || []).filter(img => typeof img === 'string');
+                    formData.append(key, JSON.stringify(key === 'images' ? existingImages : prodForm[key]));
                 } else {
                     formData.append(key, prodForm[key]);
                 }
             });
-            files.forEach(f => formData.append('images', f));
+            
+            // Add File objects from prodForm.images to the images field
+            const newFiles = (prodForm.images || []).filter(img => img instanceof File);
+            newFiles.forEach(f => formData.append('images', f));
+            
+            // Tell backend if the primary image is a newly uploaded one
+            if (prodForm.images && prodForm.images.length > 0 && prodForm.images[0] instanceof File) {
+                formData.append('primaryIsNew', 'true');
+            }
+
             if (view === 'editProduct') {
                 await axios.put(`${import.meta.env.VITE_API_URL}/api/products/${editId}`, formData);
                 showToast('Product updated!');
@@ -1382,11 +1392,58 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
         setCustomVar(''); setVarPrice(''); setVarOriginalPrice('');
     };
 
+    const addPresetWeight = (w) => {
+        if (!prodForm.weight || !prodForm.price) {
+            showToast('Set base weight & price first', 'error');
+            return;
+        }
+        const baseW = parseFloat(prodForm.weight);
+        const baseP = parseFloat(prodForm.price);
+        const baseOP = parseFloat(prodForm.originalPrice || prodForm.price);
+        const ratio = w / baseW;
+        
+        const newVar = {
+            value: `${w}g`,
+            price: Math.round(baseP * ratio),
+            originalPrice: Math.round(baseOP * ratio)
+        };
+        
+        // Avoid duplicates
+        const exists = (prodForm.availableWeights || []).some(v => v.value === newVar.value);
+        if (!exists) {
+            setProdForm({ ...prodForm, availableWeights: [...(prodForm.availableWeights || []), newVar] });
+        }
+    };
+
+    const loadDefaultPresets = () => {
+        [250, 500, 1000].forEach(w => addPresetWeight(w));
+        showToast('Standard presets loaded');
+    };
+
     const promoteToPrimary = (idx) => {
         const v = prodForm.availableWeights[idx];
         const newList = [...prodForm.availableWeights];
-        newList[idx] = { value: `${prodForm.weight}${prodForm.unit}`, price: prodForm.price, originalPrice: prodForm.originalPrice };
-        setProdForm({ ...prodForm, weight: parseFloat(v.value), price: v.price, originalPrice: v.originalPrice || '', availableWeights: newList });
+        
+        // Parse value like "500g" or "1kg"
+        const numPart = parseFloat(v.value);
+        const unitPart = v.value.replace(/[0-9.]/g, '').trim() || 'gram';
+        const finalUnit = unitPart === 'g' ? 'gram' : (unitPart === 'kg' ? 'kg' : unitPart);
+
+        newList[idx] = { 
+            value: `${prodForm.weight}${prodForm.unit === 'gram' ? 'g' : prodForm.unit}`, 
+            price: Number(prodForm.price), 
+            originalPrice: Number(prodForm.originalPrice || prodForm.price) 
+        };
+        
+        setProdForm({ 
+            ...prodForm, 
+            weight: numPart, 
+            unit: finalUnit,
+            price: v.price, 
+            originalPrice: v.originalPrice || '', 
+            availableWeights: newList 
+        });
+        showToast(`Primary updated to ${v.value}`);
     };
 
     if (loading) return <div className="p-5 text-center"><div className="spinner-border text-primary"></div></div>;
@@ -1408,7 +1465,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                 <div className="d-flex gap-2">
                     <button onClick={() => setShowBulkImport(!showBulkImport)} className="btn btn-white border rounded-pill px-4 fw-bold extra-small">Bulk Import</button>
                     <button onClick={() => { setCatForm({ name: '', description: '', image: '', parent: '', isActive: true }); setView('addCategory'); }} className="btn btn-white border rounded-pill px-4 fw-bold extra-small">Add Category</button>
-                    <button onClick={() => { setProdForm({ name: '', description: '', category: '', price: '', originalPrice: '', flashSale: false, discount: '', stock: '', isBestSeller: false, isTopRated: false, isFeatured: false, color: '', weight: '', unit: 'gram', availableWeights: [], nutrition: {}, isActive: true }); setEditId(null); setFiles([]); setFormErrors({}); setView('addProduct'); }} className="btn btn-primary rounded-pill px-4 fw-bold extra-small shadow-md">Add New Product</button>
+                    <button onClick={() => { setProdForm({ name: '', description: '', category: '', price: '', originalPrice: '', flashSale: false, discount: '', stock: '', isBestSeller: false, isTopRated: false, isFeatured: false, color: '', weight: '', unit: 'gram', availableWeights: [], nutrition: {}, isActive: true, images: [] }); setEditId(null); setFormErrors({}); setView('addProduct'); }} className="btn btn-primary rounded-pill px-4 fw-bold extra-small shadow-md">Add New Product</button>
                 </div>
             </div>
 
@@ -1416,7 +1473,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                 <div className="bg-white rounded-5 shadow-sm border p-4 p-md-5 animate-fade-in">
                     <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
                         <h4 className="fw-bold text-primary m-0 font-headline">{view === 'editProduct' ? 'Edit Product' : 'Add New Product'}</h4>
-                        <button className="btn btn-light rounded-pill px-4 fw-bold d-flex align-items-center gap-2" onClick={() => { setView('list'); setEditId(null); setFiles([]); setFormErrors({}); }}>
+                        <button className="btn btn-light rounded-pill px-4 fw-bold d-flex align-items-center gap-2" onClick={() => { setView('list'); setEditId(null); setFormErrors({}); }}>
                             <ArrowLeft size={16} /> Back to List
                         </button>
                     </div>
@@ -1479,28 +1536,80 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
 
                             {/* Weight Variations */}
                             <div className="col-12">
-                                <label className="form-label fw-bold small text-muted">Weight Variations</label>
-                                <div className="bg-light rounded-4 p-3 border">
-                                    <div className="d-flex gap-2 flex-wrap mb-3">
-                                        {(prodForm.availableWeights || []).map((v, idx) => (
-                                            <div key={idx} className="badge bg-white border text-primary fw-bold px-3 py-2 d-flex align-items-center gap-2 rounded-pill">
-                                                {typeof v === 'object' ? `${v.value} — ₹${v.price}` : v}
-                                                <button type="button" className="btn-close" style={{ fontSize: '8px' }} onClick={() => {
-                                                    const newWeights = [...prodForm.availableWeights];
-                                                    newWeights.splice(idx, 1);
-                                                    setProdForm({ ...prodForm, availableWeights: newWeights });
-                                                }}></button>
-                                                <button type="button" className="btn btn-sm btn-link text-primary p-0 ms-1" title="Promote to Primary" onClick={() => promoteToPrimary(idx)}>
-                                                    <ArrowUpCircle size={14} />
-                                                </button>
-                                            </div>
-                                        ))}
+                                <div className="d-flex justify-content-between align-items-center mb-2">
+                                    <label className="form-label fw-bold small text-muted m-0">Weight Variations</label>
+                                    <div className="d-flex gap-2">
+                                        <button type="button" className="btn btn-link text-primary p-0 extra-small fw-bold text-decoration-none" onClick={loadDefaultPresets}>+ LOAD PRESETS (250g, 500g, 1kg)</button>
+                                        <button type="button" className="btn btn-link text-danger p-0 extra-small fw-bold text-decoration-none ms-2" onClick={() => setProdForm({ ...prodForm, availableWeights: [] })}>CLEAR ALL</button>
                                     </div>
-                                    <div className="d-flex gap-2 align-items-end flex-wrap">
-                                        <input type="text" className="form-control form-control-sm rounded-pill" style={{ maxWidth: '120px' }} placeholder="Weight (e.g. 1000)" value={customVar} onChange={e => handleCustomVarChange(e.target.value)} />
-                                        <input type="number" className="form-control form-control-sm rounded-pill" style={{ maxWidth: '120px' }} placeholder="Price" value={varPrice} onChange={e => setVarPrice(e.target.value)} />
-                                        <input type="number" className="form-control form-control-sm rounded-pill" style={{ maxWidth: '120px' }} placeholder="Original Price" value={varOriginalPrice} onChange={e => setVarOriginalPrice(e.target.value)} />
-                                        <button type="button" className="btn btn-sm btn-primary rounded-pill px-3" onClick={addVariation}><Plus size={14} /> Add</button>
+                                </div>
+                                
+                                <div className="bg-light rounded-4 p-4 border shadow-inner">
+                                    {/* Primary Item (Current base product) */}
+                                    <div className="mb-3">
+                                        <h6 className="extra-small fw-bold text-muted uppercase mb-2">Primary Selection (Default)</h6>
+                                        <div className="badge bg-primary text-white px-3 py-2 rounded-pill d-inline-flex align-items-center gap-2 shadow-sm border border-primary border-opacity-10">
+                                            <ShieldCheck size={12} />
+                                            {prodForm.weight}{prodForm.unit === 'gram' ? 'g' : prodForm.unit} — ₹{prodForm.price}
+                                            {prodForm.originalPrice > prodForm.price && (
+                                                <span className="opacity-75 text-decoration-line-through extra-small">₹{prodForm.originalPrice}</span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Variation List */}
+                                    {prodForm.availableWeights && prodForm.availableWeights.length > 0 && (
+                                        <div className="mb-4">
+                                            <h6 className="extra-small fw-bold text-muted uppercase mb-2">Alternative Variations</h6>
+                                            <div className="d-flex gap-2 flex-wrap">
+                                                {prodForm.availableWeights.map((v, idx) => (
+                                                    <div key={idx} className="badge bg-white border text-primary fw-bold px-3 py-2 d-flex align-items-center gap-2 rounded-pill shadow-sm hover-shadow-md transition-all">
+                                                        <span className="text-dark">{typeof v === 'object' ? v.value : v}</span>
+                                                        <span className="text-primary opacity-75">/</span>
+                                                        <span>₹{typeof v === 'object' ? v.price : 0}</span>
+                                                        {typeof v === 'object' && v.originalPrice > v.price && (
+                                                            <span className="text-muted text-decoration-line-through extra-small">₹{v.originalPrice}</span>
+                                                        )}
+                                                        <div className="ms-2 d-flex gap-1 border-start ps-2">
+                                                            <button type="button" className="btn btn-link p-0 text-primary" title="Promote to Primary" onClick={() => promoteToPrimary(idx)}>
+                                                                <ArrowUpCircle size={14} />
+                                                            </button>
+                                                            <button type="button" className="btn btn-link p-0 text-danger" title="Remove" onClick={() => {
+                                                                const newWeights = [...prodForm.availableWeights];
+                                                                newWeights.splice(idx, 1);
+                                                                setProdForm({ ...prodForm, availableWeights: newWeights });
+                                                            }}>
+                                                                <X size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Manual Add Form */}
+                                    <div className="border-top pt-3 mt-2">
+                                        <h6 className="extra-small fw-bold text-muted uppercase mb-2">Add Custom Variation</h6>
+                                        <div className="row g-2 align-items-end">
+                                            <div className="col-md-3">
+                                                <input type="text" className="form-control form-control-sm rounded-4 bg-white border-opacity-50" placeholder="Weight (e.g. 100g)" value={customVar} onChange={e => handleCustomVarChange(e.target.value)} />
+                                            </div>
+                                            <div className="col-md-3">
+                                                <input type="number" className="form-control form-control-sm rounded-4 bg-white border-opacity-50" placeholder="Price" value={varPrice} onChange={e => setVarPrice(e.target.value)} />
+                                            </div>
+                                            <div className="col-md-3">
+                                                <input type="number" className="form-control form-control-sm rounded-4 bg-white border-opacity-50" placeholder="MRP (Optional)" value={varOriginalPrice} onChange={e => setVarOriginalPrice(e.target.value)} />
+                                            </div>
+                                            <div className="col-md-3">
+                                                <button type="button" className="btn btn-sm btn-primary w-100 rounded-pill fw-bold d-flex align-items-center justify-content-center gap-1" onClick={addVariation}><Plus size={14} /> ADD VARIATION</button>
+                                            </div>
+                                        </div>
+                                        <div className="mt-2 d-flex gap-2">
+                                            <button type="button" className="btn btn-outline-secondary btn-xs py-1 px-3 rounded-pill extra-small fw-bold" onClick={() => addPresetWeight(250)}>+ 250g</button>
+                                            <button type="button" className="btn btn-outline-secondary btn-xs py-1 px-3 rounded-pill extra-small fw-bold" onClick={() => addPresetWeight(500)}>+ 500g</button>
+                                            <button type="button" className="btn btn-outline-secondary btn-xs py-1 px-3 rounded-pill extra-small fw-bold" onClick={() => addPresetWeight(1000)}>+ 1kg</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1534,61 +1643,65 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
 
                             {/* Images */}
                             <div className="col-12">
-                                <label className="form-label fw-bold small text-muted">Product Images (Up to 8)</label>
-                                <div className="bg-light rounded-4 p-4 border">
-                                    <div className="text-center mb-3">
-                                        <label className="btn btn-white border rounded-pill px-4 py-2 cursor-pointer shadow-sm">
-                                            <Plus size={16} className="me-2" /> Add Images
-                                            <input type="file" multiple accept="image/*" className="d-none" onChange={e => {
-                                                const newFiles = Array.from(e.target.files);
-                                                setFiles(prev => [...prev, ...newFiles].slice(0, 8));
-                                            }} />
-                                        </label>
-                                        <p className="text-muted extra-small mt-2">Select 3-4 high-quality photos for better presentation</p>
-                                    </div>
-
-                                    {/* Selected Files (New) */}
-                                    {files.length > 0 && (
-                                        <div className="mb-4">
-                                            <h6 className="extra-small fw-bold text-muted uppercase mb-3">New Images to Upload</h6>
-                                            <div className="d-flex gap-3 flex-wrap">
-                                                {files.map((f, idx) => (
-                                                    <div key={idx} className="position-relative group">
-                                                        <img src={URL.createObjectURL(f)} className="rounded-3 border shadow-sm" style={{ width: 80, height: 80, objectFit: 'cover' }} alt="" />
-                                                        <button type="button" className="btn btn-danger btn-sm rounded-circle position-absolute top-0 end-0 p-1 shadow-sm" style={{ transform: 'translate(50%, -50%)', width: 24, height: 24 }} onClick={() => setFiles(files.filter((_, i) => i !== idx))}>
-                                                            <X size={12} />
-                                                        </button>
+                                <div className="d-flex justify-content-between align-items-center mb-2">
+                                    <label className="form-label fw-bold small text-muted m-0">Product Images (First image is Primary)</label>
+                                    <label className="btn btn-link text-primary p-0 extra-small fw-bold text-decoration-none cursor-pointer">
+                                        <Plus size={14} className="me-1" /> ADD NEW PHOTOS
+                                        <input type="file" multiple accept="image/*" className="d-none" onChange={e => {
+                                            const newFiles = Array.from(e.target.files);
+                                            setProdForm({ ...prodForm, images: [...(prodForm.images || []), ...newFiles].slice(0, 8) });
+                                        }} />
+                                    </label>
+                                </div>
+                                <div className="bg-light rounded-4 p-4 border shadow-inner">
+                                    <div className="d-flex gap-3 flex-wrap">
+                                        {(prodForm.images || []).map((img, idx) => {
+                                            const isFile = img instanceof File;
+                                            const imgSrc = isFile ? URL.createObjectURL(img) : img;
+                                            return (
+                                                <div key={idx} className={`position-relative group ${idx === 0 ? 'ring-primary' : ''}`} style={{ width: 120 }}>
+                                                    <div className={`rounded-4 border bg-white shadow-sm overflow-hidden position-relative ${idx === 0 ? 'border-primary border-2' : ''}`} style={{ height: 120 }}>
+                                                        <img src={imgSrc} className="w-100 h-100" style={{ objectFit: 'cover' }} alt="" />
+                                                        {idx === 0 && (
+                                                            <div className="position-absolute bottom-0 start-0 end-0 bg-primary text-white text-center extra-small fw-bold py-1">
+                                                                PRIMARY
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Existing Images (When Editing) */}
-                                    {view === 'editProduct' && prodForm.images && prodForm.images.length > 0 && (
-                                        <div>
-                                            <h6 className="extra-small fw-bold text-muted uppercase mb-3">Current Images</h6>
-                                            <div className="d-flex gap-3 flex-wrap">
-                                                {prodForm.images.map((img, idx) => (
-                                                    <div key={idx} className="position-relative group">
-                                                        <img src={img} className="rounded-3 border shadow-sm bg-white" style={{ width: 80, height: 80, objectFit: 'cover' }} alt="" />
-                                                        <button type="button" className="btn btn-danger btn-sm rounded-circle position-absolute top-0 end-0 p-1 shadow-sm" style={{ transform: 'translate(50%, -50%)', width: 24, height: 24 }} onClick={() => {
+                                                    <div className="d-flex gap-2 mt-2 justify-content-center">
+                                                        {idx !== 0 && (
+                                                            <button type="button" className="btn btn-sm btn-outline-primary rounded-circle p-1" title="Make Primary" onClick={() => {
+                                                                const newImages = [...prodForm.images];
+                                                                const [moved] = newImages.splice(idx, 1);
+                                                                newImages.unshift(moved);
+                                                                setProdForm({ ...prodForm, images: newImages });
+                                                            }}>
+                                                                <Star size={14} fill="currentColor" />
+                                                            </button>
+                                                        )}
+                                                        <button type="button" className="btn btn-sm btn-outline-danger rounded-circle p-1" title="Remove" onClick={() => {
                                                             const newImages = prodForm.images.filter((_, i) => i !== idx);
                                                             setProdForm({ ...prodForm, images: newImages });
                                                         }}>
-                                                            <Trash size={12} />
+                                                            <Trash size={14} />
                                                         </button>
-                                                        {idx === 0 && <span className="badge bg-primary position-absolute bottom-0 start-50 translate-middle-x mb-1 extra-small">Primary</span>}
                                                     </div>
-                                                ))}
+                                                </div>
+                                            );
+                                        })}
+                                        {(prodForm.images || []).length === 0 && (
+                                            <div className="w-100 py-5 text-center border border-dashed rounded-4">
+                                                <ImageIcon size={32} className="text-muted opacity-25 mb-2" />
+                                                <p className="text-muted small">No images uploaded yet.</p>
                                             </div>
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
+                                    <p className="text-muted extra-small mt-3 mb-0">Tip: The first image will be used as the main thumbnail. Use "Main" button to reorder.</p>
                                 </div>
                             </div>
                         </div>
                         <div className="d-flex gap-3 justify-content-end mt-5 pt-4 border-top">
-                            <button type="button" className="btn btn-light rounded-pill px-5 py-3 fw-bold" onClick={() => { setView('list'); setEditId(null); setFiles([]); setFormErrors({}); }}>Cancel</button>
+                            <button type="button" className="btn btn-light rounded-pill px-5 py-3 fw-bold" onClick={() => { setView('list'); setEditId(null); setFormErrors({}); }}>Cancel</button>
                             <button type="submit" className="btn btn-primary rounded-pill px-5 py-3 fw-bold shadow-md" disabled={isSaving}>
                                 {isSaving ? <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</> : (view === 'editProduct' ? 'Update Product' : 'Create Product')}
                             </button>
