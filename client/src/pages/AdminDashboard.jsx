@@ -275,13 +275,13 @@ const AdminDashboard = () => {
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
         doc.text('AR RAHMAN', 40, 12, { align: 'center' });
-        
+
         doc.setFontSize(7);
         doc.setFont('helvetica', 'normal');
         doc.text('PREMIUM DATES & NUTS', 40, 16, { align: 'center' });
         doc.text('Tambaram, Chennai', 40, 19, { align: 'center' });
         doc.text('Phone: +91 9551236099', 40, 22, { align: 'center' });
-        
+
         doc.setLineWidth(0.1);
         doc.line(5, 25, 75, 25);
 
@@ -331,7 +331,7 @@ const AdminDashboard = () => {
         const finalY = doc.lastAutoTable.finalY + 8;
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
-        
+
         doc.text('Subtotal:', 10, finalY);
         doc.text(`Rs. ${order.itemsPrice.toLocaleString()}`, 70, finalY, { align: 'right' });
 
@@ -698,7 +698,7 @@ const AdminDashboard = () => {
                                     <Printer size={18} className="me-2" /> PRINT RECEIPT
                                 </button>
                                 {selectedOrder.status === 'Processing' && (
-                                    <button className="btn-sheet-secondary flex-grow-1 d-flex align-items-center justify-content-center" style={{background: '#e8f5e9', color: '#2e7d32'}} onClick={() => { updateOrderStatus(selectedOrder._id, 'Shipped'); setShowModal(false); }}>
+                                    <button className="btn-sheet-secondary flex-grow-1 d-flex align-items-center justify-content-center" style={{ background: '#e8f5e9', color: '#2e7d32' }} onClick={() => { updateOrderStatus(selectedOrder._id, 'Shipped'); setShowModal(false); }}>
                                         <Truck size={18} className="me-2" /> MARK SHIPPED
                                     </button>
                                 )}
@@ -1355,11 +1355,11 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                     formData.append(key, prodForm[key]);
                 }
             });
-            
+
             // Add File objects from prodForm.images to the images field
             const newFiles = (prodForm.images || []).filter(img => img instanceof File);
             newFiles.forEach(f => formData.append('images', f));
-            
+
             // Tell backend if the primary image is a newly uploaded one
             if (prodForm.images && prodForm.images.length > 0 && prodForm.images[0] instanceof File) {
                 formData.append('primaryIsNew', 'true');
@@ -1401,13 +1401,13 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
         const baseP = parseFloat(prodForm.price);
         const baseOP = parseFloat(prodForm.originalPrice || prodForm.price);
         const ratio = w / baseW;
-        
+
         const newVar = {
             value: `${w}g`,
             price: Math.round(baseP * ratio),
             originalPrice: Math.round(baseOP * ratio)
         };
-        
+
         // Avoid duplicates
         const exists = (prodForm.availableWeights || []).some(v => v.value === newVar.value);
         if (!exists) {
@@ -1423,32 +1423,32 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
     const promoteToPrimary = (idx) => {
         const v = prodForm.availableWeights[idx];
         const newList = [...prodForm.availableWeights];
-        
+
         // Parse value like "500g" or "1kg"
         const numPart = parseFloat(v.value);
         const unitPart = v.value.replace(/[0-9.]/g, '').trim() || 'gram';
         const finalUnit = unitPart === 'g' ? 'gram' : (unitPart === 'kg' ? 'kg' : unitPart);
 
-        newList[idx] = { 
-            value: `${prodForm.weight}${prodForm.unit === 'gram' ? 'g' : prodForm.unit}`, 
-            price: Number(prodForm.price), 
-            originalPrice: Number(prodForm.originalPrice || prodForm.price) 
+        newList[idx] = {
+            value: `${prodForm.weight}${prodForm.unit === 'gram' ? 'g' : prodForm.unit}`,
+            price: Number(prodForm.price),
+            originalPrice: Number(prodForm.originalPrice || prodForm.price)
         };
-        
-        setProdForm({ 
-            ...prodForm, 
-            weight: numPart, 
+
+        setProdForm({
+            ...prodForm,
+            weight: numPart,
             unit: finalUnit,
-            price: v.price, 
-            originalPrice: v.originalPrice || '', 
-            availableWeights: newList 
+            price: v.price,
+            originalPrice: v.originalPrice || '',
+            availableWeights: newList
         });
         showToast(`Primary updated to ${v.value}`);
     };
 
     if (loading) return <div className="p-5 text-center"><div className="spinner-border text-primary"></div></div>;
 
-    const globalSearchResults = products.filter(p => 
+    const globalSearchResults = products.filter(p =>
         searchQuery !== '' && (p.name.toLowerCase().includes(searchQuery.toLowerCase()) || (p.sku && p.sku.toLowerCase().includes(searchQuery.toLowerCase()))) &&
         (filterStock === 'All' || (filterStock === 'Low' && p.stock > 0 && p.stock < 10) || (filterStock === 'Out' && p.stock === 0))
     );
@@ -1488,7 +1488,14 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                 <label className="form-label fw-bold small text-muted">Category *</label>
                                 <select className={`form-select rounded-4 py-3 ${formErrors.category ? 'is-invalid' : ''}`} value={prodForm.category} onChange={e => setProdForm({ ...prodForm, category: e.target.value })}>
                                     <option value="">Select Category</option>
-                                    {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
+                                    {categories.filter(c => !c.parent).map(parentCat => (
+                                        <React.Fragment key={parentCat._id}>
+                                            <option value={parentCat.name}>{parentCat.name}</option>
+                                            {categories.filter(sc => sc.parent === parentCat._id).map(subCat => (
+                                                <option key={subCat._id} value={subCat.name}>&nbsp;&nbsp;&nbsp;↳ {subCat.name}</option>
+                                            ))}
+                                        </React.Fragment>
+                                    ))}
                                 </select>
                                 {formErrors.category && <div className="invalid-feedback">{formErrors.category}</div>}
                             </div>
@@ -1543,7 +1550,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                         <button type="button" className="btn btn-link text-danger p-0 extra-small fw-bold text-decoration-none ms-2" onClick={() => setProdForm({ ...prodForm, availableWeights: [] })}>CLEAR ALL</button>
                                     </div>
                                 </div>
-                                
+
                                 <div className="bg-light rounded-4 p-4 border shadow-inner">
                                     {/* Primary Item (Current base product) */}
                                     <div className="mb-3">
@@ -1861,221 +1868,230 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                         </div>
                     ) : (
                         <div className="accordion admin-accordion d-flex flex-column gap-4 mt-5" id="categoryInventory">
-                        {categories
-                            .filter(c => filterCategory === 'All' || c.name === filterCategory)
-                            .map((cat, idx) => {
-                                const catProducts = products.filter(p => p.category === cat.name && (filterStock === 'All' || (filterStock === 'Low' && p.stock > 0 && p.stock < 10) || (filterStock === 'Out' && p.stock === 0)));
-                                const lowStockInCat = catProducts.filter(p => p.stock < 10).length;
-                                const subCats = categories.filter(c => c.parent === cat._id);
-                                const isOpen = openCategory === cat._id;
+                            {categories
+                                .filter(c => {
+                                    // If specific category is selected in filter, show it
+                                    if (filterCategory !== 'All') return c.name === filterCategory;
+                                    // Otherwise, only show top-level categories in the main list
+                                    return !c.parent;
+                                })
+                                .map((cat, idx) => {
+                                    const subCats = categories.filter(c => c.parent === cat._id);
+                                    const subCatNames = subCats.map(sc => sc.name);
+                                    const catProducts = products.filter(p => (p.category === cat.name || subCatNames.includes(p.category)) && (filterStock === 'All' || (filterStock === 'Low' && p.stock > 0 && p.stock < 10) || (filterStock === 'Out' && p.stock === 0)));
+                                    const lowStockInCat = catProducts.filter(p => p.stock < 10).length;
+                                    const isOpen = openCategory === cat._id;
 
-                                return (
-                                    <div className={`accordion-item border-0 rounded-5 overflow-hidden shadow-sm transition-all ${isOpen ? 'active shadow-lg' : ''}`} key={cat._id}>
-                                        <div className={`accordion-header d-flex align-items-center p-3 transition-all ${isOpen ? 'bg-primary text-white' : 'bg-white'}`}>
-                                            <button 
-                                                className={`btn border-0 text-start flex-grow-1 d-flex align-items-center gap-4 py-2 px-3 shadow-none ${isOpen ? 'text-white' : 'text-primary'}`} 
-                                                type="button"
-                                                onClick={() => setOpenCategory(isOpen ? null : cat._id)}
-                                            >
-                                                <div className="cat-thumb shadow-sm border border-opacity-10 rounded-4 overflow-hidden" style={{ width: '64px', height: '64px' }}>
-                                                    <img src={(cat.image?.startsWith('http') || cat.image?.startsWith('/Reference') || cat.image?.startsWith('/images')) ? cat.image : `${import.meta.env.VITE_API_URL}${cat.image}`} alt="" className="w-100 h-100 object-fit-cover transition-all" />
+                                    return (
+                                        <div className={`accordion-item border-0 rounded-5 overflow-hidden shadow-sm transition-all ${isOpen ? 'active shadow-lg' : ''}`} key={cat._id}>
+                                            <div className={`accordion-header d-flex align-items-center p-3 transition-all ${isOpen ? 'bg-primary text-white' : 'bg-white'}`}>
+                                                <button
+                                                    className={`btn border-0 text-start flex-grow-1 d-flex align-items-center gap-4 py-2 px-3 shadow-none ${isOpen ? 'text-white' : 'text-primary'}`}
+                                                    type="button"
+                                                    onClick={() => setOpenCategory(isOpen ? null : cat._id)}
+                                                >
+                                                    <div className="cat-thumb shadow-sm border border-opacity-10 rounded-4 overflow-hidden" style={{ width: '64px', height: '64px' }}>
+                                                        <img src={(cat.image?.startsWith('http') || cat.image?.startsWith('/Reference') || cat.image?.startsWith('/images')) ? cat.image : `${import.meta.env.VITE_API_URL}${cat.image}`} alt="" className="w-100 h-100 object-fit-cover transition-all" />
+                                                    </div>
+                                                    <div className="flex-grow-1">
+                                                        <h4 className="fw-bold m-0 font-headline d-flex align-items-center gap-3 text-danger">
+                                                            {cat.name}
+                                                            {!cat.isActive && <span className="badge bg-danger bg-opacity-10 text-danger border-danger border-opacity-20 extra-small fw-bold">HIDDEN</span>}
+                                                        </h4>
+                                                        <div className="d-flex gap-3 mt-2">
+                                                            <span className={`badge fw-bold extra-small border d-flex align-items-center gap-2 font-label transition-all px-3 py-2 rounded-pill ${isOpen ? 'bg-white bg-opacity-10 text-white border-white border-opacity-20' : 'bg-secondary bg-opacity-10 text-primary border-primary border-opacity-10'}`}>
+                                                                <Box size={12} /> {catProducts.length} PRODUCTS
+                                                            </span>
+                                                            {lowStockInCat > 0 && (
+                                                                <span className={`badge fw-bold extra-small border d-flex align-items-center gap-2 font-label transition-all px-3 py-2 rounded-pill ${isOpen ? 'bg-danger text-white border-danger' : 'bg-danger bg-opacity-10 text-danger border-danger border-opacity-20'}`}>
+                                                                    <AlertTriangle size={12} /> {lowStockInCat} ALERTS
+                                                                </span>
+                                                            )}
+                                                            {subCats.length > 0 && (
+                                                                <span className={`badge fw-bold extra-small border d-flex align-items-center gap-2 font-label transition-all px-3 py-2 rounded-pill ${isOpen ? 'bg-white bg-opacity-10 text-white border-white border-opacity-20' : 'bg-primary bg-opacity-5 text-secondary border-primary border-opacity-10'}`}>
+                                                                    <Layers size={12} /> {subCats.length} SUB-GROUPS
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <ChevronDown size={24} className={`transition-all me-2 ${isOpen ? 'rotate-180 text-white' : 'text-muted opacity-50'}`} />
+                                                </button>
+                                                <div className="d-flex gap-2 ms-4 border-start ps-4 border-opacity-10 align-items-center">
+                                                    <div className="form-check form-switch d-flex align-items-center me-2" title="Toggle Category Visibility">
+                                                        <input
+                                                            className={`form-check-input cursor-pointer shadow-none ${isOpen ? 'border-white border-opacity-50 bg-white bg-opacity-20' : 'border-success'}`}
+                                                            type="checkbox"
+                                                            style={{ width: '2.5rem', height: '1.25rem' }}
+                                                            checked={cat.isActive !== false}
+                                                            onChange={async (e) => {
+                                                                const newStatus = e.target.checked;
+                                                                try {
+                                                                    const formData = new FormData();
+                                                                    formData.append('name', cat.name);
+                                                                    formData.append('isActive', newStatus);
+                                                                    await axios.put(`${import.meta.env.VITE_API_URL}/api/cms/categories/${cat._id}`, formData);
+                                                                    fetchData();
+                                                                } catch (err) { showToast('Status update failed', 'error'); }
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <button className={`btn btn-sm rounded-circle p-3 shadow-sm transition-all border ${isOpen ? 'btn-outline-light border-white border-opacity-30' : 'btn-white border-opacity-10'}`} onClick={() => handleEditCategory(cat)} title="Edit Category"> <Edit size={16} /> </button>
+                                                    <button className={`btn btn-sm rounded-circle p-3 shadow-sm transition-all border ${isOpen ? 'btn-danger text-white border-danger' : 'btn-white border-opacity-10 text-danger'}`} onClick={() => handleDeleteCategory(cat._id)} title="Delete Category"> <Trash size={16} /> </button>
                                                 </div>
-                                                <div className="flex-grow-1">
-                                                    <h4 className="fw-bold m-0 font-headline d-flex align-items-center gap-3">
-                                                        {cat.name}
-                                                        {!cat.isActive && <span className="badge bg-danger bg-opacity-10 text-danger border-danger border-opacity-20 extra-small fw-bold">HIDDEN</span>}
-                                                    </h4>
-                                                    <div className="d-flex gap-3 mt-2">
-                                                        <span className={`badge fw-bold extra-small border d-flex align-items-center gap-2 font-label transition-all px-3 py-2 rounded-pill ${isOpen ? 'bg-white bg-opacity-10 text-white border-white border-opacity-20' : 'bg-secondary bg-opacity-10 text-primary border-primary border-opacity-10'}`}>
-                                                            <Box size={12} /> {catProducts.length} PRODUCTS
-                                                        </span>
-                                                    {lowStockInCat > 0 && (
-                                                        <span className={`badge fw-bold extra-small border d-flex align-items-center gap-2 font-label transition-all px-3 py-2 rounded-pill ${isOpen ? 'bg-danger text-white border-danger' : 'bg-danger bg-opacity-10 text-danger border-danger border-opacity-20'}`}>
-                                                            <AlertTriangle size={12} /> {lowStockInCat} ALERTS
-                                                        </span>
-                                                    )}
+                                            </div>
+                                            {isOpen && (
+                                                <div className="accordion-body p-0 border-top bg-light bg-opacity-10 p-4">
+                                                    {/* Nested Sub-categories List */}
                                                     {subCats.length > 0 && (
-                                                        <span className={`badge fw-bold extra-small border d-flex align-items-center gap-2 font-label transition-all px-3 py-2 rounded-pill ${isOpen ? 'bg-white bg-opacity-10 text-white border-white border-opacity-20' : 'bg-primary bg-opacity-5 text-primary border-primary border-opacity-10'}`}>
-                                                            <Layers size={12} /> {subCats.length} SUB-GROUPS
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <ChevronDown size={24} className={`transition-all me-2 ${isOpen ? 'rotate-180 text-white' : 'text-muted opacity-50'}`} />
-                                        </button>
-                                        <div className="d-flex gap-2 ms-4 border-start ps-4 border-opacity-10 align-items-center">
-                                            <div className="form-check form-switch d-flex align-items-center me-2" title="Toggle Category Visibility">
-                                                <input
-                                                    className={`form-check-input cursor-pointer shadow-none ${isOpen ? 'border-white border-opacity-50 bg-white bg-opacity-20' : 'border-success'}`}
-                                                    type="checkbox"
-                                                    style={{ width: '2.5rem', height: '1.25rem' }}
-                                                    checked={cat.isActive !== false}
-                                                    onChange={async (e) => {
-                                                        const newStatus = e.target.checked;
-                                                        try {
-                                                            const formData = new FormData();
-                                                            formData.append('name', cat.name);
-                                                            formData.append('isActive', newStatus);
-                                                            await axios.put(`${import.meta.env.VITE_API_URL}/api/cms/categories/${cat._id}`, formData);
-                                                            fetchData();
-                                                        } catch (err) { showToast('Status update failed', 'error'); }
-                                                    }}
-                                                />
-                                            </div>
-                                            <button className={`btn btn-sm rounded-circle p-3 shadow-sm transition-all border ${isOpen ? 'btn-outline-light border-white border-opacity-30' : 'btn-white border-opacity-10'}`} onClick={() => handleEditCategory(cat)} title="Edit Category"> <Edit size={16} /> </button>
-                                            <button className={`btn btn-sm rounded-circle p-3 shadow-sm transition-all border ${isOpen ? 'btn-danger text-white border-danger' : 'btn-white border-opacity-10 text-danger'}`} onClick={() => handleDeleteCategory(cat._id)} title="Delete Category"> <Trash size={16} /> </button>
-                                    </div>
-                                </div>
-                                {isOpen && (
-                                    <div className="accordion-body p-0 border-top bg-light bg-opacity-10 p-4">
-                                                {/* Nested Sub-categories List */}
-                                                {subCats.length > 0 && (
-                                                    <div className="mb-4">
-                                                        <label className="extra-small text-muted fw-bold mb-3 d-block uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Nested Sub-collections</label>
-                                                        <div className="row g-3">
-                                                            {subCats.map(sc => (
-                                                                <div className="col-md-4" key={sc._id}>
-                                                                    <div className="bg-white p-3 rounded-4 border border-opacity-50 d-flex align-items-center justify-content-between shadow-sm hover-shadow-md transition-all">
-                                                                        <div className="d-flex align-items-center gap-3">
-                                                                            <div className="cat-thumb-mini border rounded-3 overflow-hidden" style={{ width: '40px', height: '40px' }}>
-                                                                                <img src={(sc.image?.startsWith('http') || sc.image?.startsWith('/Reference') || sc.image?.startsWith('/images')) ? sc.image : `${import.meta.env.VITE_API_URL}${sc.image}`} alt="" className="w-100 h-100 object-fit-cover" />
+                                                        <div className="mb-4">
+                                                            <label className="extra-small text-muted fw-bold mb-3 d-block uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Nested Sub-collections</label>
+                                                            <div className="row g-3">
+                                                                {subCats.map(sc => (
+                                                                    <div className="col-md-4" key={sc._id}>
+                                                                        <div className="bg-white p-3 rounded-4 border border-opacity-50 d-flex align-items-center justify-content-between shadow-sm hover-shadow-md transition-all">
+                                                                            <div className="d-flex align-items-center gap-3">
+                                                                                <div className="cat-thumb-mini border rounded-3 overflow-hidden" style={{ width: '40px', height: '40px' }}>
+                                                                                    <img src={(sc.image?.startsWith('http') || sc.image?.startsWith('/Reference') || sc.image?.startsWith('/images')) ? sc.image : `${import.meta.env.VITE_API_URL}${sc.image}`} alt="" className="w-100 h-100 object-fit-cover" />
+                                                                                </div>
+                                                                                <span className="fw-bold small text-primary">{sc.name}</span>
                                                                             </div>
-                                                                            <span className="fw-bold small text-primary">{sc.name}</span>
-                                                                        </div>
-                                                                        <div className="d-flex gap-1">
-                                                                            <button className="btn btn-sm p-1 text-primary" onClick={(e) => { e.stopPropagation(); handleEditCategory(sc); }} title="Edit Sub-category"><Edit size={14} /></button>
-                                                                            <button className="btn btn-sm p-1 text-danger" onClick={(e) => { e.stopPropagation(); handleDeleteCategory(sc._id); }} title="Delete Sub-category"><Trash size={14} /></button>
+                                                                            <div className="d-flex gap-1">
+                                                                                <button className="btn btn-sm p-1 text-primary" onClick={(e) => { e.stopPropagation(); handleEditCategory(sc); }} title="Edit Sub-category"><Edit size={14} /></button>
+                                                                                <button className="btn btn-sm p-1 text-danger" onClick={(e) => { e.stopPropagation(); handleDeleteCategory(sc._id); }} title="Delete Sub-category"><Trash size={14} /></button>
+                                                                            </div>
                                                                         </div>
                                                                     </div>
-                                                                </div>
-                                                            ))}
+                                                                ))}
+                                                            </div>
+                                                            <hr className="my-4 opacity-5" />
                                                         </div>
-                                                        <hr className="my-4 opacity-5" />
-                                                    </div>
-                                                )}
+                                                    )}
 
-                                                <label className="extra-small text-muted fw-bold mb-3 d-block uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Products in {cat.name}</label>
-                                                <div className="table-responsive rounded-5 border bg-white overflow-hidden shadow-sm border-opacity-50 products-table-wrap">
-                                                    <table className="table table-hover align-middle mb-0 products-table">
-                                                        <thead className="bg-light bg-opacity-50 border-bottom border-opacity-10">
-                                                            <tr className="extra-small text-muted uppercase fw-bold font-label" style={{ letterSpacing: '2px' }}>
-                                                                <th className="ps-4 py-3">Digital Asset / Name</th>
-                                                                <th>Price / Val</th>
-                                                                <th>Warehouse Inventory</th>
-                                                                <th className="text-center">Status</th>
-                                                                <th className="text-center">Control</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {catProducts.length === 0 ? (
-                                                                <tr><td colSpan="5" className="text-center py-5 text-muted small italic opacity-50">No matching assets in this catalog department.</td></tr>
-                                                            ) : catProducts.map(prod => (
-                                                                <tr key={prod._id} className="transition-all hover-scale-xs">
-                                                                    <td className="ps-4 py-4" data-label="Product">
-                                                                        <div className="d-flex align-items-center gap-4">
-                                                                            <div className="position-relative">
-                                                                                <img 
-                                                                                    src={(prod.image?.startsWith('http') || prod.image?.startsWith('/Reference') || prod.image?.startsWith('/images')) ? prod.image : `${import.meta.env.VITE_API_URL}${prod.image}`} 
-                                                                                    className="cat-thumb-mini border border-opacity-50 rounded-4 shadow-sm transition-all hover-zoom" 
-                                                                                    alt="" 
-                                                                                    style={{ width: '60px', height: '60px', objectFit: 'cover' }} 
-                                                                                />
-                                                                                {prod.isFeatured && (
-                                                                                    <div className="position-absolute top-0 start-0 translate-middle bg-warning rounded-circle p-1 shadow-sm border border-white" title="Featured Product">
-                                                                                        <Star size={10} fill="white" className="text-white" />
+                                                    <label className="extra-small text-muted fw-bold mb-3 d-block uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Products in {cat.name} {subCats.length > 0 ? '& Sub-groups' : ''}</label>
+                                                    <div className="table-responsive rounded-5 border bg-white overflow-hidden shadow-sm border-opacity-50 products-table-wrap">
+                                                        <table className="table table-hover align-middle mb-0 products-table">
+                                                            <thead className="bg-light bg-opacity-50 border-bottom border-opacity-10">
+                                                                <tr className="extra-small text-muted uppercase fw-bold font-label" style={{ letterSpacing: '2px' }}>
+                                                                    <th className="ps-4 py-3">Digital Asset / Name</th>
+                                                                    <th>Price / Val</th>
+                                                                    <th>Warehouse Inventory</th>
+                                                                    <th className="text-center">Status</th>
+                                                                    <th className="text-center">Control</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {catProducts.length === 0 ? (
+                                                                    <tr><td colSpan="5" className="text-center py-5 text-muted small italic opacity-50">No matching assets in this catalog department.</td></tr>
+                                                                ) : catProducts.map(prod => (
+                                                                    <tr key={prod._id} className="transition-all hover-scale-xs">
+                                                                        <td className="ps-4 py-4" data-label="Product">
+                                                                            <div className="d-flex align-items-center gap-4">
+                                                                                <div className="position-relative">
+                                                                                    <img
+                                                                                        src={(prod.image?.startsWith('http') || prod.image?.startsWith('/Reference') || prod.image?.startsWith('/images')) ? prod.image : `${import.meta.env.VITE_API_URL}${prod.image}`}
+                                                                                        className="cat-thumb-mini border border-opacity-50 rounded-4 shadow-sm transition-all hover-zoom"
+                                                                                        alt=""
+                                                                                        style={{ width: '60px', height: '60px', objectFit: 'cover' }}
+                                                                                    />
+                                                                                    {prod.isFeatured && (
+                                                                                        <div className="position-absolute top-0 start-0 translate-middle bg-warning rounded-circle p-1 shadow-sm border border-white" title="Featured Product">
+                                                                                            <Star size={10} fill="white" className="text-white" />
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
+                                                                                <div>
+                                                                                    <div className="fw-bold fs-6 text-primary mb-1">{prod.name}</div>
+                                                                                    <div className="d-flex gap-2 align-items-center flex-wrap">
+                                                                                        {prod.category !== cat.name && (
+                                                                                            <span className="badge bg-primary bg-opacity-10 text-secondary extra-small fw-bold border border-primary border-opacity-10" style={{ fontSize: '9px' }}>SUB-GROUP: {prod.category}</span>
+                                                                                        )}
+                                                                                        {prod.isBestSeller && <span className="badge bg-secondary text-primary extra-small fw-bold border-0" style={{ fontSize: '9px' }}>BEST SELLER</span>}
+                                                                                        {prod.flashSale && <span className="badge bg-danger text-white extra-small fw-bold border-0" style={{ fontSize: '9px' }}>FLASH SALE</span>}
+                                                                                        <span className="extra-small text-muted fw-bold opacity-50 uppercase font-label" style={{ fontSize: '10px' }}>ID: {prod._id.slice(-6)}</span>
                                                                                     </div>
-                                                                                )}
-                                                                            </div>
-                                                                            <div>
-                                                                                <div className="fw-bold fs-6 text-primary mb-1">{prod.name}</div>
-                                                                                <div className="d-flex gap-2 align-items-center">
-                                                                                    {prod.isBestSeller && <span className="badge bg-secondary text-primary extra-small fw-bold border-0" style={{ fontSize: '9px' }}>BEST SELLER</span>}
-                                                                                    {prod.flashSale && <span className="badge bg-danger text-white extra-small fw-bold border-0" style={{ fontSize: '9px' }}>FLASH SALE</span>}
-                                                                                    <span className="extra-small text-muted fw-bold opacity-50 uppercase font-label" style={{ fontSize: '10px' }}>ID: {prod._id.slice(-6)}</span>
                                                                                 </div>
                                                                             </div>
-                                                                        </div>
-                                                                    </td>
-                                                                    <td data-label="Price">
-                                                                        <div className="d-flex flex-column">
-                                                                            <span className="fw-bold fs-6 text-primary">₹{(prod.price || 0).toLocaleString()}</span>
-                                                                            {prod.originalPrice > prod.price && (
-                                                                                <span className="extra-small text-muted text-decoration-line-through fw-bold opacity-50">₹{prod.originalPrice.toLocaleString()}</span>
-                                                                            )}
-                                                                        </div>
-                                                                    </td>
-                                                                    <td data-label="Stock">
-                                                                        <div className="d-flex flex-column gap-2" style={{ maxWidth: '180px' }}>
-                                                                            <div className="d-flex justify-content-between align-items-center extra-small fw-bold font-label">
-                                                                                <span className={prod.stock < 10 ? 'text-danger' : 'text-success'}>
-                                                                                    {prod.stock === 0 ? 'OUT OF STOCK' : prod.stock < 10 ? 'CRITICAL STOCK' : 'IN STOCK'}
+                                                                        </td>
+                                                                        <td data-label="Price">
+                                                                            <div className="d-flex flex-column">
+                                                                                <span className="fw-bold fs-6 text-primary">₹{(prod.price || 0).toLocaleString()}</span>
+                                                                                {prod.originalPrice > prod.price && (
+                                                                                    <span className="extra-small text-muted text-decoration-line-through fw-bold opacity-50">₹{prod.originalPrice.toLocaleString()}</span>
+                                                                                )}
+                                                                            </div>
+                                                                        </td>
+                                                                        <td data-label="Stock">
+                                                                            <div className="d-flex flex-column gap-2" style={{ maxWidth: '180px' }}>
+                                                                                <div className="d-flex justify-content-between align-items-center extra-small fw-bold font-label">
+                                                                                    <span className={prod.stock < 10 ? 'text-danger' : 'text-success'}>
+                                                                                        {prod.stock === 0 ? 'OUT OF STOCK' : prod.stock < 10 ? 'CRITICAL STOCK' : 'IN STOCK'}
+                                                                                    </span>
+                                                                                    <span className="opacity-50">{prod.stock} UNITS</span>
+                                                                                </div>
+                                                                                <div className="progress rounded-pill bg-light border border-opacity-10" style={{ height: 6 }}>
+                                                                                    <div
+                                                                                        className={`progress-bar rounded-pill transition-all ${prod.stock === 0 ? 'bg-transparent' : prod.stock < 10 ? 'bg-danger shadow-sm' : 'bg-success shadow-sm'}`}
+                                                                                        role="progressbar"
+                                                                                        style={{ width: `${Math.min((prod.stock / 50) * 100, 100)}%` }}
+                                                                                    ></div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </td>
+                                                                        <td className="text-center" data-label="Status">
+                                                                            <div className="d-flex flex-column align-items-center gap-2">
+                                                                                <div className="form-check form-switch p-0 m-0" title="Toggle Product Visibility">
+                                                                                    <input
+                                                                                        className="form-check-input cursor-pointer shadow-none border-success"
+                                                                                        type="checkbox"
+                                                                                        style={{ width: '2.4rem', height: '1.2rem', margin: 0 }}
+                                                                                        checked={prod.isActive !== false}
+                                                                                        onChange={async (e) => {
+                                                                                            const newStatus = e.target.checked;
+                                                                                            try {
+                                                                                                const formData = new FormData();
+                                                                                                formData.append('name', prod.name);
+                                                                                                formData.append('isActive', newStatus);
+                                                                                                await axios.put(`${import.meta.env.VITE_API_URL}/api/products/${prod._id}`, formData);
+                                                                                                fetchData();
+                                                                                            } catch (err) { showToast('Status update failed', 'error'); }
+                                                                                        }}
+                                                                                    />
+                                                                                </div>
+                                                                                <span className={`extra-small fw-bold ${prod.isActive !== false ? 'text-success' : 'text-muted'}`}>
+                                                                                    {prod.isActive !== false ? 'VISIBLE' : 'HIDDEN'}
                                                                                 </span>
-                                                                                <span className="opacity-50">{prod.stock} UNITS</span>
                                                                             </div>
-                                                                            <div className="progress rounded-pill bg-light border border-opacity-10" style={{ height: 6 }}>
-                                                                                <div 
-                                                                                    className={`progress-bar rounded-pill transition-all ${prod.stock === 0 ? 'bg-transparent' : prod.stock < 10 ? 'bg-danger shadow-sm' : 'bg-success shadow-sm'}`} 
-                                                                                    role="progressbar" 
-                                                                                    style={{ width: `${Math.min((prod.stock / 50) * 100, 100)}%` }}
-                                                                                ></div>
+                                                                        </td>
+                                                                        <td className="text-center" data-label="Actions">
+                                                                            <div className="d-flex justify-content-center gap-3">
+                                                                                <button className="btn btn-sm btn-white border-opacity-10 shadow-sm p-3 rounded-4 hover-bg-primary hover-text-white transition-all group" onClick={() => {
+                                                                                    const nutritionObj = prod.nutrition ? (typeof prod.nutrition === 'object' && !(prod.nutrition instanceof Map) ? prod.nutrition : Object.fromEntries(prod.nutrition)) : {};
+                                                                                    setProdForm({
+                                                                                        ...prod,
+                                                                                        availableWeights: Array.isArray(prod.availableWeights) ? prod.availableWeights : (prod.availableWeights ? prod.availableWeights.split(',').map(w => w.trim()) : []),
+                                                                                        nutrition: nutritionObj,
+                                                                                        isActive: prod.isActive !== undefined ? prod.isActive : true
+                                                                                    });
+                                                                                    setEditId(prod._id);
+                                                                                    setView('editProduct');
+                                                                                }} title="Edit Product Details">
+                                                                                    <Edit size={18} className="text-primary group-hover-white" />
+                                                                                </button>
+                                                                                <button className="btn btn-sm btn-white border-opacity-10 text-danger shadow-sm p-3 rounded-4 hover-bg-danger hover-text-white transition-all group" onClick={() => handleDelete(prod._id)} title="Permanently Delete Product">
+                                                                                    <Trash size={18} className="group-hover-white" />
+                                                                                </button>
                                                                             </div>
-                                                                        </div>
-                                                                    </td>
-                                                                    <td className="text-center" data-label="Status">
-                                                                        <div className="d-flex flex-column align-items-center gap-2">
-                                                                            <div className="form-check form-switch p-0 m-0" title="Toggle Product Visibility">
-                                                                                <input
-                                                                                    className="form-check-input cursor-pointer shadow-none border-success"
-                                                                                    type="checkbox"
-                                                                                    style={{ width: '2.4rem', height: '1.2rem', margin: 0 }}
-                                                                                    checked={prod.isActive !== false}
-                                                                                    onChange={async (e) => {
-                                                                                        const newStatus = e.target.checked;
-                                                                                        try {
-                                                                                            const formData = new FormData();
-                                                                                            formData.append('name', prod.name);
-                                                                                            formData.append('isActive', newStatus);
-                                                                                            await axios.put(`${import.meta.env.VITE_API_URL}/api/products/${prod._id}`, formData);
-                                                                                            fetchData();
-                                                                                        } catch (err) { showToast('Status update failed', 'error'); }
-                                                                                    }}
-                                                                                />
-                                                                            </div>
-                                                                            <span className={`extra-small fw-bold ${prod.isActive !== false ? 'text-success' : 'text-muted'}`}>
-                                                                                {prod.isActive !== false ? 'VISIBLE' : 'HIDDEN'}
-                                                                            </span>
-                                                                        </div>
-                                                                    </td>
-                                                                    <td className="text-center" data-label="Actions">
-                                                                        <div className="d-flex justify-content-center gap-3">
-                                                                            <button className="btn btn-sm btn-white border-opacity-10 shadow-sm p-3 rounded-4 hover-bg-primary hover-text-white transition-all group" onClick={() => {
-                                                                                const nutritionObj = prod.nutrition ? (typeof prod.nutrition === 'object' && !(prod.nutrition instanceof Map) ? prod.nutrition : Object.fromEntries(prod.nutrition)) : {};
-                                                                                setProdForm({
-                                                                                    ...prod,
-                                                                                    availableWeights: Array.isArray(prod.availableWeights) ? prod.availableWeights : (prod.availableWeights ? prod.availableWeights.split(',').map(w => w.trim()) : []),
-                                                                                    nutrition: nutritionObj,
-                                                                                    isActive: prod.isActive !== undefined ? prod.isActive : true
-                                                                                });
-                                                                                setEditId(prod._id);
-                                                                                setView('editProduct');
-                                                                            }} title="Edit Product Details">
-                                                                                <Edit size={18} className="text-primary group-hover-white" />
-                                                                            </button>
-                                                                            <button className="btn btn-sm btn-white border-opacity-10 text-danger shadow-sm p-3 rounded-4 hover-bg-danger hover-text-white transition-all group" onClick={() => handleDelete(prod._id)} title="Permanently Delete Product">
-                                                                                <Trash size={18} className="group-hover-white" />
-                                                                            </button>
-                                                                        </div>
-                                                                    </td>
-                                                                </tr>
-                                                            ))}
-                                                        </tbody>
-                                                    </table>
+                                                                        </td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
+                                            )}
+                                        </div>
+                                    );
+                                })}
                         </div>
                     )}
                 </React.Fragment>
@@ -2498,30 +2514,30 @@ const CustomersTab = ({ showToast, setConfirmModal, editUser, setEditUser, editF
 
 
 const AVAILABLE_ICONS = [
-    'AlertTriangle', 'ArrowLeft', 'Bell', 'BellOff', 'Box', 'Briefcase', 'Calendar', 
-    'ChevronDown', 'Clock', 'CreditCard', 'Download', 'Edit', 'ExternalLink', 'Eye', 
-    'HelpCircle', 'Info', 'Layers', 'LayoutDashboard', 'Lock', 'MessageSquare', 
-    'MousePointer2', 'MousePointerClick', 'Package', 'Plus', 'Quote', 'Save', 
-    'Search', 'ShieldCheck', 'ShoppingBag', 'ShoppingCart', 'Smartphone', 'Star', 
+    'AlertTriangle', 'ArrowLeft', 'Bell', 'BellOff', 'Box', 'Briefcase', 'Calendar',
+    'ChevronDown', 'Clock', 'CreditCard', 'Download', 'Edit', 'ExternalLink', 'Eye',
+    'HelpCircle', 'Info', 'Layers', 'LayoutDashboard', 'Lock', 'MessageSquare',
+    'MousePointer2', 'MousePointerClick', 'Package', 'Plus', 'Quote', 'Save',
+    'Search', 'ShieldCheck', 'ShoppingBag', 'ShoppingCart', 'Smartphone', 'Star',
     'Ticket', 'Timer', 'Trash', 'TrendingUp', 'Truck', 'User', 'Users'
 ];
 
 const DynamicIcon = ({ name, size = 18, className = "" }) => {
     const icons = {
-        Star, Truck, ShieldCheck, Clock, MessageSquare, Package, Box, Users, 
+        Star, Truck, ShieldCheck, Clock, MessageSquare, Package, Box, Users,
         Layers, Ticket, Smartphone, MousePointer2, LayoutDashboard, Search,
         Plus, Trash, Edit, Eye, Info, AlertTriangle, User, Quote, Timer,
         HelpCircle, Smartphone, MousePointerClick, TrendingUp, ExternalLink,
         Briefcase, Bell, BellOff, Calendar, ArrowLeft, Lock, Download,
         ChevronDown, Save, CreditCard, ShoppingCart, ShoppingBag, LayoutDashboard
     };
-    
+
     if (!name) return <HelpCircle size={size} className={className} />;
-    
+
     // Normalize name: "ShieldCheck" or "shield-check" -> "ShieldCheck"
     const normalizedName = name.split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join('');
     const Icon = icons[normalizedName] || icons[name] || HelpCircle;
-    
+
     return <Icon size={size} className={className} />;
 };
 
@@ -2541,7 +2557,7 @@ const CustomIconSelect = ({ value, onChange }) => {
 
     return (
         <div className="position-relative" ref={dropdownRef}>
-            <div 
+            <div
                 className="form-control form-control-sm rounded-pill shadow-sm d-flex align-items-center gap-2 bg-white"
                 onClick={() => setIsOpen(!isOpen)}
                 style={{ cursor: 'pointer' }}
@@ -2550,14 +2566,14 @@ const CustomIconSelect = ({ value, onChange }) => {
                 <span className="flex-grow-1" style={{ fontSize: '13px' }}>{value || 'Select Icon'}</span>
                 <ChevronDown size={14} className="text-muted" />
             </div>
-            
+
             {isOpen && (
-                <div 
-                    className="position-absolute w-100 bg-white shadow-premium rounded-4 mt-2 overflow-auto py-2 animate-slide-up" 
+                <div
+                    className="position-absolute w-100 bg-white shadow-premium rounded-4 mt-2 overflow-auto py-2 animate-slide-up"
                     style={{ maxHeight: '220px', zIndex: 1050, border: '1px solid rgba(212, 175, 55, 0.2)' }}
                 >
                     {AVAILABLE_ICONS.map(icon => (
-                        <div 
+                        <div
                             key={icon}
                             className="d-flex align-items-center gap-2 px-3 py-2 transition-all hover-bg-primary hover-bg-opacity-10"
                             onClick={() => {
@@ -3142,13 +3158,13 @@ const CMSContentTab = ({ showToast, setConfirmModal }) => {
                                             </div>
                                             <div className="mb-3">
                                                 <label className="extra-small text-muted fw-bold mb-1 d-block uppercase opacity-75 font-label">Icon Name (Lucide)</label>
-                                                <CustomIconSelect 
-                                                    value={feature.icon} 
+                                                <CustomIconSelect
+                                                    value={feature.icon}
                                                     onChange={(newIcon) => {
-                                                        const nf = [...(cmsData.features || [{}, {}, {}, {}])]; 
-                                                        nf[idx] = { ...feature, icon: newIcon }; 
+                                                        const nf = [...(cmsData.features || [{}, {}, {}, {}])];
+                                                        nf[idx] = { ...feature, icon: newIcon };
                                                         setCmsData({ ...cmsData, features: nf });
-                                                    }} 
+                                                    }}
                                                 />
                                             </div>
                                             <div className="mb-3">
