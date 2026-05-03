@@ -100,6 +100,22 @@ const ProductDetails = () => {
     };
     fetchFeatured();
   }, [categorySlug, productSlug]);
+  
+  const productImages = (product?.images && product.images.length > 0) 
+    ? product.images 
+    : [product?.img || product?.image];
+
+  // Update active image when weight changes if a specific image is linked
+  useEffect(() => {
+    if (!product || !selectedWeight || !productImages[0]) return;
+    const variant = product.availableWeights?.find(v => (typeof v === 'object' ? v.value : v) === selectedWeight);
+    if (variant && typeof variant === 'object' && variant.image) {
+      const imgIndex = productImages.findIndex(img => img === variant.image);
+      if (imgIndex !== -1) {
+        setActiveImage(imgIndex);
+      }
+    }
+  }, [selectedWeight, product, productImages]);
 
   if (loading) return <div className="min-vh-100 d-flex align-items-center justify-content-center"><div className="spinner-border text-primary" role="status"></div></div>;
   if (!product) return <div className="min-vh-100 d-flex align-items-center justify-content-center font-headline fs-4">Product collection not found.</div>;
@@ -147,9 +163,6 @@ const ProductDetails = () => {
   const hasDiscount = numOrig > numPrice;
   const discountPercent = hasDiscount ? Math.round(((numOrig - numPrice) / numOrig) * 100) : 0;
 
-  const productImages = (product.images && product.images.length > 0) 
-    ? product.images 
-    : [product.img || product.image];
 
   const inWishlist = isInWishlist(product._id);
 

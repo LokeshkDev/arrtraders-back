@@ -90,12 +90,18 @@ const ProductCard = ({
   const formattedOriginalPrice = numericOriginalPrice.toFixed(2);
   const discountPercent = hasDiscount ? Math.round(((numericOriginalPrice - parseFloat(formattedPrice)) / numericOriginalPrice) * 100) : 0;
 
+  const currentImage = (() => {
+    const variant = product.availableWeights?.find(v => (typeof v === 'object' ? v.value : v) === selectedWeight);
+    if (variant && typeof variant === 'object' && variant.image) return variant.image;
+    return product.img || product.image || "/images/reference/product-thumb-1.png";
+  })();
+
   return (
     <div className="universal-product-card d-flex flex-column">
       <div className="card-image-container">
         <Link to={path} className="d-block overflow-hidden">
           <img
-            src={product.img || product.image || "/images/reference/product-thumb-1.png"}
+            src={currentImage}
             alt={product.name}
             className="w-100 h-100 object-fit-cover transition-all"
             loading="lazy"

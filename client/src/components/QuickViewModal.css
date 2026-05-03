@@ -394,11 +394,68 @@
   }
 
   .qv-refined-qty-control {
-    width: 160px;
+    width: 150px;
+    background: #fdfcf7; /* Ivory background */
+    border: 1px solid var(--secondary);
+    border-radius: 40px;
+    padding: 4px;
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.1);
+  }
+
+  .qv-qty-btn {
+    width: 34px;
+    height: 34px;
+    background: #f7f3e8;
+    color: var(--primary);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 50%;
+  }
+
+  .qv-qty-value {
+    font-size: 1rem;
+    font-weight: 700;
   }
 
   .qv-trust-footer {
     padding-bottom: 1rem;
   }
+}
+
+.qv-nav-btn {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--secondary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  outline: none;
+}
+
+.qv-nav-btn:hover {
+  background: var(--primary);
+  color: var(--secondary);
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(15, 61, 46, 0.2);
+}
+
+/* Swiper Pagination Styling */
+.qv-swiper .swiper-pagination-bullet {
+  background: var(--primary) !important;
+  opacity: 0.3;
+  width: 8px;
+  height: 8px;
+  transition: all 0.3s ease;
+}
+
+.qv-swiper .swiper-pagination-bullet-active {
+  background: var(--secondary) !important;
+  opacity: 1;
+  transform: scale(1.3);
 }
 

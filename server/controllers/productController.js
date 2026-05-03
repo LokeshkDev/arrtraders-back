@@ -139,7 +139,7 @@ export const createProduct = async (req, res) => {
             }
         }
         
-        const finalImages = images.slice(0, 5);
+        const finalImages = images.slice(0, 10);
         let image = finalImages.length > 0 ? finalImages[0] : (req.body.image || '');
         
         if (req.body.primaryImage && finalImages.includes(req.body.primaryImage)) {
@@ -283,8 +283,8 @@ export const updateProduct = async (req, res) => {
 
                 const isNewPrimary = req.body.primaryIsNew === 'true';
                 const combined = isNewPrimary 
-                    ? [...newlyUploaded, ...existingImages].slice(0, 5)
-                    : [...existingImages, ...newlyUploaded].slice(0, 5);
+                    ? [...newlyUploaded, ...existingImages].slice(0, 10)
+                    : [...existingImages, ...newlyUploaded].slice(0, 10);
                 
                 product.images = combined;
                 

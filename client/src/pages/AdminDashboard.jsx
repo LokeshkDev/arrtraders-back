@@ -1405,7 +1405,8 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
         const newVar = {
             value: `${w}g`,
             price: Math.round(baseP * ratio),
-            originalPrice: Math.round(baseOP * ratio)
+            originalPrice: Math.round(baseOP * ratio),
+            image: prodForm.images?.[0] instanceof File ? '' : (prodForm.images?.[0] || '')
         };
 
         // Avoid duplicates
@@ -1571,6 +1572,14 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                             <div className="d-flex gap-2 flex-wrap">
                                                 {prodForm.availableWeights.map((v, idx) => (
                                                     <div key={idx} className="badge bg-white border text-primary fw-bold px-3 py-2 d-flex align-items-center gap-2 rounded-pill shadow-sm hover-shadow-md transition-all">
+                                                        {v.image && (
+                                                            <img 
+                                                                src={v.image instanceof File ? URL.createObjectURL(v.image) : v.image} 
+                                                                alt="" 
+                                                                className="rounded-circle border" 
+                                                                style={{ width: '20px', height: '20px', objectFit: 'cover' }} 
+                                                            />
+                                                        )}
                                                         <span className="text-dark">{typeof v === 'object' ? v.value : v}</span>
                                                         <span className="text-primary opacity-75">/</span>
                                                         <span>₹{typeof v === 'object' ? v.price : 0}</span>
@@ -1578,6 +1587,41 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                                             <span className="text-muted text-decoration-line-through extra-small">₹{v.originalPrice}</span>
                                                         )}
                                                         <div className="ms-2 d-flex gap-1 border-start ps-2">
+                                                            <div className="dropdown">
+                                                                <button type="button" className="btn btn-link p-0 text-secondary" data-bs-toggle="dropdown" title="Select Image from Gallery">
+                                                                    <ImageIcon size={14} />
+                                                                </button>
+                                                                <div className="dropdown-menu shadow-premium border-0 rounded-4 p-2" style={{ minWidth: '200px' }}>
+                                                                    <div className="extra-small fw-bold text-muted mb-2 px-2 uppercase">Link Gallery Image</div>
+                                                                    <div className="d-flex flex-wrap gap-2 px-2">
+                                                                        {prodForm.images?.map((img, i) => (
+                                                                            <div 
+                                                                                key={i} 
+                                                                                className="cursor-pointer border rounded-2 overflow-hidden hover-scale-xs" 
+                                                                                style={{ width: '40px', height: '40px' }}
+                                                                                onClick={() => {
+                                                                                    const newList = [...prodForm.availableWeights];
+                                                                                    newList[idx] = { ...v, image: img };
+                                                                                    setProdForm({ ...prodForm, availableWeights: newList });
+                                                                                }}
+                                                                            >
+                                                                                <img src={img instanceof File ? URL.createObjectURL(img) : img} className="w-100 h-100 object-fit-cover" />
+                                                                            </div>
+                                                                        ))}
+                                                                        <div 
+                                                                            className="cursor-pointer border rounded-2 d-flex align-items-center justify-content-center bg-light text-muted"
+                                                                            style={{ width: '40px', height: '40px' }}
+                                                                            onClick={() => {
+                                                                                const newList = [...prodForm.availableWeights];
+                                                                                newList[idx] = { ...v, image: '' };
+                                                                                setProdForm({ ...prodForm, availableWeights: newList });
+                                                                            }}
+                                                                        >
+                                                                            <X size={14} />
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
                                                             <button type="button" className="btn btn-link p-0 text-primary" title="Promote to Primary" onClick={() => promoteToPrimary(idx)}>
                                                                 <ArrowUpCircle size={14} />
                                                             </button>
