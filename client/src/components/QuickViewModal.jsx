@@ -27,9 +27,12 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
 
   const [selectedWeight, setSelectedWeight] = useState(weights[0]);
 
-  const productImages = (product?.images && product.images.length > 0) 
-    ? product.images 
-    : [product?.img || product?.image];
+  const productImages = (() => {
+    if (product?.images && product.images.length > 0) return product.images;
+    if (product?.img) return [product.img];
+    if (product?.image) return [product.image];
+    return ["/images/reference/product-thumb-1.png"];
+  })();
 
   // Update swiper when weight changes
   useEffect(() => {

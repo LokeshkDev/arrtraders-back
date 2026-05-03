@@ -93,7 +93,13 @@ const ProductCard = ({
   const currentImage = (() => {
     const variant = product.availableWeights?.find(v => (typeof v === 'object' ? v.value : v) === selectedWeight);
     if (variant && typeof variant === 'object' && variant.image) return variant.image;
-    return product.img || product.image || "/images/reference/product-thumb-1.png";
+    
+    // Robust fallback sequence
+    if (product.img && typeof product.img === 'string' && product.img.trim()) return product.img;
+    if (product.image && typeof product.image === 'string' && product.image.trim()) return product.image;
+    if (product.images && product.images.length > 0 && product.images[0]) return product.images[0];
+    
+    return "/images/reference/product-thumb-1.png";
   })();
 
   return (

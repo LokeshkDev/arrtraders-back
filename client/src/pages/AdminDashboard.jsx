@@ -1402,8 +1402,9 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
         const baseOP = parseFloat(prodForm.originalPrice || prodForm.price);
         const ratio = w / baseW;
 
+        const formattedValue = w >= 1000 ? `${w / 1000}KG` : `${w}G`;
         const newVar = {
-            value: `${w}g`,
+            value: formattedValue,
             price: Math.round(baseP * ratio),
             originalPrice: Math.round(baseOP * ratio),
             image: prodForm.images?.[0] instanceof File ? '' : (prodForm.images?.[0] || '')
@@ -1644,7 +1645,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                         <h6 className="extra-small fw-bold text-muted uppercase mb-2">Add Custom Variation</h6>
                                         <div className="row g-2 align-items-end">
                                             <div className="col-md-3">
-                                                <input type="text" className="form-control form-control-sm rounded-4 bg-white border-opacity-50" placeholder="Weight (e.g. 100g)" value={customVar} onChange={e => handleCustomVarChange(e.target.value)} />
+                                                <input type="text" className="form-control form-control-sm rounded-4 bg-white border-opacity-50" placeholder="Weight (e.g. 1KG)" value={customVar} onChange={e => handleCustomVarChange(e.target.value)} />
                                             </div>
                                             <div className="col-md-3">
                                                 <input type="number" className="form-control form-control-sm rounded-4 bg-white border-opacity-50" placeholder="Price" value={varPrice} onChange={e => setVarPrice(e.target.value)} />
@@ -1657,9 +1658,10 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                             </div>
                                         </div>
                                         <div className="mt-2 d-flex gap-2">
-                                            <button type="button" className="btn btn-outline-secondary btn-xs py-1 px-3 rounded-pill extra-small fw-bold" onClick={() => addPresetWeight(250)}>+ 250g</button>
-                                            <button type="button" className="btn btn-outline-secondary btn-xs py-1 px-3 rounded-pill extra-small fw-bold" onClick={() => addPresetWeight(500)}>+ 500g</button>
-                                            <button type="button" className="btn btn-outline-secondary btn-xs py-1 px-3 rounded-pill extra-small fw-bold" onClick={() => addPresetWeight(1000)}>+ 1kg</button>
+                                            <button type="button" className="btn btn-outline-secondary rounded-pill px-3 py-1 extra-small fw-bold" onClick={() => addPresetWeight(250)}>+ 250G</button>
+                                            <button type="button" className="btn btn-outline-secondary rounded-pill px-3 py-1 extra-small fw-bold" onClick={() => addPresetWeight(500)}>+ 500G</button>
+                                            <button type="button" className="btn btn-outline-secondary rounded-pill px-3 py-1 extra-small fw-bold" onClick={() => addPresetWeight(1000)}>+ 1KG</button>
+                                            <button type="button" className="btn btn-outline-secondary rounded-pill px-3 py-1 extra-small fw-bold" onClick={() => addPresetWeight(2000)}>+ 2KG</button>
                                         </div>
                                     </div>
                                 </div>
