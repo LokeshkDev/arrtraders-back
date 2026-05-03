@@ -117,6 +117,8 @@ export const getProductById = async (req, res) => {
 // @route   POST /api/products
 export const createProduct = async (req, res) => {
     try {
+        console.log('[DEBUG] Creating product with body:', JSON.stringify(req.body, null, 2));
+        
         const { 
             name, description, price, originalPrice, category, flashSale, 
             discount, isBestSeller, isTopRated, isFeatured, stock, 
@@ -125,13 +127,20 @@ export const createProduct = async (req, res) => {
         
         let images = [];
         if (req.files && req.files.length > 0) {
-            const { uploadToR2 } = await import('../config/cloudflareR2.js');
-            const uploadPromises = req.files.map(file => uploadToR2(file.buffer, file.originalname, 'products'));
-            images = await Promise.all(uploadPromises);
+            console.log(`[DEBUG] Uploading ${req.files.length} images to R2...`);
+            try {
+                const { uploadToR2 } = await import('../config/cloudflareR2.js');
+                const uploadPromises = req.files.map(file => uploadToR2(file.buffer, file.originalname, 'products'));
+                images = await Promise.all(uploadPromises);
+                console.log('[DEBUG] R2 Upload Success:', images);
+            } catch (r2Error) {
+                console.error('[ERROR] Cloudflare R2 Upload Failed:', r2Error);
+                return res.status(500).json({ message: 'Image upload failed. Please check R2 configuration.', error: r2Error.message });
+            }
         }
         
         const finalImages = images.slice(0, 5);
-        let image = finalImages.length > 0 ? finalImages[0] : req.body.image;
+        let image = finalImages.length > 0 ? finalImages[0] : (req.body.image || '');
         
         if (req.body.primaryImage && finalImages.includes(req.body.primaryImage)) {
             image = req.body.primaryImage;
@@ -144,8 +153,9 @@ export const createProduct = async (req, res) => {
                     ? JSON.parse(availableWeights) 
                     : availableWeights;
             } catch (e) {
+                console.warn('[DEBUG] Failed to parse availableWeights JSON, falling back to comma split');
                 weightsArr = typeof availableWeights === 'string'
-                    ? availableWeights.split(',').map(w => ({ value: w.trim(), price: price || 0 })).filter(w => w.value !== '')
+                    ? availableWeights.split(',').map(w => ({ value: w.trim(), price: parseFloat(price) || 0 })).filter(w => w.value !== '')
                     : availableWeights;
             }
         }
@@ -154,29 +164,46 @@ export const createProduct = async (req, res) => {
         if (nutrition) {
             try {
                 nutritionMap = typeof nutrition === 'string' ? JSON.parse(nutrition) : nutrition;
-            } catch (e) { nutritionMap = {}; }
+            } catch (e) { 
+                console.warn('[DEBUG] Failed to parse nutrition JSON');
+                nutritionMap = {}; 
+            }
         }
 
+        console.log('[DEBUG] Attempting Product.create...');
         const product = await Product.create({
             id: generateMongoId(),
             name, 
             slug: createSlug(name),
-            description, price, originalPrice, category, image,
+            description, 
+            price: price ? String(price) : "0", 
+            originalPrice: originalPrice ? String(originalPrice) : null, 
+            category, 
+            image,
             images: finalImages,
             flashSale: String(flashSale) === 'true',
-            discount,
+            discount: discount ? parseFloat(discount) : 0,
             isBestSeller: String(isBestSeller) === 'true',
             isTopRated: String(isTopRated) === 'true',
             isFeatured: String(isFeatured) === 'true',
             isActive: isActive !== undefined ? String(isActive) === 'true' : true,
-            stock,
-            color, weight, unit, availableWeights: weightsArr,
+            stock: stock ? parseInt(stock) : 0,
+            color: color || null, 
+            weight: weight ? parseFloat(weight) : 0, 
+            unit: unit || 'gram', 
+            availableWeights: weightsArr,
             nutrition: nutritionMap
         });
 
+        console.log('[DEBUG] Product created successfully:', product.id);
         res.status(201).json(formatResponse(product));
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('[CRITICAL] Product Creation Failed:', error);
+        res.status(500).json({ 
+            message: 'Database operation failed', 
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 };
 
