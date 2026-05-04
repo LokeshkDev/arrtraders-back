@@ -29,9 +29,10 @@ export const connectMySQL = async () => {
     console.log(`MySQL Connected Successfully to database: ${sequelize.config.database}`);
     
     // Sync database schema - automatically creates new tables and adds missing columns
-    // IMPORTANT: alter: true is used to add missing columns. Disable this after one successful deployment to avoid overhead.
-    await sequelize.sync({ alter: true });
-    console.log('Database schema synchronized with alter: true');
+    // IMPORTANT: alter: true is disabled by default to avoid duplicate index issues.
+    // Enable it only when you need to update the schema, then disable it again.
+    await sequelize.sync({ alter: false });
+    console.log('Database schema synchronized');
   } catch (error) {
     console.error('Unable to connect to MySQL:', error);
     process.exit(1);
