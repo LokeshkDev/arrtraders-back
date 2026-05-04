@@ -8,7 +8,7 @@
 
 .blog-card-organio:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-5px);
+  /* Removed translateY as per user request */
   border-color: var(--primary);
 }
 
@@ -26,7 +26,8 @@
 }
 
 .blog-card-organio:hover .blog-img-wrap img {
-  transform: scale(1.1);
+  /* Removed scale animation as per user request */
+  transform: none;
 }
 
 .blog-info-organio {

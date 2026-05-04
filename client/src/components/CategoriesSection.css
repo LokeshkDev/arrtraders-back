@@ -28,7 +28,8 @@
 }
 
 .category-card-organio:hover .category-img-wrap img {
-  transform: scale(1.1);
+  /* Removed scale animation as per user request */
+  transform: none;
 }
 
 .category-info-organio h3 {

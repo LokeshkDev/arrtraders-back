@@ -45,6 +45,8 @@ const ProductDetails = () => {
   const [activeImage, setActiveImage] = useState(0);
   const [shippingInfo, setShippingInfo] = useState(null);
   const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [zoomStyle, setZoomStyle] = useState({ transformOrigin: 'center center', transform: 'scale(1)' });
+  const [isMobileLightboxOpen, setIsMobileLightboxOpen] = useState(false);
   
   const productId = product?._id || product?.id;
 
@@ -180,6 +182,23 @@ const ProductDetails = () => {
     }
   };
 
+  const handleMouseMove = (e) => {
+    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+    const x = ((e.pageX - left - window.scrollX) / width) * 100;
+    const y = ((e.pageY - top - window.scrollY) / height) * 100;
+    setZoomStyle({
+      transformOrigin: `${x}% ${y}%`,
+      transform: 'scale(1.8)'
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setZoomStyle({
+      transformOrigin: 'center center',
+      transform: 'scale(1)'
+    });
+  };
+
   const handleAddToCart = () => {
     const productToCart = {
       ...product,
@@ -233,11 +252,16 @@ const ProductDetails = () => {
                         </div>
 
                         <div className="main-preview-stage flex-grow-1 overflow-hidden">
-                            <div className="zoom-container cursor-zoom-in h-100 w-100">
+                            <div 
+                                className="zoom-container cursor-zoom-in h-100 w-100"
+                                onMouseMove={handleMouseMove}
+                                onMouseLeave={handleMouseLeave}
+                            >
                                 <img 
                                     src={productImages[activeImage]} 
                                     alt={product.name} 
                                     className="w-100 h-100 object-fit-contain transition-all hover-zoom-amazon" 
+                                    style={zoomStyle}
                                 />
                                 <div className="qv-image-badge position-absolute bottom-0 start-0 m-4 px-3 py-1">
                                     ARTISANAL GRADE
@@ -254,9 +278,12 @@ const ProductDetails = () => {
                      className="bg-light"
                    >
                      {productImages.map((img, idx) => (
-                       <SwiperSlide key={idx}>
+                       <SwiperSlide key={idx} onClick={() => setIsMobileLightboxOpen(true)}>
                          <div className="mobile-img-container">
                             <img src={img} alt={product.name} className="w-100 h-100 object-fit-contain" />
+                            <div className="mobile-zoom-hint">
+                                <Plus size={16} /> Tap to zoom
+                            </div>
                          </div>
                        </SwiperSlide>
                      ))}
@@ -515,6 +542,29 @@ const ProductDetails = () => {
            </div>
         </div>
       </div>
+      {/* Mobile Lightbox / Fullscreen Zoom */}
+      {isMobileLightboxOpen && (
+        <div className="mobile-lightbox" onClick={() => setIsMobileLightboxOpen(false)}>
+            <button className="close-lightbox" onClick={() => setIsMobileLightboxOpen(false)}>
+                <Plus size={32} style={{ transform: 'rotate(45deg)' }} />
+            </button>
+            <div className="lightbox-content" onClick={e => e.stopPropagation()}>
+                <Swiper
+                    modules={[Pagination]}
+                    pagination={{ clickable: true }}
+                    initialSlide={activeImage}
+                >
+                    {productImages.map((img, idx) => (
+                        <SwiperSlide key={idx}>
+                            <div className="lightbox-img-wrap">
+                                <img src={img} alt="Zoomed" />
+                            </div>
+                        </SwiperSlide>
+                    ))}
+                </Swiper>
+            </div>
+        </div>
+      )}
     </main>
   );
 };
