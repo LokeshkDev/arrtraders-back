@@ -3544,7 +3544,7 @@ const CMSContentTab = ({ showToast, setConfirmModal }) => {
                                 <h4 className="font-headline text-primary fs-5 mb-0 fw-bold d-flex align-items-center gap-3"> <Box size={24} /> Collection Grid</h4>
                                 <p className="text-muted extra-small fw-bold m-0 mt-2 uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>MANUALLY CURATED COLLECTIONS FOR THE HOME PAGE</p>
                             </div>
-                            <button className="btn btn-outline-primary rounded-pill px-4 py-2 extra-small fw-bold border-2 d-flex align-items-center gap-2 font-label" onClick={() => setCmsData({ ...cmsData, categoryItems: [...(cmsData.categoryItems || []), { name: 'New Collection', img: '', count: '10 Items' }] })}> <Plus size={16} /> ADD ITEM</button>
+                            <button className="btn btn-outline-primary rounded-pill px-4 py-2 extra-small fw-bold border-2 d-flex align-items-center gap-2 font-label" onClick={() => setCmsData({ ...cmsData, categoryItems: [...(cmsData.categoryItems || []), { name: 'New Collection', img: '', link: '/categories' }] })}> <Plus size={16} /> ADD ITEM</button>
                         </div>
                         <div className="row g-4">
                             {(cmsData?.categoryItems || []).map((cat, idx) => (
@@ -3579,29 +3579,32 @@ const CMSContentTab = ({ showToast, setConfirmModal }) => {
                                             </div>
                                         </div>
                                         <div className="mb-3">
-                                            <label className="extra-small text-muted fw-bold mb-1 d-block font-label uppercase ls-sm opacity-75">Category Name</label>
-                                            <select
-                                                className="form-select form-select-sm rounded-pill shadow-sm fw-bold text-primary"
+                                            <label className="extra-small text-muted fw-bold mb-1 d-block font-label uppercase ls-sm opacity-75">Card Name / Label</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm rounded-pill shadow-sm fw-bold"
                                                 value={cat.name}
                                                 onChange={(e) => {
                                                     const nci = [...cmsData.categoryItems];
-                                                    const selectedCat = categories.find(c => c.name === e.target.value);
                                                     nci[idx].name = e.target.value;
-                                                    if (selectedCat) {
-                                                        nci[idx].count = `${selectedCat.productCount} Items`;
-                                                        if (!nci[idx].img) nci[idx].img = selectedCat.image;
-                                                    }
                                                     setCmsData({ ...cmsData, categoryItems: nci });
                                                 }}
-                                            >
-                                                <option value="">Select Category</option>
-                                                {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
-                                                {!categories.find(c => c.name === cat.name) && cat.name && <option value={cat.name}>{cat.name} (Custom)</option>}
-                                            </select>
+                                                placeholder="e.g. Premium Dates"
+                                            />
                                         </div>
                                         <div>
-                                            <label className="extra-small text-muted fw-bold mb-1 d-block font-label uppercase ls-sm opacity-75">Item Count Tag</label>
-                                            <input type="text" className="form-control form-control-sm rounded-pill shadow-sm" value={cat.count} readOnly />
+                                            <label className="extra-small text-muted fw-bold mb-1 d-block font-label uppercase ls-sm opacity-75">Target URL</label>
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm rounded-pill shadow-sm"
+                                                value={cat.link || ''}
+                                                onChange={(e) => {
+                                                    const nci = [...cmsData.categoryItems];
+                                                    nci[idx].link = e.target.value;
+                                                    setCmsData({ ...cmsData, categoryItems: nci });
+                                                }}
+                                                placeholder="/categories?selected=..."
+                                            />
                                         </div>
                                     </div>
                                 </div>

@@ -207,7 +207,7 @@ const Home = () => {
 
             <div className="category-minimal-grid">
               {categoryItems.map((cat, i) => (
-                <Link to={`/categories?selected=${cat.name}`} className="category-minimal-item" key={i}>
+                <Link to={cat.link || `/categories?selected=${cat.name}`} className="category-minimal-item" key={i}>
                   <div className="category-minimal-img-wrapper">
                     <img src={cat.img} alt={cat.name} className="category-minimal-img" loading="lazy" />
                   </div>
