@@ -144,6 +144,7 @@
 .logo-text span {
   color: var(--secondary);
   font-weight: 500;
+  font-size: 16px;
 }
 
 /* Trendy Search Container */
