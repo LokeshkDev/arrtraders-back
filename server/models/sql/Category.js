@@ -26,6 +26,10 @@ const Category = sequelize.define('Category', {
     isActive: {
         type: DataTypes.BOOLEAN,
         defaultValue: true
+    },
+    displayOrder: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
     }
 }, {
     timestamps: true

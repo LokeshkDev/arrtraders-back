@@ -34,6 +34,7 @@ import Privacy from './pages/Privacy';
 import Faq from './pages/Faq';
 import OrderSuccess from './pages/OrderSuccess';
 import OrderFailure from './pages/OrderFailure';
+import NotFound from './pages/NotFound';
 
 const ProductRedirect = () => {
   const { id } = useParams();
@@ -63,7 +64,7 @@ const ProductRedirect = () => {
 
 const Layout = ({ children }) => {
   const location = useLocation();
-  const isAdmin = location.pathname.startsWith('/admin');
+  const isAdmin = location.pathname.startsWith('/arrt-panel');
 
   if (isAdmin) {
     return <div className="app-container d-flex flex-column min-vh-100">{children}</div>;
@@ -125,7 +126,7 @@ function App() {
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/categories" element={<Categories />} />
                   <Route path="/category/:id" element={<Categories />} />
-                  <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/arrt-panel" element={<AdminDashboard />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/cart" element={<Cart />} />
@@ -141,6 +142,7 @@ function App() {
                   <Route path="/faq" element={<Faq />} />
                   <Route path="/order-success/:id" element={<OrderSuccess />} />
                   <Route path="/order-failure" element={<OrderFailure />} />
+                  <Route path="*" element={<NotFound />} />
                 </Routes>
               </Layout>
             </Router>

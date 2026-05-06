@@ -78,7 +78,9 @@ export const getProducts = async (req, res) => {
         let products;
         
         if (isAdminRequest) {
-            products = await Product.findAll({});
+            products = await Product.findAll({
+                order: [['displayOrder', 'ASC']]
+            });
         } else {
             // Fetch active categories first to ensure we only show products from active categories
             const activeCategories = await Category.findAll({ where: { isActive: true } });
@@ -88,7 +90,8 @@ export const getProducts = async (req, res) => {
                 where: { 
                     isActive: true,
                     category: activeCategoryNames
-                } 
+                },
+                order: [['displayOrder', 'ASC']]
             });
         }
         
@@ -122,7 +125,7 @@ export const createProduct = async (req, res) => {
         const { 
             name, description, price, originalPrice, category, flashSale, 
             discount, isBestSeller, isTopRated, isFeatured, stock, 
-            color, weight, unit, availableWeights, nutrition, isActive 
+            color, weight, unit, availableWeights, nutrition, isActive, displayOrder 
         } = req.body;
         
         let images = [];
@@ -192,7 +195,8 @@ export const createProduct = async (req, res) => {
             weight: weight ? parseFloat(weight) : 0, 
             unit: unit || 'gram', 
             availableWeights: weightsArr,
-            nutrition: nutritionMap
+            nutrition: nutritionMap,
+            displayOrder: displayOrder ? parseInt(displayOrder) : 0
         });
 
         console.log('[DEBUG] Product created successfully:', product.id);
@@ -232,6 +236,7 @@ export const updateProduct = async (req, res) => {
             product.color = req.body.color || product.color;
             product.weight = req.body.weight || product.weight;
             product.unit = req.body.unit || product.unit;
+            product.displayOrder = req.body.displayOrder !== undefined ? parseInt(req.body.displayOrder) : product.displayOrder;
 
             if (req.body.availableWeights !== undefined) {
                 try {

@@ -4,11 +4,14 @@ import {
     createCoupon,
     updateCoupon,
     deleteCoupon,
-    validateCoupon
+    validateCoupon,
+    getActiveCoupons
 } from '../controllers/couponController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
+
+router.get('/active', getActiveCoupons);
 
 // Admin routes
 router.route('/')

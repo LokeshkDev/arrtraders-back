@@ -266,9 +266,6 @@ const ProductDetails = () => {
                                     className="w-100 h-100 object-fit-contain transition-all hover-zoom-amazon" 
                                     style={zoomStyle}
                                 />
-                                <div className="qv-image-badge position-absolute bottom-0 start-0 m-4 px-3 py-1">
-                                    ARTISANAL GRADE
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -408,72 +405,87 @@ const ProductDetails = () => {
                   </div>
                 </div>
 
-                <div className="pd-info-tabs mt-4 mt-lg-5">
-                   <div className="d-flex border-bottom gap-4 mb-4">
-                      {['description', 'shipping'].map(tab => (
-                         <button 
-                           key={tab}
-                           className={`tab-link py-2 border-0 bg-transparent fw-bold small uppercase tracking-wider position-relative ${activeTab === tab ? 'active' : 'text-muted'}`}
-                           onClick={() => setActiveTab(tab)}
-                         >
-                           {tab}
-                           {activeTab === tab && <div className="tab-indicator"></div>}
-                         </button>
-                      ))}
-                   </div>
-                   <div className="tab-content-area min-h-100">
-                      {activeTab === 'description' && (
-                         <div className="anim-fade-in">
-                            <div 
-                              className="text-muted fs-7 lh-lg product-description-html" 
-                              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description || '') }} 
-                            />
-                            {product.features && (
-                               <ul className="premium-list-app mt-3 list-unstyled">
-                                  {product.features.map((f, i) => (
-                                    <li key={i} className="d-flex align-items-baseline gap-2 mb-2 fs-7 text-primary">
-                                       <div className="dot bg-secondary mt-2"></div> {f}
-                                    </li>
-                                  ))}
-                               </ul>
-                            )}
-                         </div>
-                      )}
+        </div>
+      </div>
+    </div>
 
-                      {activeTab === 'shipping' && (
-                         <div className="anim-fade-in">
-                            {shippingInfo ? (
-                               <>
-                                 <p className="text-muted fs-7 lh-lg mb-4">{shippingInfo.content}</p>
-                                 <div className="row g-2 mb-4">
-                                   <div className="col-6">
-                                     <div className="bg-light p-3 rounded-4 text-center border">
-                                       <Truck size={20} className="text-secondary mb-2" />
-                                       <span className="d-block extra-small text-muted uppercase fw-bold mb-1 font-heading">Delivery Time</span>
-                                       <span className="d-block fs-7 fw-bold text-primary">{shippingInfo.deliveryTime}</span>
-                                     </div>
-                                   </div>
-                                   <div className="col-6">
-                                     <div className="bg-light p-3 rounded-4 text-center border">
-                                       <Package size={20} className="text-secondary mb-2" />
-                                       <span className="d-block extra-small text-muted uppercase fw-bold mb-1 font-heading">Free Shipping</span>
-                                       <span className="d-block fs-7 fw-bold text-primary">Above {shippingInfo.freeShippingMin}</span>
-                                     </div>
-                                   </div>
-                                 </div>
-                                 {shippingInfo.returnPolicy && (
-                                   <div className="luxury-return-box p-3 rounded-4">
-                                     <h6 className="extra-small fw-bold text-secondary uppercase mb-1 font-heading">Return Policy</h6>
-                                     <p className="text-muted fs-7 mb-0">{shippingInfo.returnPolicy}</p>
-                                   </div>
-                                 )}
-                               </>
-                            ) : (
-                               <p className="text-muted fs-7 italic opacity-50">Shipping information will be available soon.</p>
-                            )}
-                         </div>
-                      )}
-                   </div>
+    <div className="row mt-5 px-3 px-lg-0">
+          <div className="col-12">
+            <div className="pd-info-tabs-full bg-white p-4 p-lg-5 rounded-4 shadow-premium-sm">
+                <div className="d-flex border-bottom gap-4 mb-5">
+                    {['description', 'shipping'].map(tab => (
+                        <button 
+                        key={tab}
+                        className={`tab-link py-3 border-0 bg-transparent fw-bold small uppercase tracking-widest position-relative ${activeTab === tab ? 'active' : 'text-muted'}`}
+                        onClick={() => setActiveTab(tab)}
+                        >
+                        {tab}
+                        {activeTab === tab && <div className="tab-indicator"></div>}
+                        </button>
+                    ))}
+                </div>
+                <div className="tab-content-area">
+                    {activeTab === 'description' && (
+                        <div className="anim-fade-in">
+                        <div 
+                            className="text-muted fs-6 lh-lg product-description-html" 
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description || '') }} 
+                        />
+                        {product.features && (
+                            <div className="row mt-4">
+                                {product.features.map((f, i) => (
+                                <div key={i} className="col-md-6 mb-3">
+                                    <div className="d-flex align-items-center gap-3 p-3 bg-light rounded-3 border">
+                                        <BadgeCheck size={20} className="text-secondary" />
+                                        <span className="fs-7 fw-medium text-primary">{f}</span>
+                                    </div>
+                                </div>
+                                ))}
+                            </div>
+                        )}
+                        </div>
+                    )}
+
+                    {activeTab === 'shipping' && (
+                        <div className="anim-fade-in">
+                        {shippingInfo ? (
+                            <>
+                                <p className="text-muted fs-6 lh-lg mb-5" style={{ maxWidth: '800px' }}>{shippingInfo.content}</p>
+                                <div className="row g-4 mb-5">
+                                <div className="col-md-4">
+                                    <div className="bg-light p-4 rounded-4 text-center border h-100">
+                                    <Truck size={32} className="text-secondary mb-3" />
+                                    <span className="d-block extra-small text-muted uppercase fw-bold mb-2 font-heading tracking-widest">Estimated Delivery</span>
+                                    <span className="d-block fs-5 fw-bold text-primary">{shippingInfo.deliveryTime}</span>
+                                    </div>
+                                </div>
+                                <div className="col-md-4">
+                                    <div className="bg-light p-4 rounded-4 text-center border h-100">
+                                    <Package size={32} className="text-secondary mb-3" />
+                                    <span className="d-block extra-small text-muted uppercase fw-bold mb-2 font-heading tracking-widest">Free Shipping Threshold</span>
+                                    <span className="d-block fs-5 fw-bold text-primary">Orders Above {shippingInfo.freeShippingMin}</span>
+                                    </div>
+                                </div>
+                                <div className="col-md-4">
+                                    <div className="bg-light p-4 rounded-4 text-center border h-100">
+                                    <ShieldCheck size={32} className="text-secondary mb-3" />
+                                    <span className="d-block extra-small text-muted uppercase fw-bold mb-2 font-heading tracking-widest">Quality Guaranteed</span>
+                                    <span className="d-block fs-5 fw-bold text-primary">100% Freshness</span>
+                                    </div>
+                                </div>
+                                </div>
+                                {shippingInfo.returnPolicy && (
+                                <div className="luxury-return-box p-4 rounded-4 border-start border-4 border-secondary">
+                                    <h6 className="extra-small fw-bold text-secondary uppercase mb-2 font-heading tracking-widest">Hassle-Free Returns</h6>
+                                    <p className="text-muted fs-6 mb-0">{shippingInfo.returnPolicy}</p>
+                                </div>
+                                )}
+                            </>
+                        ) : (
+                            <p className="text-muted fs-6 italic opacity-50 text-center py-5">Shipping information will be available soon.</p>
+                        )}
+                        </div>
+                    )}
                 </div>
             </div>
           </div>

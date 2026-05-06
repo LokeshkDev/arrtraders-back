@@ -237,6 +237,19 @@
   border: 1px solid rgba(212, 175, 55, 0.2);
 }
 
+.shadow-premium-sm {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+}
+
+.pd-info-tabs-full {
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  transition: var(--transition-premium);
+}
+
+.product-description-html {
+  max-width: 1000px;
+}
+
 .dot {
   width: 5px;
   height: 5px;

@@ -21,6 +21,7 @@ import {
     Edit,
     Trash,
     ChevronDown,
+    ChevronUp,
     Eye,
     Download,
     Lock,
@@ -73,6 +74,7 @@ const AdminDashboard = () => {
     const [confirmModal, setConfirmModal] = useState({ show: false, title: '', message: '', onConfirm: null });
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [showModal, setShowModal] = useState(false);
+    const [trackingInput, setTrackingInput] = useState('');
 
     // User Edit States
     const [editUser, setEditUser] = useState(null);
@@ -147,9 +149,9 @@ const AdminDashboard = () => {
         }
     };
 
-    const updateOrderStatus = async (id, status) => {
+    const updateOrderStatus = async (id, status, trackingNumber = null) => {
         try {
-            await axios.put(`${import.meta.env.VITE_API_URL}/api/orders/${id}/status`, { status });
+            await axios.put(`${import.meta.env.VITE_API_URL}/api/orders/${id}/status`, { status, trackingNumber });
             fetchOrders();
             showToast('Order status updated');
         } catch (error) { showToast('Order status update failed', 'error'); }
@@ -381,7 +383,7 @@ const AdminDashboard = () => {
 
     useEffect(() => {
         if (!userInfo || !userInfo.isAdmin) {
-            window.location.href = '/login?redirect=/admin';
+            window.location.href = '/login?redirect=/arrt-panel';
             return;
         }
 
@@ -672,6 +674,39 @@ const AdminDashboard = () => {
                             </div>
                         </div>
 
+                        {selectedOrder.trackingNumber && (
+                            <div className="customer-sheet-card mt-3 bg-light border-0 shadow-none" style={{ background: '#f8f9fa' }}>
+                                <div className="d-flex justify-content-between align-items-center mb-2">
+                                    <span className="label-top opacity-50" style={{ fontSize: '10px' }}>ST COURIER LOGISTICS</span>
+                                    <button 
+                                        className="btn btn-link p-0 extra-small fw-bold text-primary text-decoration-none" 
+                                        style={{ fontSize: '10px' }}
+                                        onClick={() => setTrackingInput(selectedOrder.trackingNumber)}
+                                    >
+                                        EDIT NUMBER
+                                    </button>
+                                </div>
+                                <div className="d-flex align-items-center gap-3">
+                                    <div className="nav-icon-box bg-white shadow-sm" style={{ width: '32px', height: '32px', minWidth: '32px' }}>
+                                        <Truck size={16} className="text-secondary" />
+                                    </div>
+                                    <div>
+                                        <div className="font-headline small fw-bold text-primary">{selectedOrder.trackingNumber}</div>
+                                        <div className="extra-small text-muted fw-bold">LIVE TRACKING ACTIVE</div>
+                                    </div>
+                                    <button 
+                                        className="btn btn-sm btn-light rounded-pill ms-auto px-3 extra-small fw-bold border shadow-sm"
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(selectedOrder.trackingNumber);
+                                            showToast('AWB copied to clipboard');
+                                        }}
+                                    >
+                                        COPY ID
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="items-section-sheet">
                             <h3 className="section-title">ORDER ITEMS ({selectedOrder.orderItems.length})</h3>
                             <div className="items-list-sheet">
@@ -698,12 +733,69 @@ const AdminDashboard = () => {
                                 <button className="btn-sheet-primary flex-grow-1 d-flex align-items-center justify-content-center" onClick={() => generateReceipt(selectedOrder, true)}>
                                     <Printer size={18} className="me-2" /> PRINT RECEIPT
                                 </button>
+                                {selectedOrder.status === 'Shipped' && (
+                                    <div className="d-flex flex-column w-100 gap-2">
+                                        <div className="sheet-field-group mb-0">
+                                            <input 
+                                                type="text" 
+                                                className="tracking-input-field" 
+                                                placeholder="Update AWB Number..." 
+                                                value={trackingInput}
+                                                onChange={(e) => setTrackingInput(e.target.value)}
+                                                autoFocus
+                                            />
+                                        </div>
+                                        <button 
+                                            className="btn-sheet-secondary flex-grow-1 d-flex align-items-center justify-content-center" 
+                                            style={{ background: '#e3f2fd', color: '#1976d2' }} 
+                                            onClick={() => { 
+                                                if (!trackingInput) {
+                                                    alert('Please enter a tracking number');
+                                                    return;
+                                                }
+                                                updateOrderStatus(selectedOrder._id, 'Shipped', trackingInput); 
+                                                setTrackingInput('');
+                                                // We don't close modal here so user sees it's updated (optionally)
+                                                // but the fetchOrders in updateOrderStatus will refresh the data
+                                                // Actually, better to just update the local selectedOrder or close it
+                                                setShowModal(false);
+                                            }}
+                                        >
+                                            <Package size={18} className="me-2" /> UPDATE SHIPMENT
+                                        </button>
+                                    </div>
+                                )}
                                 {selectedOrder.status === 'Processing' && (
-                                    <button className="btn-sheet-secondary flex-grow-1 d-flex align-items-center justify-content-center" style={{ background: '#e8f5e9', color: '#2e7d32' }} onClick={() => { updateOrderStatus(selectedOrder._id, 'Shipped'); setShowModal(false); }}>
-                                        <Truck size={18} className="me-2" /> MARK SHIPPED
-                                    </button>
+                                    <div className="d-flex flex-column w-100 gap-2">
+                                        <div className="sheet-field-group mb-0">
+                                            <input 
+                                                type="text" 
+                                                className="tracking-input-field" 
+                                                placeholder="Enter ST Courier AWB No..." 
+                                                value={trackingInput}
+                                                onChange={(e) => setTrackingInput(e.target.value)}
+                                                autoFocus
+                                            />
+                                        </div>
+                                        <button 
+                                            className="btn-sheet-secondary flex-grow-1 d-flex align-items-center justify-content-center" 
+                                            style={{ background: '#e8f5e9', color: '#2e7d32' }} 
+                                            onClick={() => { 
+                                                if (!trackingInput) {
+                                                    alert('Please enter a tracking number first');
+                                                    return;
+                                                }
+                                                updateOrderStatus(selectedOrder._id, 'Shipped', trackingInput); 
+                                                setShowModal(false); 
+                                                setTrackingInput('');
+                                            }}
+                                        >
+                                            <Truck size={18} className="me-2" /> MARK SHIPPED
+                                        </button>
+                                    </div>
                                 )}
                             </div>
+                            <div className="admin-sheet-keyboard-spacer" style={{ height: '250px', display: 'none' }}></div>
                             <div className="d-flex gap-2 w-100">
                                 <button className="btn-sheet-secondary flex-grow-1 d-flex align-items-center justify-content-center" onClick={() => generateReceipt(selectedOrder)}>
                                     <Download size={16} className="me-2" /> RECEIPT (SHOP)
@@ -835,6 +927,17 @@ const AdminDashboard = () => {
 
                         <form onSubmit={async (e) => {
                             e.preventDefault();
+                            
+                            // Manual validation
+                            if (!couponForm.code) {
+                                showToast('Coupon code is required', 'warning');
+                                return;
+                            }
+                            if (!couponForm.freeShipping && !couponForm.discountValue && couponForm.discountType !== 'shipping') {
+                                showToast('Please enter a reward value or enable complimentary shipping', 'warning');
+                                return;
+                            }
+
                             setIsSavingCoupon(true);
                             try {
                                 const payload = {
@@ -884,23 +987,23 @@ const AdminDashboard = () => {
                                             <label>Reward Type</label>
                                             <select
                                                 value={couponForm.discountType}
-                                                onChange={e => setCouponForm({ ...couponForm, discountType: e.target.value })}
+                                                onChange={e => setCouponForm({ ...couponForm, discountType: e.target.value, freeShipping: e.target.value === 'shipping' ? true : couponForm.freeShipping })}
                                             >
                                                 <option value="percentage">Percentage (%)</option>
                                                 <option value="fixed">Fixed Amount (₹)</option>
+                                                <option value="shipping">Shipping Discount (₹)</option>
                                             </select>
                                         </div>
                                     </div>
 
                                     <div className="col-md-6">
                                         <div className="sheet-field-group">
-                                            <label>Reward Value</label>
+                                            <label>{couponForm.discountType === 'shipping' ? 'Shipping Discount (₹)' : 'Reward Value'}</label>
                                             <input
                                                 type="number"
-                                                required
                                                 value={couponForm.discountValue}
                                                 onChange={e => setCouponForm({ ...couponForm, discountValue: e.target.value })}
-                                                placeholder="e.g. 10"
+                                                placeholder={couponForm.discountType === 'percentage' ? 'e.g. 10' : 'e.g. 100'}
                                             />
                                         </div>
                                     </div>
@@ -1041,7 +1144,11 @@ const AdminDashboard = () => {
 /* --- SUB-COMPONENTS --- */
 
 const OverviewTab = ({ setActiveTab, orders = [] }) => {
-    const [stats, setStats] = useState({ users: 0, orders: 0, revenue: 0, lowStock: 0 });
+    const [stats, setStats] = useState({ 
+        users: 0, orders: 0, revenue: 0, lowStock: 0,
+        salesChart: [], topProducts: []
+    });
+    const [chartFilter, setChartFilter] = useState('MONTHLY');
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -1056,7 +1163,9 @@ const OverviewTab = ({ setActiveTab, orders = [] }) => {
                     users: userRes.data.totalUsers,
                     orders: orderRes.data.totalOrders,
                     revenue: orderRes.data.totalRevenue,
-                    lowStock: lowStockCount
+                    lowStock: lowStockCount,
+                    salesChart: orderRes.data.salesChart || [],
+                    topProducts: orderRes.data.topProducts || []
                 });
             } catch (error) {
                 console.error('Stats fetch error:', error);
@@ -1080,12 +1189,18 @@ const OverviewTab = ({ setActiveTab, orders = [] }) => {
         { label: 'Stock Alerts', value: stats.lowStock, icon: AlertTriangle, color: '#F95F09', bg: '#fff5f0' }
     ];
 
-    const trendingProducts = [
+    const trendingProducts = stats.topProducts.length > 0 ? stats.topProducts : [
         { name: 'Al-Madina Ajwa', category: 'Premium Dates', sold: '248 Sold', price: '₹1,250', img: '/Reference/images/product-thumb-1.png', tag: 'BEST SELLER' },
         { name: 'Medjool Jumbo', category: 'Specialty Dates', sold: '192 Sold', price: '₹1,800', img: '/Reference/images/product-thumb-3.png', tag: 'TRENDING' },
         { name: 'Sukkari Gold', category: 'Organic Dates', sold: '156 Sold', price: '₹950', img: '/Reference/images/product-thumb-10.png', tag: 'NEW' },
         { name: 'Premium Walnuts', category: 'Dry Fruits', sold: '112 Sold', price: '₹750', img: '/Reference/images/product-thumb-14.png', tag: 'POPULAR' }
     ];
+
+    const chartData = chartFilter === 'MONTHLY' 
+        ? stats.salesChart 
+        : stats.salesChart.slice(-4); // Last 4 items as "Weekly" approximation if we don't have true weekly
+
+    const maxVal = Math.max(...chartData.map(d => d.total), 1);
 
     return (
         <div className="container-fluid p-0 animate-fade-in">
@@ -1133,19 +1248,37 @@ const OverviewTab = ({ setActiveTab, orders = [] }) => {
                                 <p className="text-muted extra-small fw-bold mb-0 uppercase opacity-75">ORDER VOLUME OVER 12 MONTHS</p>
                             </div>
                             <div className="d-flex gap-2 bg-light p-1 rounded-pill border">
-                                <button className="btn btn-sm text-muted rounded-pill px-3 extra-small fw-bold border-0 font-label">WEEKLY</button>
-                                <button className="btn btn-sm btn-primary rounded-pill px-3 extra-small fw-bold shadow-sm border-0 font-label">MONTHLY</button>
+                                <button 
+                                    className={`btn btn-sm rounded-pill px-3 extra-small fw-bold border-0 font-label ${chartFilter === 'WEEKLY' ? 'btn-primary shadow-sm text-white' : 'text-muted'}`}
+                                    onClick={() => setChartFilter('WEEKLY')}
+                                >
+                                    WEEKLY
+                                </button>
+                                <button 
+                                    className={`btn btn-sm rounded-pill px-3 extra-small fw-bold border-0 font-label ${chartFilter === 'MONTHLY' ? 'btn-primary shadow-sm text-white' : 'text-muted'}`}
+                                    onClick={() => setChartFilter('MONTHLY')}
+                                >
+                                    MONTHLY
+                                </button>
                             </div>
                         </div>
-                        <div className="d-flex align-items-end gap-3 p-3 sales-chart-container" style={{ height: '320px' }}>
-                            {[40, 55, 45, 70, 85, 65, 95, 60, 75, 50, 80, 90].map((h, i) => (
-                                <div key={i} className={`flex-grow-1 rounded-top sales-bar ${i === 6 ? 'highlight' : ''}`} style={{ height: `${h}%`, transition: 'height 1s cubic-bezier(0.16, 1, 0.3, 1)' }}>
+                        <div className="d-flex align-items-end gap-2 p-3 sales-chart-container" style={{ height: '320px' }}>
+                            {chartData.map((d, i) => (
+                                <div 
+                                    key={i} 
+                                    className={`flex-grow-1 rounded-top sales-bar ${i === chartData.length - 1 ? 'highlight' : ''}`} 
+                                    style={{ 
+                                        height: `${(d.total / maxVal) * 100}%`, 
+                                        transition: 'height 1s cubic-bezier(0.16, 1, 0.3, 1)' 
+                                    }}
+                                    title={`₹${d.total.toLocaleString()}`}
+                                >
+                                    <div className="bar-value">₹{Math.round(d.total/1000)}k</div>
                                 </div>
                             ))}
                         </div>
                         <div className="d-flex justify-content-between extra-small text-muted fw-bold mt-3 px-2 font-label" style={{ letterSpacing: '1px' }}>
-                            <span>JAN</span><span>FEB</span><span>MAR</span><span>APR</span><span>MAY</span><span>JUN</span>
-                            <span>JUL</span><span>AUG</span><span>SEP</span><span>OCT</span><span>NOV</span><span>DEC</span>
+                            {chartData.map((d, i) => <span key={i}>{d.label}</span>)}
                         </div>
                     </div>
                 </div>
@@ -1197,7 +1330,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
         name: '', description: '', category: '', price: '', originalPrice: '',
         flashSale: false, discount: '', stock: '', isBestSeller: false,
         isTopRated: false, isFeatured: false, color: '', weight: '',
-        unit: 'gram', availableWeights: [], nutrition: {}, isActive: true
+        unit: 'gram', availableWeights: [], nutrition: {}, isActive: true, displayOrder: 0
     });
     const [customVar, setCustomVar] = useState('');
     const [varPrice, setVarPrice] = useState('');
@@ -1209,7 +1342,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
     const [formErrors, setFormErrors] = useState({});
     const [inventoryStats, setInventoryStats] = useState({ total: 0, lowStock: 0, outOfStock: 0, bestSellers: 0 });
 
-    const [catForm, setCatForm] = useState({ name: '', description: '', image: '', parent: '', isActive: true });
+    const [catForm, setCatForm] = useState({ name: '', description: '', image: '', parent: '', isActive: true, displayOrder: 0 });
     const [editCatId, setEditCatId] = useState(null);
 
     const firstInputRef = useRef(null);
@@ -1224,6 +1357,23 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
             setProducts(prodRes.data);
             setCategories(catRes.data);
         } catch (error) { console.error(error); } finally { setLoading(false); }
+    };
+
+    const handleUpdateDisplayOrder = async (type, id, currentOrder, direction) => {
+        const newOrder = direction === 'up' ? Math.max(0, (currentOrder || 0) - 1) : (currentOrder || 0) + 1;
+        try {
+            const url = type === 'category' 
+                ? `${import.meta.env.VITE_API_URL}/api/cms/categories/${id}`
+                : `${import.meta.env.VITE_API_URL}/api/products/${id}`;
+            
+            const formData = new FormData();
+            formData.append('displayOrder', newOrder);
+            
+            await axios.put(url, formData);
+            fetchData();
+        } catch (err) {
+            showToast('Order update failed', 'error');
+        }
     };
 
     useEffect(() => { fetchData(); }, []);
@@ -1299,7 +1449,8 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
             name: cat.name,
             description: cat.description || '',
             parent: cat.parent || '',
-            isActive: cat.isActive !== false
+            isActive: cat.isActive !== false,
+            displayOrder: cat.displayOrder || 0
         });
         setEditCatId(cat._id);
         setView('editCategory');
@@ -1315,6 +1466,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
             formData.append('description', catForm.description);
             formData.append('parent', catForm.parent);
             formData.append('isActive', catForm.isActive);
+            formData.append('displayOrder', catForm.displayOrder);
             if (catFile) formData.append('image', catFile);
             await axios.post(`${import.meta.env.VITE_API_URL}/api/cms/categories`, formData);
             showToast('Category created successfully!');
@@ -1333,6 +1485,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
             formData.append('description', catForm.description);
             formData.append('parent', catForm.parent);
             formData.append('isActive', catForm.isActive);
+            formData.append('displayOrder', catForm.displayOrder);
             if (catFile) formData.append('image', catFile);
             await axios.put(`${import.meta.env.VITE_API_URL}/api/cms/categories/${editCatId}`, formData);
             showToast('Category updated!');
@@ -1483,8 +1636,8 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                 </div>
                 <div className="d-flex gap-2">
                     <button onClick={() => setShowBulkImport(!showBulkImport)} className="btn btn-white border rounded-pill px-4 fw-bold extra-small">Bulk Import</button>
-                    <button onClick={() => { setCatForm({ name: '', description: '', image: '', parent: '', isActive: true }); setView('addCategory'); }} className="btn btn-white border rounded-pill px-4 fw-bold extra-small">Add Category</button>
-                    <button onClick={() => { setProdForm({ name: '', description: '', category: '', price: '', originalPrice: '', flashSale: false, discount: '', stock: '', isBestSeller: false, isTopRated: false, isFeatured: false, color: '', weight: '', unit: 'gram', availableWeights: [], nutrition: {}, isActive: true, images: [] }); setEditId(null); setFormErrors({}); setView('addProduct'); }} className="btn btn-primary rounded-pill px-4 fw-bold extra-small shadow-md">Add New Product</button>
+                    <button onClick={() => { setCatForm({ name: '', description: '', image: '', parent: '', isActive: true, displayOrder: 0 }); setView('addCategory'); }} className="btn btn-white border rounded-pill px-4 fw-bold extra-small">Add Category</button>
+                    <button onClick={() => { setProdForm({ name: '', description: '', category: '', price: '', originalPrice: '', flashSale: false, discount: '', stock: '', isBestSeller: false, isTopRated: false, isFeatured: false, color: '', weight: '', unit: 'gram', availableWeights: [], nutrition: {}, isActive: true, displayOrder: 0, images: [] }); setEditId(null); setFormErrors({}); setView('addProduct'); }} className="btn btn-primary rounded-pill px-4 fw-bold extra-small shadow-md">Add New Product</button>
                 </div>
             </div>
 
@@ -1722,6 +1875,12 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                 </div>
                             </div>
 
+                            <div className="col-md-6">
+                                <label className="form-label fw-bold small text-muted">Display Order (Lower values first)</label>
+                                <input type="number" className="form-control rounded-4 py-3" placeholder="0" value={prodForm.displayOrder} onChange={e => setProdForm({ ...prodForm, displayOrder: e.target.value })} />
+                                <div className="extra-small text-muted mt-1">Numerical position for manual storefront sorting</div>
+                            </div>
+
                             {/* Images */}
                             <div className="col-12">
                                 <div className="d-flex justify-content-between align-items-center mb-2">
@@ -1831,6 +1990,10 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                     <input className="form-check-input" type="checkbox" checked={catForm.isActive} onChange={e => setCatForm({ ...catForm, isActive: e.target.checked })} />
                                     <label className="form-check-label small fw-bold">Active & Visible</label>
                                 </div>
+                            </div>
+                            <div className="col-md-6">
+                                <label className="form-label fw-bold small text-muted">Display Order (Lower values first)</label>
+                                <input type="number" className="form-control rounded-4 py-3" placeholder="0" value={catForm.displayOrder} onChange={e => setCatForm({ ...catForm, displayOrder: e.target.value })} />
                             </div>
                         </div>
                         <div className="d-flex gap-3 justify-content-end mt-5 pt-4 border-top">
@@ -1986,6 +2149,13 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                                                     <Layers size={12} /> {subCats.length} SUB-GROUPS
                                                                 </span>
                                                             )}
+                                                             <span className={`badge fw-bold extra-small border d-flex align-items-center gap-2 font-label transition-all px-3 py-2 rounded-pill ${isOpen ? 'bg-white bg-opacity-10 text-white border-white border-opacity-20' : 'bg-info bg-opacity-10 text-info border-info border-opacity-10'}`}>
+                                                                 ORDER: {cat.displayOrder || 0}
+                                                                 <div className="d-flex flex-column ms-2">
+                                                                     <ChevronUp size={10} className="cursor-pointer hover-scale" onClick={(e) => { e.stopPropagation(); handleUpdateDisplayOrder('category', cat._id, cat.displayOrder, 'up'); }} />
+                                                                     <ChevronDown size={10} className="cursor-pointer hover-scale" onClick={(e) => { e.stopPropagation(); handleUpdateDisplayOrder('category', cat._id, cat.displayOrder, 'down'); }} />
+                                                                 </div>
+                                                             </span>
                                                         </div>
                                                     </div>
                                                     <ChevronDown size={24} className={`transition-all me-2 ${isOpen ? 'rotate-180 text-white' : 'text-muted opacity-50'}`} />
@@ -2049,13 +2219,14 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                                                     <th className="ps-4 py-3">Digital Asset / Name</th>
                                                                     <th>Price / Val</th>
                                                                     <th>Warehouse Inventory</th>
+                                                                    <th className="text-center">Order</th>
                                                                     <th className="text-center">Status</th>
                                                                     <th className="text-center">Control</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
                                                                 {catProducts.length === 0 ? (
-                                                                    <tr><td colSpan="5" className="text-center py-5 text-muted small italic opacity-50">No matching assets in this catalog department.</td></tr>
+                                                                    <tr><td colSpan="6" className="text-center py-5 text-muted small italic opacity-50">No matching assets in this catalog department.</td></tr>
                                                                 ) : catProducts.map(prod => (
                                                                     <tr key={prod._id} className="transition-all hover-scale-xs">
                                                                         <td className="ps-4 py-4" data-label="Product">
@@ -2111,6 +2282,17 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                                                                 </div>
                                                                             </div>
                                                                         </td>
+                                                                        <td className="text-center" data-label="Order">
+                                                                            <div className="d-flex align-items-center justify-content-center gap-2">
+                                                                                <button className="btn btn-sm p-0 text-muted hover-text-primary" onClick={() => handleUpdateDisplayOrder('product', prod._id, prod.displayOrder, 'up')}>
+                                                                                    <ChevronUp size={14} />
+                                                                                </button>
+                                                                                <span className="badge bg-light text-primary border fw-bold">{prod.displayOrder || 0}</span>
+                                                                                <button className="btn btn-sm p-0 text-muted hover-text-primary" onClick={() => handleUpdateDisplayOrder('product', prod._id, prod.displayOrder, 'down')}>
+                                                                                    <ChevronDown size={14} />
+                                                                                </button>
+                                                                            </div>
+                                                                        </td>
                                                                         <td className="text-center" data-label="Status">
                                                                             <div className="d-flex flex-column align-items-center gap-2">
                                                                                 <div className="form-check form-switch p-0 m-0" title="Toggle Product Visibility">
@@ -2144,7 +2326,8 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                                                                         ...prod,
                                                                                         availableWeights: Array.isArray(prod.availableWeights) ? prod.availableWeights : (prod.availableWeights ? prod.availableWeights.split(',').map(w => w.trim()) : []),
                                                                                         nutrition: nutritionObj,
-                                                                                        isActive: prod.isActive !== undefined ? prod.isActive : true
+                                                                                        isActive: prod.isActive !== undefined ? prod.isActive : true,
+                                                                                        displayOrder: prod.displayOrder || 0
                                                                                     });
                                                                                     setEditId(prod._id);
                                                                                     setView('editProduct');
@@ -2313,7 +2496,17 @@ const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled, sh
                                         <select
                                             className="admin-status-select"
                                             value={order.status || 'Processing'}
-                                            onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                                            onChange={(e) => {
+                                                const newStatus = e.target.value;
+                                                if (newStatus === 'Shipped' && !order.trackingNumber) {
+                                                    // Instead of prompt, open the modal to let them enter tracking
+                                                    setSelectedOrder(order);
+                                                    setShowModal(true);
+                                                    setTrackingInput('');
+                                                } else {
+                                                    updateOrderStatus(order._id, newStatus, order.trackingNumber);
+                                                }
+                                            }}
                                         >
                                             <option value="Processing">Processing</option>
                                             <option value="Shipped">Shipped</option>
@@ -2390,7 +2583,20 @@ const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled, sh
                             <div><span>Payment</span><strong>{order.paymentMethod === 'COD' ? 'COD' : (order.paymentMethod || 'ONLINE')}</strong></div>
                             <div><span>City</span><strong>{order.shippingAddress?.city || 'N/A'}</strong></div>
                         </div>
-                        <select className="admin-status-select w-100 mt-3" value={order.status || 'Processing'} onChange={(e) => updateOrderStatus(order._id, e.target.value)}>
+                        <select 
+                            className="admin-status-select w-100 mt-3" 
+                            value={order.status || 'Processing'} 
+                            onChange={(e) => {
+                                const newStatus = e.target.value;
+                                if (newStatus === 'Shipped' && !order.trackingNumber) {
+                                    setSelectedOrder(order);
+                                    setShowModal(true);
+                                    setTrackingInput('');
+                                } else {
+                                    updateOrderStatus(order._id, newStatus, order.trackingNumber);
+                                }
+                            }}
+                        >
                             <option value="Processing">Processing</option>
                             <option value="Shipped">Shipped</option>
                             <option value="Delivered">Delivered</option>
@@ -2809,7 +3015,12 @@ const CouponsTab = ({
                                             <span className="font-headline fw-bold text-secondary bg-primary bg-opacity-10 px-3 py-1 rounded-pill" style={{ fontSize: '14px', letterSpacing: '1px' }}>{coupon.code}</span>
                                         </td>
                                         <td data-label="Type"><span className="badge bg-light text-secondary border px-3 py-2 rounded-pill extra-small fw-bold font-label uppercase">{coupon.discountType}</span></td>
-                                        <td className="fw-bold text-secondary font-headline" data-label="Value">{coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`}{coupon.maxDiscount ? <span className="d-block extra-small text-muted fw-bold">Max ₹{coupon.maxDiscount}</span> : null}</td>
+                                        <td className="fw-bold text-secondary font-headline" data-label="Value">
+                                            {coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : 
+                                             coupon.discountType === 'fixed' ? `₹${coupon.discountValue}` : 
+                                             `₹${coupon.discountValue} Off Shipping`}
+                                            {coupon.maxDiscount ? <span className="d-block extra-small text-muted fw-bold">Max ₹{coupon.maxDiscount}</span> : null}
+                                        </td>
                                         <td className="fw-bold font-body" data-label="Min Order">{coupon.minOrderAmount ? `₹${coupon.minOrderAmount}` : '—'}</td>
                                         <td data-label="Usage"><span className="font-headline fw-bold">{coupon.usedCount}</span><span className="text-muted">/{coupon.usageLimit || '∞'}</span></td>
                                         <td data-label="Expires">{coupon.expiresAt ? <span className={`extra-small fw-bold ${isExpired ? 'text-danger' : 'text-primary'}`}>{new Date(coupon.expiresAt).toLocaleDateString()}{isExpired && <span className="d-block text-danger">EXPIRED</span>}</span> : <span className="text-muted extra-small fw-bold">Never</span>}</td>
@@ -2851,13 +3062,14 @@ const CouponsTab = ({
                                 </div>
                                 <div className="col-md-6">
                                     <label className="extra-small text-muted fw-bold mb-2 uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Discount Type</label>
-                                    <select className="form-select rounded-4 py-3 border-opacity-25 shadow-sm fw-bold" value={couponForm.discountType} onChange={e => setCouponForm({ ...couponForm, discountType: e.target.value })}>
+                                    <select className="form-select rounded-4 py-3 border-opacity-25 shadow-sm fw-bold" value={couponForm.discountType} onChange={e => setCouponForm({ ...couponForm, discountType: e.target.value, freeShipping: e.target.value === 'shipping' ? true : couponForm.freeShipping })}>
                                         <option value="percentage">Percentage (%)</option>
                                         <option value="fixed">Fixed Amount (₹)</option>
+                                        <option value="shipping">Shipping Discount (₹)</option>
                                     </select>
                                 </div>
                                 <div className="col-md-6">
-                                    <label className="extra-small text-muted fw-bold mb-2 uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>Discount Value</label>
+                                    <label className="extra-small text-muted fw-bold mb-2 uppercase opacity-75 font-label" style={{ letterSpacing: '1px' }}>{couponForm.discountType === 'shipping' ? 'Shipping Discount (₹)' : 'Discount Value'}</label>
                                     <input type="number" className="form-control rounded-4 py-3 border-opacity-25 shadow-sm fw-bold" required={!couponForm.freeShipping} placeholder={couponForm.discountType === 'percentage' ? 'e.g. 20' : 'e.g. 100'} value={couponForm.discountValue} onChange={e => setCouponForm({ ...couponForm, discountValue: e.target.value })} />
                                 </div>
                                 <div className="col-md-6">
@@ -2883,7 +3095,7 @@ const CouponsTab = ({
                                     <div className="p-3 bg-light bg-opacity-40 rounded-4 border border-opacity-10 mt-1">
                                         <div className="form-check form-switch d-flex align-items-center gap-4">
                                             <input className="form-check-input border-primary shadow-none" style={{ transform: 'scale(1.3)' }} type="checkbox" checked={couponForm.freeShipping} onChange={e => setCouponForm({ ...couponForm, freeShipping: e.target.checked })} />
-                                            <label className="form-check-label font-body fw-bold text-primary mb-0 small">Make delivery free with this coupon</label>
+                                            <label className="form-check-label font-body fw-bold text-primary mb-0 small">Include Complimentary Shipping (100% Free)</label>
                                         </div>
                                     </div>
                                 </div>

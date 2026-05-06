@@ -41,6 +41,8 @@ const Profile = () => {
     const [addressForm, setAddressForm] = useState({ _id: '', label: 'Home', name: '', phone: '', line1: '', line2: '', city: '', state: '', pincode: '', isDefault: false });
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [showOrderModal, setShowOrderModal] = useState(false);
+    const [showTrackingModal, setShowTrackingModal] = useState(false);
+    const [trackingUrl, setTrackingUrl] = useState('');
 
     useEffect(() => {
         const queryParams = new URLSearchParams(window.location.search);
@@ -239,10 +241,23 @@ const Profile = () => {
                                                             {order.status || 'Received'}
                                                         </span>
                                                     </div>
-                                                    <div className="col-md-2 text-md-end mt-2 mt-md-0">
-                                                        <button className="btn btn-primary btn-sm rounded-pill w-100 w-md-auto py-2 px-4 font-label fw-bold extra-small text-decoration-none d-flex align-items-center justify-content-center gap-1 shadow-sm" onClick={() => { setSelectedOrder(order); setShowOrderModal(true); }}>
+                                                    <div className="col-md-2 text-md-end mt-2 mt-md-0 d-flex flex-column gap-2">
+                                                        <button className="btn btn-primary btn-sm rounded-pill w-100 py-2 px-4 font-label fw-bold extra-small text-decoration-none d-flex align-items-center justify-content-center gap-1 shadow-sm" onClick={() => { setSelectedOrder(order); setShowOrderModal(true); }}>
                                                             View Order <ArrowRight size={14} />
                                                         </button>
+                                                        {order.status === 'Shipped' && order.trackingNumber && (
+                                                            <button 
+                                                                className="btn btn-secondary btn-sm rounded-pill w-100 py-2 px-4 font-label fw-bold extra-small text-decoration-none d-flex align-items-center justify-content-center gap-1 shadow-sm" 
+                                                                style={{ backgroundColor: '#ff9800', border: 'none', color: 'white' }}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setTrackingUrl(`https://stcourier.com/track/shipment?awb=${order.trackingNumber}`);
+                                                                    setShowTrackingModal(true);
+                                                                }}
+                                                            >
+                                                                <Truck size={14} /> Track Shipment
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
 
@@ -529,13 +544,74 @@ const Profile = () => {
                                 </div>
                             </div>
 
-                            <div className="frontend-sheet-footer d-flex gap-3 mt-4">
+                            <div className="frontend-sheet-footer d-flex flex-column flex-md-row gap-3 mt-4">
+                                {selectedOrder.status === 'Shipped' && selectedOrder.trackingNumber && (
+                                    <button 
+                                        className="btn btn-secondary rounded-pill flex-grow-1 py-3 fw-bold font-label tracking-widest shadow-sm border-0 d-flex align-items-center justify-content-center gap-2" 
+                                        style={{ backgroundColor: '#ff9800', color: 'white' }}
+                                        onClick={() => {
+                                            setTrackingUrl(`https://stcourier.com/track/shipment?awb=${selectedOrder.trackingNumber}`);
+                                            setShowTrackingModal(true);
+                                        }}
+                                    >
+                                        <Truck size={18} /> TRACK SHIPMENT
+                                    </button>
+                                )}
                                 <button className="btn btn-primary rounded-pill flex-grow-1 py-3 fw-bold font-label tracking-widest shadow-sm border-0 d-flex align-items-center justify-content-center gap-2" onClick={() => window.print()}>
                                     <Download size={18} /> DOWNLOAD INVOICE
                                 </button>
                                 <button className="btn btn-light border rounded-pill px-4 py-3 fw-bold font-label small" onClick={() => setShowOrderModal(false)}>
                                     CLOSE
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Tracking Modal */}
+                {showTrackingModal && (
+                    <div className="art-modal-overlay d-flex align-items-center justify-content-center" style={{ zIndex: 11000 }}>
+                        <div className="art-modal-content bg-white p-0 rounded-5 shadow-premium animated zoomIn position-relative overflow-hidden" style={{ maxWidth: '900px', width: '95%', height: '85vh' }}>
+                            <div className="p-4 border-bottom d-flex justify-content-between align-items-center bg-light">
+                                <div>
+                                    <span className="font-label text-secondary small uppercase tracking-widest fw-bold mb-1 d-block">ST COURIER LOGISTICS</span>
+                                    <h3 className="font-headline text-primary m-0">Live Shipment Tracking</h3>
+                                </div>
+                                <div className="d-flex align-items-center gap-3">
+                                    <div className="text-end">
+                                        <button 
+                                            className="btn btn-outline-primary btn-sm rounded-pill px-3 py-1 font-label fw-bold extra-small"
+                                            onClick={() => {
+                                                const awb = trackingUrl.split('awb=')[1] || trackingUrl.split('awb_no=')[1];
+                                                if (awb) {
+                                                    navigator.clipboard.writeText(awb);
+                                                    alert('Tracking ID Copied!');
+                                                }
+                                            }}
+                                        >
+                                            COPY ID
+                                        </button>
+                                    </div>
+                                    <button className="btn-close-sheet" onClick={() => setShowTrackingModal(false)}>
+                                        <X size={24} />
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="tracking-iframe-container" style={{ height: 'calc(85vh - 90px)', width: '100%', position: 'relative' }}>
+                                <div className="p-2 bg-warning bg-opacity-10 text-center border-bottom">
+                                    <span className="extra-small fw-bold text-dark">If the page doesn't load tracking details automatically, please paste your ID in the search box.</span>
+                                </div>
+                                <iframe 
+                                    src={trackingUrl} 
+                                    title="ST Courier Tracking" 
+                                    style={{ width: '100%', height: '100%', border: 'none' }}
+                                    allowFullScreen
+                                ></iframe>
+                                <div className="p-3 text-center bg-light border-top position-absolute bottom-0 w-100">
+                                    <p className="extra-small text-muted m-0">
+                                        Tracking not loading? <a href={trackingUrl} target="_blank" rel="noopener noreferrer" className="text-primary fw-bold">Click here to open in new tab</a>
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -87,6 +87,10 @@ const Order = sequelize.define('Order', {
     paymentDetails: {
         type: DataTypes.JSON,
         allowNull: true
+    },
+    trackingNumber: {
+        type: DataTypes.STRING(100),
+        allowNull: true
     }
 }, {
     timestamps: true

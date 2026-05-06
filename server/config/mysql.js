@@ -28,8 +28,8 @@ export const connectMySQL = async () => {
     await sequelize.authenticate();
     console.log(`MySQL Connected Successfully to database: ${sequelize.config.database}`);
     
-    // await sequelize.sync({ alter: false });
-    // console.log('Database schema synchronized');
+    await sequelize.sync({ alter: false });
+    console.log('Database schema synchronized');
   } catch (error) {
     console.error('Unable to connect to MySQL:', error);
     process.exit(1);

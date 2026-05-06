@@ -32,6 +32,28 @@ const ensureCouponSchema = async () => {
     }
 };
 
+// @desc    Get all active coupons (public)
+// @route   GET /api/coupons/active
+export const getActiveCoupons = async (req, res) => {
+    try {
+        await ensureCouponSchema();
+        const now = new Date();
+        const coupons = await Coupon.findAll({ 
+            where: { 
+                isActive: true,
+                [Op.or]: [
+                    { expiresAt: null },
+                    { expiresAt: { [Op.gt]: now } }
+                ]
+            },
+            order: [['createdAt', 'DESC']]
+        });
+        res.json(formatResponse(coupons));
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 // @desc    Get all coupons (admin)
 // @route   GET /api/coupons
 export const getCoupons = async (req, res) => {
@@ -51,8 +73,8 @@ export const createCoupon = async (req, res) => {
         await ensureCouponSchema();
         const { code, discountType, discountValue, minOrderAmount, maxDiscount, usageLimit, expiresAt, isActive, freeShipping } = req.body;
 
-        if (!code || (!freeShipping && !discountValue)) {
-            return res.status(400).json({ message: 'Code and discount value are required unless free shipping is enabled' });
+        if (!code || (!freeShipping && discountType !== 'shipping' && !discountValue)) {
+            return res.status(400).json({ message: 'Code and discount value are required unless free shipping or shipping discount is enabled' });
         }
 
         // Check for duplicate code
@@ -166,28 +188,39 @@ export const validateCoupon = async (req, res) => {
         }
 
         // Calculate discount
-        let discount = 0;
+        let itemDiscount = 0;
+        let shippingDiscount = 0;
+        let isFreeShipping = coupon.freeShipping;
+
         if (coupon.discountType === 'percentage') {
-            discount = (cartTotal * coupon.discountValue) / 100;
-            if (coupon.maxDiscount && discount > coupon.maxDiscount) {
-                discount = coupon.maxDiscount;
+            itemDiscount = (cartTotal * coupon.discountValue) / 100;
+            if (coupon.maxDiscount && itemDiscount > coupon.maxDiscount) {
+                itemDiscount = coupon.maxDiscount;
             }
-        } else {
-            discount = coupon.discountValue;
+        } else if (coupon.discountType === 'fixed') {
+            itemDiscount = coupon.discountValue;
+        } else if (coupon.discountType === 'shipping') {
+            shippingDiscount = coupon.discountValue;
         }
 
-        // Ensure discount doesn't exceed cart total
-        discount = Math.min(discount, cartTotal);
-        discount = Math.round(discount * 100) / 100;
+        // Ensure item discount doesn't exceed cart total
+        itemDiscount = Math.min(itemDiscount, cartTotal);
+        itemDiscount = Math.round(itemDiscount * 100) / 100;
+
+        let message = `Coupon applied!`;
+        if (itemDiscount > 0) message += ` You save ₹${itemDiscount}`;
+        if (shippingDiscount > 0) message += ` + ₹${shippingDiscount} off shipping`;
+        if (isFreeShipping) message += ` + Free Shipping`;
 
         res.json({
             valid: true,
             code: coupon.code,
             discountType: coupon.discountType,
             discountValue: coupon.discountValue,
-            discount,
-            freeShipping: coupon.freeShipping,
-            message: `Coupon applied! You save ₹${discount}`
+            discount: itemDiscount,
+            shippingDiscount: shippingDiscount,
+            freeShipping: isFreeShipping,
+            message
         });
     } catch (error) {
         res.status(500).json({ message: error.message });

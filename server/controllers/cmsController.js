@@ -62,7 +62,10 @@ export const getCategories = async (req, res) => {
     try {
         const isAdminRequest = req.query.admin === 'true';
         const filter = isAdminRequest ? {} : { isActive: true };
-        const categories = await Category.findAll({ where: filter });
+        const categories = await Category.findAll({ 
+            where: filter,
+            order: [['displayOrder', 'ASC']]
+        });
         
         // Fetch product counts
         const productCounts = await Product.findAll({
@@ -88,7 +91,7 @@ export const getCategories = async (req, res) => {
 
 export const createCategory = async (req, res) => {
     try {
-        const { name, description, parent, isActive } = req.body;
+        const { name, description, parent, isActive, displayOrder } = req.body;
         let image = req.body.image;
         
         if (req.file) {
@@ -107,7 +110,8 @@ export const createCategory = async (req, res) => {
             description, 
             image: image || req.body.image,
             parentId: parent || null,
-            isActive: isActive !== undefined ? String(isActive) === 'true' : true
+            isActive: isActive !== undefined ? String(isActive) === 'true' : true,
+            displayOrder: displayOrder ? parseInt(displayOrder) : 0
         });
         res.status(201).json(formatResponse(category));
     } catch (error) {
@@ -127,6 +131,7 @@ export const updateCategory = async (req, res) => {
             category.description = req.body.description || category.description;
             category.parentId = req.body.parent === '' ? null : (req.body.parent || category.parentId);
             category.isActive = req.body.isActive !== undefined ? String(req.body.isActive) === 'true' : category.isActive;
+            category.displayOrder = req.body.displayOrder !== undefined ? parseInt(req.body.displayOrder) : category.displayOrder;
             
             if (req.file) {
                 const { uploadToR2 } = await import('../config/cloudflareR2.js');

@@ -42,33 +42,53 @@ const generateMongoId = () => {
 };
 
 export const ensureOrderPaymentSchema = async () => {
-    const queryInterface = Order.sequelize.getQueryInterface();
-    const table = await queryInterface.describeTable(Order.getTableName());
+    try {
+        const queryInterface = Order.sequelize.getQueryInterface();
+        const table = await queryInterface.describeTable(Order.getTableName());
 
-    const columns = {
-        cashfreeOrderId: {
-            type: DataTypes.STRING(100),
-            allowNull: true
-        },
-        cashfreePaymentSessionId: {
-            type: DataTypes.TEXT,
-            allowNull: true
-        },
-        paymentStatus: {
-            type: DataTypes.STRING(50),
-            allowNull: false,
-            defaultValue: 'PENDING'
-        },
-        paymentDetails: {
-            type: DataTypes.JSON,
-            allowNull: true
-        }
-    };
+        const columns = {
+            cashfreeOrderId: {
+                type: DataTypes.STRING(100),
+                allowNull: true
+            },
+            cashfreePaymentSessionId: {
+                type: DataTypes.TEXT,
+                allowNull: true
+            },
+            paymentStatus: {
+                type: DataTypes.STRING(50),
+                allowNull: false,
+                defaultValue: 'PENDING'
+            },
+            paymentDetails: {
+                type: DataTypes.JSON,
+                allowNull: true
+            }
+        };
 
-    for (const [name, definition] of Object.entries(columns)) {
-        if (!table[name]) {
-            await queryInterface.addColumn(Order.getTableName(), name, definition);
+        for (const [name, definition] of Object.entries(columns)) {
+            if (!table[name]) {
+                await queryInterface.addColumn(Order.getTableName(), name, definition);
+            }
         }
+    } catch (error) {
+        console.error('Error ensuring order payment schema:', error);
+    }
+};
+
+export const ensureOrderTrackingSchema = async () => {
+    try {
+        const queryInterface = Order.sequelize.getQueryInterface();
+        const table = await queryInterface.describeTable(Order.getTableName());
+
+        if (!table['trackingNumber']) {
+            await queryInterface.addColumn(Order.getTableName(), 'trackingNumber', {
+                type: DataTypes.STRING,
+                allowNull: true
+            });
+        }
+    } catch (error) {
+        console.error('Error ensuring order tracking schema:', error);
     }
 };
 
@@ -257,6 +277,7 @@ export const verifyCashfreePayment = async (req, res) => {
 export const getMyOrders = async (req, res) => {
     try {
         await ensureOrderPaymentSchema();
+        await ensureOrderTrackingSchema();
         const orders = await Order.findAll({ 
             where: { userId: req.user.id || req.user._id },
             order: [['createdAt', 'DESC']]
@@ -272,6 +293,7 @@ export const getMyOrders = async (req, res) => {
 export const getOrderById = async (req, res) => {
     try {
         await ensureOrderPaymentSchema();
+        await ensureOrderTrackingSchema();
         const order = await Order.findByPk(req.params.id, {
             include: [{ model: User, as: 'user', attributes: ['id', 'name', 'email'] }]
         });
@@ -290,6 +312,7 @@ export const getOrderById = async (req, res) => {
 export const getOrders = async (req, res) => {
     try {
         await ensureOrderPaymentSchema();
+        await ensureOrderTrackingSchema();
         const orders = await Order.findAll({
             include: [{ model: User, as: 'user', attributes: ['id', 'name', 'email'] }],
             order: [['createdAt', 'DESC']]
@@ -305,9 +328,13 @@ export const getOrders = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
     try {
         await ensureOrderPaymentSchema();
+        await ensureOrderTrackingSchema();
         const order = await Order.findByPk(req.params.id);
         if (order) {
             order.status = req.body.status || order.status;
+            if (req.body.trackingNumber) {
+                order.trackingNumber = req.body.trackingNumber;
+            }
             if (req.body.status === 'Delivered') {
                 order.deliveredAt = new Date();
             }
@@ -330,24 +357,86 @@ export const updateOrderStatus = async (req, res) => {
 export const getOrderStats = async (req, res) => {
     try {
         await ensureOrderPaymentSchema();
+        await ensureOrderTrackingSchema();
+        
         const totalOrders = await Order.count();
         const processingOrders = await Order.count({ where: { status: 'Processing' } });
         const deliveredOrders = await Order.count({ where: { status: 'Delivered' } });
         
         const totalRevenue = await Order.sum('totalPrice', { where: { isPaid: true } });
         
-        const recentOrders = await Order.findAll({
-            include: [{ model: User, as: 'user', attributes: ['id', 'name', 'email'] }],
-            order: [['createdAt', 'DESC']],
-            limit: 5
+        // Fetch all orders to calculate monthly stats and top products
+        // (For high traffic, this should be optimized with SQL aggregations, but for current scale this is more flexible)
+        const allOrders = await Order.findAll({
+            where: { isPaid: true },
+            attributes: ['totalPrice', 'orderItems', 'createdAt']
         });
+
+        // Monthly Sales (Last 12 months)
+        const monthlyStats = {};
+        const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
         
+        // Initialize last 12 months
+        const now = new Date();
+        for (let i = 0; i < 12; i++) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const key = `${months[d.getMonth()]} ${d.getFullYear()}`;
+            monthlyStats[key] = { label: months[d.getMonth()], total: 0, count: 0 };
+        }
+
+        const productStats = {};
+
+        allOrders.forEach(order => {
+            const date = new Date(order.createdAt);
+            const monthKey = `${months[date.getMonth()]} ${date.getFullYear()}`;
+            
+            if (monthlyStats[monthKey]) {
+                monthlyStats[monthKey].total += order.totalPrice;
+                monthlyStats[monthKey].count += 1;
+            }
+
+            // Top Products
+            const items = parseJson(order.orderItems) || [];
+            items.forEach(item => {
+                const pid = item.id || item.product;
+                if (!pid) return;
+                
+                if (!productStats[pid]) {
+                    productStats[pid] = {
+                        name: item.name,
+                        category: item.category || 'General',
+                        price: item.price,
+                        img: item.image || item.img,
+                        sold: 0,
+                        revenue: 0
+                    };
+                }
+                productStats[pid].sold += (item.qty || 1);
+                productStats[pid].revenue += (item.price * (item.qty || 1));
+            });
+        });
+
+        // Format Monthly Sales (reversed to be chronological)
+        const salesChart = Object.values(monthlyStats).reverse();
+
+        // Format Top Products
+        const topProducts = Object.values(productStats)
+            .sort((a, b) => b.sold - a.sold)
+            .slice(0, 4)
+            .map(p => ({
+                ...p,
+                sold: `${p.sold} Sold`,
+                price: `₹${p.price.toLocaleString()}`,
+                tag: p.sold > 50 ? 'BEST SELLER' : 'TRENDING'
+            }));
+
         res.json({
             totalOrders,
             processingOrders,
             deliveredOrders,
             totalRevenue: totalRevenue || 0,
-            recentOrders: formatResponse(recentOrders),
+            salesChart,
+            topProducts
         });
     } catch (error) {
         res.status(500).json({ message: error.message });

@@ -128,7 +128,7 @@ const Header = () => {
               </div>
               <div className="dropdown-divider"></div>
               {userInfo.isAdmin && (
-                <Link to="/admin" className="dropdown-item-premium">
+                <Link to="/arrt-panel" className="dropdown-item-premium">
                   <span>Admin Console</span>
                 </Link>
               )}

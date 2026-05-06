@@ -18,7 +18,7 @@ const Login = () => {
   const redirectPath = searchParams.get('redirect');
   
   // Distinguish between Admin and User login
-  const isAdminLogin = redirectPath?.includes('/admin') || location.pathname === '/admin/login';
+  const isAdminLogin = redirectPath?.includes('/arrt-panel') || location.pathname === '/arrt-panel/login';
 
   useEffect(() => {
     const userInfo = localStorage.getItem('userInfo');
@@ -37,7 +37,7 @@ const Login = () => {
       if (data.token) localStorage.setItem('userToken', data.token);
       window.dispatchEvent(new Event('storage'));
       
-      const nextPath = redirectPath || (data.isAdmin ? '/admin' : '/');
+      const nextPath = redirectPath || (data.isAdmin ? '/arrt-panel' : '/');
       window.location.href = nextPath;
     } catch (error) {
       console.error('Login error:', error);

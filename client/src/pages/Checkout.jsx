@@ -17,7 +17,7 @@ const Checkout = () => {
     const [addrServiceable, setAddrServiceable] = useState(true);
     const [addrDeliveryCharge, setAddrDeliveryCharge] = useState(50);
     const [showNewAddressForm, setShowNewAddressForm] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState('COD');
+    const [paymentMethod, setPaymentMethod] = useState('CASHFREE');
     const [loading, setLoading] = useState(false);
     const orderPlacedRef = useRef(false);
 
@@ -61,7 +61,10 @@ const Checkout = () => {
 
     const subtotal = getCartTotal();
     const effectiveDeliveryCharge = selectedAddress ? addrDeliveryCharge : deliveryChargeAmount;
-    const deliveryCharge = (couponApplied?.freeShipping || subtotal > freeShippingThreshold) ? 0 : effectiveDeliveryCharge;
+    const isFreeShipping = couponApplied?.freeShipping || subtotal > freeShippingThreshold;
+    const shippingDiscount = couponApplied?.shippingDiscount || 0;
+    
+    const deliveryCharge = isFreeShipping ? 0 : Math.max(0, effectiveDeliveryCharge - shippingDiscount);
     const discount = couponApplied ? couponApplied.discount : 0;
     const total = subtotal + deliveryCharge - discount;
 
@@ -124,17 +127,25 @@ const Checkout = () => {
         }
     }, [navigate, userInfo, cart.length]);
 
-    // Fetch CMS settings for dynamic shipping and promos
+    // Fetch CMS settings and active coupons
     useEffect(() => {
-        const fetchShippingSettings = async () => {
+        const fetchSettingsAndCoupons = async () => {
             try {
-                const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/cms/homepage`);
-                if (data.freeShippingThreshold !== undefined) setFreeShippingThreshold(data.freeShippingThreshold);
-                if (data.deliveryCharge !== undefined) setDeliveryChargeAmount(data.deliveryCharge);
-                if (data.promos) setCmsPromos(data.promos.filter(p => p.code));
-            } catch (e) { console.error('Failed to fetch shipping settings'); }
+                const [cmsRes, couponsRes] = await Promise.all([
+                    axios.get(`${import.meta.env.VITE_API_URL}/api/cms/homepage`),
+                    axios.get(`${import.meta.env.VITE_API_URL}/api/coupons/active`)
+                ]);
+
+                if (cmsRes.data.freeShippingThreshold !== undefined) setFreeShippingThreshold(cmsRes.data.freeShippingThreshold);
+                if (cmsRes.data.deliveryCharge !== undefined) setDeliveryChargeAmount(cmsRes.data.deliveryCharge);
+                
+                const dbCoupons = (couponsRes.data || []).map(c => ({ code: c.code.toUpperCase() }));
+                
+                // Use database coupons as the source of truth for "Available Offers"
+                setCmsPromos(dbCoupons);
+            } catch (e) { console.error('Failed to fetch checkout settings', e); }
         };
-        fetchShippingSettings();
+        fetchSettingsAndCoupons();
     }, []);
 
     // Real-time pincode validation for new address form
@@ -595,19 +606,7 @@ const Checkout = () => {
                             <div className="animated fadeIn">
                                 <h2 className="font-headline text-primary mb-4 border-bottom pb-3 border-gold-subtle">Payment Selection</h2>
                                 <div className="d-flex flex-column gap-3 mb-5">
-                                    <div
-                                        className={`check-pay-card luxury-card p-4 d-flex align-items-center gap-4 pointer transition-all ${paymentMethod === 'COD' ? 'selected' : ''}`}
-                                        onClick={() => setPaymentMethod('COD')}
-                                    >
-                                        <div className={`premium-radio-input ${paymentMethod === 'COD' ? 'active' : ''}`}>
-                                            <div className="pay-check-inner"></div>
-                                        </div>
-                                        <div className="flex-grow-1">
-                                            <div className="fw-bold font-headline text-primary fs-5">Cash on Delivery</div>
-                                            <div className="small text-muted font-body">Pay when you receive your order.</div>
-                                        </div>
-                                        <Truck size={32} className="text-secondary opacity-25" />
-                                    </div>
+
 
                                     <div
                                         className={`check-pay-card luxury-card p-4 d-flex align-items-center gap-4 pointer transition-all ${paymentMethod === 'CASHFREE' ? 'selected' : ''}`}

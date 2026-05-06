@@ -152,24 +152,14 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
                 </>
               )}
             </Swiper>
-
-            <div className="qv-image-badge position-absolute bottom-0 start-0 m-3 px-3 py-1 z-2">
-               ARTISANAL GRADE
-            </div>
           </div>
 
           {/* RIGHT: DETAILS PANE */}
           <div className="qv-details-pane p-4">
-            <h2 className="qv-title font-headline mb-2">{product.name}</h2>
-            
-            <div className="qv-rating d-flex align-items-center gap-2 mb-3">
-               <div className="stars d-flex gap-1 text-gold">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={14} fill={i < Math.floor(product.rating || 4) ? "currentColor" : "none"} />
-                  ))}
-               </div>
-               <span className="text-muted fs-8">({product.reviews || '128'} Reviews)</span>
+            <div className="qv-category mb-1">
+               <span className="badge-luxury-reserve text-uppercase" style={{ fontSize: '10px', letterSpacing: '1px' }}>{product.category || 'PREMIUM COLLECTION'}</span>
             </div>
+            <h2 className="qv-title font-headline mb-2">{product.name}</h2>
 
             <div className="qv-pricing d-flex align-items-center gap-3 mb-4">
               <span className="qv-current-price font-headline">₹{formattedPrice(currentPrice)}</span>
