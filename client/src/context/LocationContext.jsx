@@ -98,7 +98,7 @@ export const LocationProvider = ({ children }) => {
                     resolve(result);
                 }
             } catch (error) {
-                console.error('Geolocation failed:', error);
+                console.warn('Geolocation failed or unavailable:', error.message || error);
                 let message = 'Location detection failed. Please enter your pincode manually.';
                 
                 if (error.code === 1) { // PERMISSION_DENIED
