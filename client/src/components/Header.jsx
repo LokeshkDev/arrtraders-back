@@ -43,7 +43,7 @@ const Header = () => {
   useEffect(() => {
     if (searchQuery.trim().length > 1) {
       const q = searchQuery.toLowerCase();
-      const filtered = (products || []).filter(p => 
+      const filtered = (products || []).filter(p =>
         p.name.toLowerCase().includes(q) || (p.category && p.category.toLowerCase().includes(q))
       ).slice(0, 5);
       setSearchSuggestions(filtered);
@@ -153,7 +153,7 @@ const Header = () => {
         <ul className="list-unstyled mb-0">
           {searchSuggestions.map((product) => (
             <li key={product._id || product.id} className="border-bottom">
-              <Link 
+              <Link
                 to={`/${(product.category ? product.category.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-') : 'all')}/${product.slug || product.name.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-')}`}
                 className="d-flex align-items-center gap-3 p-3 text-decoration-none text-dark hover-bg-light transition-all"
                 onClick={() => { setShowSuggestions(false); setMobileSearchOpen(false); }}
@@ -169,7 +169,7 @@ const Header = () => {
           ))}
         </ul>
         <div className="bg-light p-2 text-center border-top">
-          <button 
+          <button
             className="btn btn-link text-primary fw-bold font-label uppercase extra-small text-decoration-none"
             onClick={handleSearchSubmit}
           >
@@ -184,184 +184,184 @@ const Header = () => {
     <>
       <div className="header-placeholder"></div>
       <div className={`header-wrapper ${scrolled ? 'header-sticky' : ''}`}>
-      {/* Layer 1: Top Utility Bar */}
-      <div className="top-utility-bar">
-        <div className="container-lg d-flex justify-content-between align-items-center py-0" style={{ minHeight: '40px' }}>
-          <div className="promo-marquee-container flex-grow-1 overflow-hidden">
-            <div className="promo-marquee-content">
-              {(promos.length > 0 ? [...promos, ...promos, ...promos] : [{ title: `Free shipping on all orders over ₹${shippingThreshold.toLocaleString()}` }]).map((promo, idx) => (
-                <div className="promo-item" key={idx}>
-                  <span className="me-2">{promo.title}</span>
-                  {promo.code && (
-                    <strong className="promo-badge">
-                      CODE: {promo.code}
-                    </strong>
-                  )}
-                  <span className="promo-separator">|</span>
-                </div>
-              ))}
+        {/* Layer 1: Top Utility Bar */}
+        <div className="top-utility-bar">
+          <div className="container-lg d-flex justify-content-between align-items-center py-0" style={{ minHeight: '40px' }}>
+            <div className="promo-marquee-container flex-grow-1 overflow-hidden">
+              <div className="promo-marquee-content">
+                {(promos.length > 0 ? [...promos, ...promos, ...promos] : [{ title: `Free shipping on all orders over ₹${shippingThreshold.toLocaleString()}` }]).map((promo, idx) => (
+                  <div className="promo-item" key={idx}>
+                    <span className="me-2">{promo.title}</span>
+                    {promo.code && (
+                      <strong className="promo-badge">
+                        CODE: {promo.code}
+                      </strong>
+                    )}
+                    <span className="promo-separator">|</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-          
-          <div className="utility-links d-none d-lg-flex gap-4 ms-4" style={{ whiteSpace: 'nowrap' }}>
-            <Link to="/about" className="utility-link">Our Story</Link>
-            <Link to="/faq" className="utility-link">Help Center</Link>
-            <Link to="/contact" className="utility-link">Contact Us</Link>
+
+            <div className="utility-links d-none d-lg-flex gap-4 ms-4" style={{ whiteSpace: 'nowrap' }}>
+              <Link to="/about" className="utility-link">Our Story</Link>
+              <Link to="/faq" className="utility-link">Help Center</Link>
+              <Link to="/contact" className="utility-link">Contact Us</Link>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Layer 2: Main Header Bar */}
-      <div className="main-header-bar py-3">
-        <div className="container-lg">
-          <div className="row align-items-center">
-            {/* Logo Section */}
-            <div className="col-lg-2 col-9 d-flex align-items-center gap-3">
-              <button
-                className="category-sidebar-trigger border-0 bg-transparent p-0 d-flex align-items-center justify-content-center"
-                onClick={() => setCategoryMenuOpen(true)}
-                title="Browse Categories"
-              >
-                <LayoutGrid size={24} className="text-secondary hover-primary transition" />
-              </button>
-              <Link to="/" className="main-logo-brand text-decoration-none">
-                <h1 className="logo-text mb-0">AR Rahman <span>Dates</span></h1>
-              </Link>
+        {/* Layer 2: Main Header Bar */}
+        <div className="main-header-bar py-3">
+          <div className="container-lg">
+            <div className="row align-items-center">
+              {/* Logo Section */}
+              <div className="col-lg-2 col-9 d-flex align-items-center gap-3">
+                <button
+                  className="category-sidebar-trigger border-0 bg-transparent p-0 d-flex align-items-center justify-content-center"
+                  onClick={() => setCategoryMenuOpen(true)}
+                  title="Browse Categories"
+                >
+                  <LayoutGrid size={24} className="text-secondary hover-primary transition" />
+                </button>
+                <Link to="/" className="main-logo-brand text-decoration-none">
+                  <h1 className="logo-text mb-0">AR Rahman <span>Dates N' Nuts</span></h1>
+                </Link>
+              </div>
+
+              {/* Location Picker (Desktop) */}
+              <div className="col-lg-2 d-none d-lg-block">
+                <LocationPicker />
+              </div>
+
+              {/* Centered Search Bar (Desktop) */}
+              <div className="col-lg-4 d-none d-lg-block">
+                <div className="trendy-search-container position-relative" ref={searchWrapperRef}>
+                  <form className="search-bar-inner" onSubmit={handleSearchSubmit}>
+                    <Search size={18} className="search-icon" />
+                    <input
+                      type="text"
+                      placeholder="Search..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onFocus={() => { if (searchQuery.length > 1) setShowSuggestions(true); }}
+                    />
+                    <button type="submit" className="search-submit-btn">Search</button>
+                  </form>
+                  <SearchSuggestionsDropdown />
+                </div>
+              </div>
+
+              {/* Action Icons Section */}
+              <div className="col-lg-4 col-3">
+                <div className="d-flex justify-content-end align-items-center gap-4">
+                  <div className="d-none d-lg-flex align-items-center gap-4 me-2">
+                    <Link to="/" className="nav-link-trendy">Home</Link>
+                    <Link to="/categories" className="nav-link-trendy">Shop</Link>
+                  </div>
+
+                  {/* Desktop Icons */}
+                  <div className="header-actions-group d-none d-lg-flex align-items-center gap-2">
+                    <UserMenu isScrolled={scrolled} />
+                    <Link to="/wishlist" className="action-icon-trendy d-none d-md-flex">
+                      <Heart size={22} />
+                    </Link>
+                    <Link to="/cart" className="action-icon-trendy position-relative cart-icon-special">
+                      <ShoppingBag size={22} />
+                      {getCartCount() > 0 && <span className="cart-badge-trendy">{getCartCount()}</span>}
+                    </Link>
+                  </div>
+
+                  {/* Mobile: Search Icon + Hamburger */}
+                  <div className="d-lg-none d-flex align-items-center gap-2">
+                    <LocationPicker />
+                    <button
+                      className="mobile-search-toggle border-0 bg-transparent p-0"
+                      onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
+                      aria-label="Toggle search"
+                    >
+                      <Search size={20} className="text-secondary" />
+                    </button>
+                    <button
+                      className="mobile-hamburger-btn border-0 bg-transparent"
+                      onClick={() => setMobileHelpMenuOpen(true)}
+                    >
+                      <Menu size={28} className="text-secondary" />
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Location Picker (Desktop) */}
-            <div className="col-lg-2 d-none d-lg-block">
-              <LocationPicker />
-            </div>
-
-            {/* Centered Search Bar (Desktop) */}
-            <div className="col-lg-4 d-none d-lg-block">
-              <div className="trendy-search-container position-relative" ref={searchWrapperRef}>
-                <form className="search-bar-inner" onSubmit={handleSearchSubmit}>
-                  <Search size={18} className="search-icon" />
+            {/* Mobile Search - Expandable overlay */}
+            {mobileSearchOpen && (
+              <div className="mobile-search-expanded d-lg-none" ref={searchWrapperRef}>
+                <form className="mobile-search-bar position-relative" onSubmit={handleSearchSubmit}>
+                  <Search size={16} />
                   <input
                     type="text"
                     placeholder="Search..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => { if (searchQuery.length > 1) setShowSuggestions(true); }}
+                    autoFocus
                   />
-                  <button type="submit" className="search-submit-btn">Search</button>
+                  <button
+                    type="button"
+                    className="mobile-search-close border-0 bg-transparent p-0"
+                    onClick={() => setMobileSearchOpen(false)}
+                  >
+                    <X size={18} className="text-muted" />
+                  </button>
+                  <SearchSuggestionsDropdown />
                 </form>
-                <SearchSuggestionsDropdown />
               </div>
-            </div>
-
-            {/* Action Icons Section */}
-            <div className="col-lg-4 col-3">
-              <div className="d-flex justify-content-end align-items-center gap-4">
-                <div className="d-none d-lg-flex align-items-center gap-4 me-2">
-                  <Link to="/" className="nav-link-trendy">Home</Link>
-                  <Link to="/categories" className="nav-link-trendy">Shop</Link>
-                </div>
-
-                {/* Desktop Icons */}
-                <div className="header-actions-group d-none d-lg-flex align-items-center gap-2">
-                  <UserMenu isScrolled={scrolled} />
-                  <Link to="/wishlist" className="action-icon-trendy d-none d-md-flex">
-                    <Heart size={22} />
-                  </Link>
-                  <Link to="/cart" className="action-icon-trendy position-relative cart-icon-special">
-                    <ShoppingBag size={22} />
-                    {getCartCount() > 0 && <span className="cart-badge-trendy">{getCartCount()}</span>}
-                  </Link>
-                </div>
-
-                {/* Mobile: Search Icon + Hamburger */}
-                <div className="d-lg-none d-flex align-items-center gap-2">
-                  <LocationPicker />
-                  <button
-                    className="mobile-search-toggle border-0 bg-transparent p-0"
-                    onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
-                    aria-label="Toggle search"
-                  >
-                    <Search size={20} className="text-secondary" />
-                  </button>
-                  <button
-                    className="mobile-hamburger-btn border-0 bg-transparent"
-                    onClick={() => setMobileHelpMenuOpen(true)}
-                  >
-                    <Menu size={28} className="text-secondary" />
-                  </button>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
-
-          {/* Mobile Search - Expandable overlay */}
-          {mobileSearchOpen && (
-            <div className="mobile-search-expanded d-lg-none" ref={searchWrapperRef}>
-              <form className="mobile-search-bar position-relative" onSubmit={handleSearchSubmit}>
-                <Search size={16} />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={() => { if (searchQuery.length > 1) setShowSuggestions(true); }}
-                  autoFocus
-                />
-                <button
-                  type="button"
-                  className="mobile-search-close border-0 bg-transparent p-0"
-                  onClick={() => setMobileSearchOpen(false)}
-                >
-                  <X size={18} className="text-muted" />
-                </button>
-                <SearchSuggestionsDropdown />
-              </form>
-            </div>
-          )}
         </div>
-      </div>
 
-      {/* Slide-out Category Menu */}
-      <SideCategoryMenu
-        isOpen={categoryMenuOpen}
-        onClose={() => setCategoryMenuOpen(false)}
-      />
+        {/* Slide-out Category Menu */}
+        <SideCategoryMenu
+          isOpen={categoryMenuOpen}
+          onClose={() => setCategoryMenuOpen(false)}
+        />
 
-      {/* Mobile Help Menu Overlay */}
-      <div className={`mobile-help-drawer ${mobileHelpMenuOpen ? 'open' : ''}`}>
-        <div className="drawer-overlay" onClick={() => setMobileHelpMenuOpen(false)}></div>
-        <div className="drawer-content shadow-premium">
-          <div className="drawer-header d-flex justify-content-between align-items-center p-4 border-bottom">
-            <h5 className="font-headline text-primary m-0">Menú</h5>
-            <button className="close-drawer-btn border-0 bg-transparent" onClick={() => setMobileHelpMenuOpen(false)}>
-              <X size={24} className="text-secondary" />
-            </button>
-          </div>
-          <div className="drawer-links d-flex flex-column p-4 gap-4">
-            <Link to="/about" className="drawer-link-item">
-              <span className="link-text">Our Story</span>
-              <ChevronDown size={16} className="rotate-270" />
-            </Link>
-            <Link to="/faq" className="drawer-link-item">
-              <span className="link-text">Help Center</span>
-              <ChevronDown size={16} className="rotate-270" />
-            </Link>
-            <Link to="/contact" className="drawer-link-item">
-              <span className="link-text">Contact Us</span>
-              <ChevronDown size={16} className="rotate-270" />
-            </Link>
-          </div>
-          <div className="drawer-footer mt-auto p-4 border-top">
-            <div className="d-flex justify-content-center gap-4">
-              <Link to="/wishlist" className="drawer-footer-icon"><Heart size={24} /></Link>
-              <Link to="/cart" className="drawer-footer-icon position-relative">
-                <ShoppingBag size={24} />
-                {getCartCount() > 0 && <span className="cart-badge-mini">{getCartCount()}</span>}
+        {/* Mobile Help Menu Overlay */}
+        <div className={`mobile-help-drawer ${mobileHelpMenuOpen ? 'open' : ''}`}>
+          <div className="drawer-overlay" onClick={() => setMobileHelpMenuOpen(false)}></div>
+          <div className="drawer-content shadow-premium">
+            <div className="drawer-header d-flex justify-content-between align-items-center p-4 border-bottom">
+              <h5 className="font-headline text-primary m-0">Menú</h5>
+              <button className="close-drawer-btn border-0 bg-transparent" onClick={() => setMobileHelpMenuOpen(false)}>
+                <X size={24} className="text-secondary" />
+              </button>
+            </div>
+            <div className="drawer-links d-flex flex-column p-4 gap-4">
+              <Link to="/about" className="drawer-link-item">
+                <span className="link-text">Our Story</span>
+                <ChevronDown size={16} className="rotate-270" />
               </Link>
-              <Link to="/profile" className="drawer-footer-icon"><User size={24} /></Link>
+              <Link to="/faq" className="drawer-link-item">
+                <span className="link-text">Help Center</span>
+                <ChevronDown size={16} className="rotate-270" />
+              </Link>
+              <Link to="/contact" className="drawer-link-item">
+                <span className="link-text">Contact Us</span>
+                <ChevronDown size={16} className="rotate-270" />
+              </Link>
+            </div>
+            <div className="drawer-footer mt-auto p-4 border-top">
+              <div className="d-flex justify-content-center gap-4">
+                <Link to="/wishlist" className="drawer-footer-icon"><Heart size={24} /></Link>
+                <Link to="/cart" className="drawer-footer-icon position-relative">
+                  <ShoppingBag size={24} />
+                  {getCartCount() > 0 && <span className="cart-badge-mini">{getCartCount()}</span>}
+                </Link>
+                <Link to="/profile" className="drawer-footer-icon"><User size={24} /></Link>
+              </div>
             </div>
           </div>
         </div>
-      </div>
       </div>
     </>
   );

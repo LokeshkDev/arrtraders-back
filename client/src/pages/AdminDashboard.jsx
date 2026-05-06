@@ -61,6 +61,7 @@ import {
 import './AdminDashboard.css';
 import PagesCMS from '../components/PagesCMS.jsx';
 import DeliveryZoneTab from '../components/DeliveryZoneTab.jsx';
+import JoditEditor from 'jodit-react';
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('Overview');
@@ -432,7 +433,7 @@ const AdminDashboard = () => {
             {/* Page Loader Splash */}
             <div className={`admin-loader-overlay ${!pageLoading ? 'fade-out' : ''}`}>
                 <img src="/loader-giff.gif" alt="Loading" style={{ width: '80px', height: '80px', objectFit: 'contain', marginBottom: '15px' }} />
-                <div className="loader-brand">AR RAHMAN</div>
+                <div className="loader-brand">AR RAHMAN DATES N' NUTS</div>
                 <div className="loader-progress mt-3"></div>
             </div>
 
@@ -1519,8 +1520,12 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                             </div>
                             <div className="col-12">
                                 <label className="form-label fw-bold small text-muted">Description *</label>
-                                <textarea className={`form-control rounded-4 py-3 ${formErrors.description ? 'is-invalid' : ''}`} rows="3" placeholder="Product description..." value={prodForm.description} onChange={e => setProdForm({ ...prodForm, description: e.target.value })} />
-                                {formErrors.description && <div className="invalid-feedback">{formErrors.description}</div>}
+                                <JoditEditor
+                                    value={prodForm.description}
+                                    config={{ readonly: false, height: 300, theme: 'default' }}
+                                    onBlur={(newContent) => setProdForm({ ...prodForm, description: newContent })}
+                                />
+                                {formErrors.description && <div className="invalid-feedback d-block">{formErrors.description}</div>}
                             </div>
                             <div className="col-md-3">
                                 <label className="form-label fw-bold small text-muted">Price (₹) *</label>
@@ -1594,11 +1599,11 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                                 {prodForm.availableWeights.map((v, idx) => (
                                                     <div key={idx} className="badge bg-white border text-primary fw-bold px-3 py-2 d-flex align-items-center gap-2 rounded-pill shadow-sm hover-shadow-md transition-all">
                                                         {v.image && (
-                                                            <img 
-                                                                src={v.image instanceof File ? URL.createObjectURL(v.image) : v.image} 
-                                                                alt="" 
-                                                                className="rounded-circle border" 
-                                                                style={{ width: '20px', height: '20px', objectFit: 'cover' }} 
+                                                            <img
+                                                                src={v.image instanceof File ? URL.createObjectURL(v.image) : v.image}
+                                                                alt=""
+                                                                className="rounded-circle border"
+                                                                style={{ width: '20px', height: '20px', objectFit: 'cover' }}
                                                             />
                                                         )}
                                                         <span className="text-dark">{typeof v === 'object' ? v.value : v}</span>
@@ -1616,9 +1621,9 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                                                     <div className="extra-small fw-bold text-muted mb-2 px-2 uppercase">Link Gallery Image</div>
                                                                     <div className="d-flex flex-wrap gap-2 px-2">
                                                                         {prodForm.images?.map((img, i) => (
-                                                                            <div 
-                                                                                key={i} 
-                                                                                className="cursor-pointer border rounded-2 overflow-hidden hover-scale-xs" 
+                                                                            <div
+                                                                                key={i}
+                                                                                className="cursor-pointer border rounded-2 overflow-hidden hover-scale-xs"
                                                                                 style={{ width: '40px', height: '40px' }}
                                                                                 onClick={() => {
                                                                                     const newList = [...prodForm.availableWeights];
@@ -1629,7 +1634,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                                                                 <img src={img instanceof File ? URL.createObjectURL(img) : img} className="w-100 h-100 object-fit-cover" />
                                                                             </div>
                                                                         ))}
-                                                                        <div 
+                                                                        <div
                                                                             className="cursor-pointer border rounded-2 d-flex align-items-center justify-content-center bg-light text-muted"
                                                                             style={{ width: '40px', height: '40px' }}
                                                                             onClick={() => {
@@ -2934,8 +2939,8 @@ const CMSContentTab = ({ showToast, setConfirmModal }) => {
         } catch (error) { console.error('CMS fetch error:', error); } finally { setLoading(false); }
     };
 
-    useEffect(() => { 
-        fetchCMS(); 
+    useEffect(() => {
+        fetchCMS();
         fetchCategories();
     }, []);
 
@@ -3363,9 +3368,9 @@ const CMSContentTab = ({ showToast, setConfirmModal }) => {
                                         </div>
                                         <div className="mb-3">
                                             <label className="extra-small text-muted fw-bold mb-1 d-block font-label uppercase ls-sm opacity-75">Category Name</label>
-                                            <select 
-                                                className="form-select form-select-sm rounded-pill shadow-sm fw-bold text-primary" 
-                                                value={cat.name} 
+                                            <select
+                                                className="form-select form-select-sm rounded-pill shadow-sm fw-bold text-primary"
+                                                value={cat.name}
                                                 onChange={(e) => {
                                                     const nci = [...cmsData.categoryItems];
                                                     const selectedCat = categories.find(c => c.name === e.target.value);

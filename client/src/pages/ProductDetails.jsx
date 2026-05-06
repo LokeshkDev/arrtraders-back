@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import DOMPurify from 'dompurify';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
@@ -234,8 +235,8 @@ const ProductDetails = () => {
           </ol>
         </nav>
 
-        <div className="row g-lg-5 m-0">
-          <div className="col-lg-7 px-0">
+        <div className="row g-lg-5 m-0 align-items-start">
+          <div className="col-lg-6 px-0">
             <div className="sticky-gallery-wrapper">
                 <div className="d-none d-lg-block">
                     <div className="amazon-gallery-wrapper d-flex gap-3">
@@ -292,14 +293,10 @@ const ProductDetails = () => {
             </div>
           </div>
 
-          <div className="col-lg-5 px-3 px-lg-0">
+          <div className="col-lg-6 px-3 px-lg-5">
             <div className="pd-main-info mt-n4 mt-lg-0 mobile-app-card">
-               <div className="d-flex align-items-center gap-2 mb-3">
-                   <span className="badge-luxury-reserve">ESTATE RESERVE</span>
-                   <div className="d-flex align-items-center gap-1 ms-2">
-                       {[...Array(5)].map((_, i) => <Star key={i} size={14} fill={i < 4 ? "var(--secondary)" : "none"} className="text-secondary" />)}
-                       <span className="small fw-bold ms-1 text-primary">({product.reviews || 0} Artisan Reviews)</span>
-                   </div>
+               <div className="d-flex align-items-center mb-3">
+                   <span className="badge-luxury-reserve text-uppercase">{product.category || 'PREMIUM COLLECTION'}</span>
                </div>
 
                 <h1 className="display-5 font-headline mb-2 text-primary">{product.name}</h1>
@@ -425,7 +422,10 @@ const ProductDetails = () => {
                    <div className="tab-content-area min-h-100">
                       {activeTab === 'description' && (
                          <div className="anim-fade-in">
-                            <p className="text-muted fs-7 lh-lg">{product.description}</p>
+                            <div 
+                              className="text-muted fs-7 lh-lg product-description-html" 
+                              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description || '') }} 
+                            />
                             {product.features && (
                                <ul className="premium-list-app mt-3 list-unstyled">
                                   {product.features.map((f, i) => (

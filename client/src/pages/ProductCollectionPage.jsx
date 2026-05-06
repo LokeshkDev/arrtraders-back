@@ -109,7 +109,7 @@ const ProductCollectionPage = ({ type = 'featured' }) => {
           <>
             <div className="row g-2 g-md-4">
               {filteredProducts.map((item) => (
-                <div key={item._id} className="col-6 col-md-4 col-lg-3">
+                <div key={item._id} className="col-6 col-md-4 col-lg-4">
                   <ProductCard
                     product={item}
                     showFeaturedBadge={type === 'featured'}

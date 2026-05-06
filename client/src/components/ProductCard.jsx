@@ -105,7 +105,7 @@ const ProductCard = ({
   return (
     <div className="universal-product-card d-flex flex-column">
       <div className="card-image-container">
-        <Link to={path} className="d-block overflow-hidden">
+        <Link to={path} className="d-block overflow-hidden h-100">
           <img
             src={currentImage}
             alt={product.name}

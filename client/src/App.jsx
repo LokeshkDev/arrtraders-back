@@ -104,7 +104,7 @@ const GlobalLoader = () => {
       <div className="loader-content">
         <img src="/loader-giff.gif" alt="Loading" className="loader-gif" />
         <h2 className="loader-brand-name">AR RAHMAN</h2>
-        <p className="loader-brand-subtitle">PREMIUM DATES & NUTS</p>
+        <p className="loader-brand-subtitle">DATES N' NUTS</p>
       </div>
     </div>
   );

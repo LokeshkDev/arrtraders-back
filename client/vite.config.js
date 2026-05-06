@@ -4,6 +4,10 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  optimizeDeps: {
+    include: ['jodit-react', 'dompurify'],
+    force: true
+  },
   build: {
     // Increase chunk size limit to suppress warning (optional)
     chunkSizeWarningLimit: 1000,

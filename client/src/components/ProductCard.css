@@ -22,7 +22,7 @@
 
 /* --- Image Container: Full size, no background, rounded --- */
 .card-image-container {
-  aspect-ratio: 1/1;
+  aspect-ratio: 4/5;
   border-radius: 16px;
   overflow: hidden;
   background-color: transparent;

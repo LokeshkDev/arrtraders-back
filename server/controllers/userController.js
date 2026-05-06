@@ -111,6 +111,61 @@ export const googleLogin = async (req, res) => {
     }
 };
 
+// @desc    Auth user with Phone OTP & get token
+// @route   POST /api/users/phone-login
+export const phoneLogin = async (req, res) => {
+    try {
+        if (!isFirebaseInitialized) {
+            return res.status(500).json({ message: 'Authentication service error.' });
+        }
+
+        const { idToken } = req.body;
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        const firebasePhone = decodedToken.phone_number;
+
+        if (!firebasePhone) {
+            return res.status(401).json({ message: 'Phone verification failed: No phone number in token.' });
+        }
+
+        let user = await User.findOne({ where: { phone: firebasePhone } });
+
+        if (!user) {
+            // Create new customer user if phone doesn't exist
+            user = await User.create({
+                id: generateMongoId(),
+                name: 'User ' + firebasePhone.slice(-4),
+                email: firebasePhone + '@arrahman.com', // Dummy email for schema requirement
+                password: Math.random().toString(36).slice(-16),
+                isAdmin: false,
+                phone: firebasePhone
+            });
+        }
+
+        const token = generateToken(user.id);
+        const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
+
+        res.cookie('jwt', token, {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'lax',
+            maxAge: 30 * 24 * 60 * 60 * 1000
+        });
+
+        res.json({
+            _id: user.id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            isAdmin: user.isAdmin,
+            addresses: user.addresses,
+            token: token
+        });
+    } catch (error) {
+        console.error('Phone Login Error:', error.message);
+        res.status(401).json({ message: 'Phone verification failed' });
+    }
+};
+
 // @desc    Auth user & get token
 // @route   POST /api/users/login
 export const authUser = async (req, res) => {

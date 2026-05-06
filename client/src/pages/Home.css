@@ -6,10 +6,9 @@
 
 /* Billboard / Hero Section */
 .hero-slide-content {
-  height: 480px;
-  /* Panoramic Height */
-  min-height: 400px;
-  max-height: 550px;
+  height: calc(100vh - 80px);
+  min-height: 600px;
+  max-height: none;
   position: relative;
   display: flex;
   align-items: center;

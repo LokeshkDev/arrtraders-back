@@ -14,7 +14,8 @@ import {
     deleteAddress,
     toggleWishlist,
     getDashboardStats,
-    logoutUser
+    logoutUser,
+    phoneLogin
 } from '../controllers/userController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
@@ -22,6 +23,7 @@ const router = express.Router();
 
 router.post('/login', authUser);
 router.post('/google-login', googleLogin);
+router.post('/phone-login', phoneLogin);
 router.post('/register', registerUser);
 router.post('/logout', logoutUser);
 

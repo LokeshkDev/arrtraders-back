@@ -288,10 +288,10 @@ const Categories = () => {
               </div>
             </div>
 
-            {/* Product Grid (Responsive: 2 on mobile, 3 tablet, 4 desktop) */}
+            {/* Product Grid (Responsive: 2 on mobile, 3 tablet, 3 desktop) */}
             <div className="row g-2 g-md-4">
               {filteredProducts.map((item) => (
-                <div key={item._id} className="col-6 col-md-4 col-lg-3">
+                <div key={item._id} className="col-6 col-md-4 col-lg-4">
                   <ProductCard product={item} />
                 </div>
               ))}
