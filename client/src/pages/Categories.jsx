@@ -32,18 +32,31 @@ const Categories = () => {
   const [sortOption, setSortOption] = useState('relevant'); // newly added sorting state
   const [expandedCatId, setExpandedCatId] = useState(null);
 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const selectedFromUrl = searchParams.get('selected');
   const searchFromUrl = searchParams.get('search');
 
   useEffect(() => {
     if (selectedFromUrl) {
       setActiveCategory(selectedFromUrl);
+    } else {
+      setActiveCategory('All');
     }
     if (searchFromUrl) {
       setSearchQuery(searchFromUrl);
     }
   }, [selectedFromUrl, searchFromUrl]);
+
+  const handleCategoryChange = (catName) => {
+    setActiveCategory(catName);
+    const newParams = new URLSearchParams(searchParams);
+    if (catName === 'All') {
+      newParams.delete('selected');
+    } else {
+      newParams.set('selected', catName);
+    }
+    setSearchParams(newParams);
+  };
 
   const toggleExpand = (id) => {
     setExpandedCatId(expandedCatId === id ? null : id);
@@ -131,7 +144,7 @@ const Categories = () => {
                 <li className="category-accordion-item border-bottom py-2">
                   <button
                     className={`w-100 bg-transparent border-0 d-flex align-items-center p-2 rounded transition-all ${activeCategory === 'All' ? 'text-white fw-bold bg-primary' : 'text-secondary hover-bg-light'}`}
-                    onClick={() => setActiveCategory('All')}
+                    onClick={() => handleCategoryChange('All')}
                   >
                     <span className="text-truncate" style={{ fontSize: '14px' }}>All Collections</span>
                   </button>
@@ -165,7 +178,7 @@ const Categories = () => {
                         <div className="d-flex w-100 align-items-center">
                           <button
                             className={`flex-grow-1 bg-transparent border-0 d-flex align-items-center gap-3 p-2 rounded transition-all ${activeCategory === cat.name && !hasChildren ? 'text-white fw-bold bg-primary' : 'text-secondary hover-bg-light'}`}
-                            onClick={() => { setActiveCategory(cat.name); setExpandedCatId(cat._id); }}
+                            onClick={() => { handleCategoryChange(cat.name); setExpandedCatId(cat._id); }}
                           >
                             <img src={getImageUrl(cat.image)} alt={cat.name} className="flex-shrink-0 rounded-circle object-fit-cover shadow-sm" style={{ width: '28px', height: '28px' }} />
                             <span className="text-truncate text-start fw-bold" style={{ fontSize: '14px' }}>{cat.name}</span>
@@ -181,7 +194,7 @@ const Categories = () => {
                         <li key={child._id} className="category-accordion-item border-bottom py-1 ps-5 bg-light bg-opacity-50">
                           <button
                             className={`w-100 bg-transparent border-0 d-flex align-items-center gap-3 p-2 rounded transition-all ${activeCategory === child.name ? 'text-white fw-bold bg-primary' : 'text-muted hover-bg-light'}`}
-                            onClick={() => setActiveCategory(child.name)}
+                            onClick={() => handleCategoryChange(child.name)}
                           >
                             <span className="text-truncate text-start" style={{ fontSize: '13px' }}>↳ {child.name}</span>
                           </button>
@@ -213,7 +226,7 @@ const Categories = () => {
               <div className="mobile-category-tabs d-flex overflow-auto gap-2 mb-4 pb-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                 <button
                   className={`btn mobile-cat-tab flex-shrink-0 rounded-pill ${activeCategory === 'All' ? 'btn-primary' : 'btn-outline-secondary bg-white'}`}
-                  onClick={() => setActiveCategory('All')}
+                  onClick={() => handleCategoryChange('All')}
                 >
                   <span>All Collections</span>
                 </button>
@@ -228,7 +241,7 @@ const Categories = () => {
                   <button
                     key={cat._id}
                     className={`btn mobile-cat-tab flex-shrink-0 rounded-pill d-flex align-items-center gap-2 ${activeCategory === cat.name || categories.some(c => c.parent === cat._id && c.name === activeCategory) ? 'btn-primary shadow-sm' : 'btn-outline-secondary bg-white'}`}
-                    onClick={() => setActiveCategory(cat.name)}
+                    onClick={() => handleCategoryChange(cat.name)}
                   >
                     <img src={getImageUrl(cat.image)} alt={cat.name} className="rounded-circle object-fit-cover shadow-sm" />
                     <span>{cat.name}</span>
@@ -248,7 +261,7 @@ const Categories = () => {
                     <div className="mobile-subcategory-tabs d-flex overflow-auto gap-2 mb-4 pb-2 border-bottom" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', marginTop: '-15px' }}>
                       <button
                         className={`btn mobile-subcat-tab flex-shrink-0 rounded-pill font-label extra-small ${activeCategory === parentCatName ? 'btn-secondary text-white' : 'btn-outline-secondary bg-white text-muted border-opacity-50'}`}
-                        onClick={() => setActiveCategory(parentCatName)}
+                        onClick={() => handleCategoryChange(parentCatName)}
                       >
                         <span>All in {parentCatName}</span>
                       </button>
@@ -256,7 +269,7 @@ const Categories = () => {
                         <button
                           key={child._id}
                           className={`btn mobile-subcat-tab flex-shrink-0 rounded-pill font-label extra-small ${activeCategory === child.name ? 'btn-secondary text-white shadow-sm' : 'btn-outline-secondary bg-white text-muted border-opacity-50'}`}
-                          onClick={() => setActiveCategory(child.name)}
+                          onClick={() => handleCategoryChange(child.name)}
                         >
                           <span>{child.name}</span>
                         </button>
