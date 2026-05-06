@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { MapPin, Search, Navigation, X, ChevronDown, CheckCircle, AlertCircle } from 'lucide-react';
 import { useLocation } from '../context/LocationContext';
 import './LocationPicker.css';
@@ -156,7 +157,7 @@ const LocationPicker = () => {
             )}
 
             {/* Desktop: Modal popup (unchanged) */}
-            {showModal && !isMobile && (
+            {showModal && !isMobile && createPortal(
                 <div className="location-modal-overlay" onClick={() => setShowModal(false)}>
                     <div className="location-modal-content shadow-premium" onClick={e => e.stopPropagation()}>
                         <div className="modal-header-premium">
@@ -172,10 +173,11 @@ const LocationPicker = () => {
                             {locationContentJSX}
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
-            {servicePopup && (
+            {servicePopup && createPortal(
                 <div className="service-popup-overlay" onClick={() => setServicePopup(null)}>
                     <div className="service-popup-card" onClick={e => e.stopPropagation()}>
                         <button className="service-popup-close" onClick={() => setServicePopup(null)}>
@@ -188,7 +190,8 @@ const LocationPicker = () => {
                             Try another pincode
                         </button>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

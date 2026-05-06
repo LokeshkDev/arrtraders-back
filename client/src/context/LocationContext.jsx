@@ -120,8 +120,8 @@ export const LocationProvider = ({ children }) => {
         if (location && location.pincode) {
             validateLocation(location);
         } else {
-            // Optional: Auto-detect on first load if no location saved
-            // detectLocation();
+            // Auto-detect on first load if no location saved
+            detectLocation();
         }
     }, []);
 
