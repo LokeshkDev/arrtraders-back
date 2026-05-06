@@ -66,7 +66,8 @@ const ProductDetails = () => {
         setProduct(data);
         
         // Synthesize weights including Primary Weight
-        const primaryWeight = data.weight ? `${data.weight}${data.unit === 'gram' ? 'g' : data.unit === 'kg' ? 'kg' : data.unit === 'ml' ? 'ml' : 'L'}` : '';
+        const unitMap = { gram: 'g', kg: 'kg', ml: 'ml', litre: 'L', piece: ' pc', cup: ' Cup', box: ' Box', packet: ' Packet', bottle: ' Bottle' };
+        const primaryWeight = data.weight ? `${data.weight}${unitMap[data.unit] || data.unit || 'g'}` : '';
         const customWeights = data.availableWeights && data.availableWeights.length > 0 
           ? data.availableWeights.map(w => typeof w === 'object' ? w.value : w)
           : [];
@@ -123,7 +124,8 @@ const ProductDetails = () => {
   if (loading) return <div className="min-vh-100 d-flex align-items-center justify-content-center"><div className="spinner-border text-primary" role="status"></div></div>;
   if (!product) return <div className="min-vh-100 d-flex align-items-center justify-content-center font-headline fs-4">Product collection not found.</div>;
 
-  const primaryWeight = product.weight ? `${product.weight}${product.unit === 'gram' ? 'g' : product.unit === 'kg' ? 'kg' : product.unit === 'ml' ? 'ml' : 'L'}` : '';
+  const unitMapR = { gram: 'g', kg: 'kg', ml: 'ml', litre: 'L', piece: ' pc', cup: ' Cup', box: ' Box', packet: ' Packet', bottle: ' Bottle' };
+  const primaryWeight = product.weight ? `${product.weight}${unitMapR[product.unit] || product.unit || 'g'}` : '';
   const customWeights = product.availableWeights && product.availableWeights.length > 0 
     ? product.availableWeights.map(w => typeof w === 'object' ? w.value : w)
     : [];

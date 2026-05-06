@@ -16,7 +16,8 @@ const QuickViewModal = ({ isOpen, onClose, product }) => {
   const [swiperRef, setSwiperRef] = useState(null);
   
   const productId = product?._id || product?.id;
-  const primaryWeight = product?.weight ? `${product.weight}${product.unit === 'gram' ? 'g' : product.unit === 'kg' ? 'kg' : product.unit === 'ml' ? 'ml' : 'L'}` : '';
+  const unitMap = { gram: 'g', kg: 'kg', ml: 'ml', litre: 'L', piece: ' pc', cup: ' Cup', box: ' Box', packet: ' Packet', bottle: ' Bottle' };
+  const primaryWeight = product?.weight ? `${product.weight}${unitMap[product.unit] || product.unit || 'g'}` : '';
   const customWeights = product?.availableWeights && product.availableWeights.length > 0 
     ? product.availableWeights.map(w => typeof w === 'object' ? w.value : w)
     : [];

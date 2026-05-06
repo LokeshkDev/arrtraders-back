@@ -24,7 +24,8 @@ const ProductCard = ({
   const productSlug = product.slug || createSlug(product.name);
   const categorySlug = createSlug(product.category || 'all');
   const path = `/${categorySlug}/${productSlug}`;
-  const primaryWeight = product.weight ? `${product.weight}${product.unit === 'gram' ? 'g' : product.unit === 'kg' ? 'kg' : product.unit === 'ml' ? 'ml' : 'L'}` : (product.qty || "500g");
+  const unitMap = { gram: 'g', kg: 'kg', ml: 'ml', litre: 'L', piece: ' pc', cup: ' Cup', box: ' Box', packet: ' Packet', bottle: ' Bottle' };
+  const primaryWeight = product.weight ? `${product.weight}${unitMap[product.unit] || product.unit || 'g'}` : (product.qty || "500g");
   const weights = product.availableWeights && product.availableWeights.length > 0
     ? [primaryWeight, ...product.availableWeights.map(w => typeof w === 'object' ? w.value : w)]
     : [primaryWeight];
