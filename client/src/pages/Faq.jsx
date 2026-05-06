@@ -30,7 +30,7 @@ const Faq = () => {
   const faqs = data?.content?.items || [];
 
   return (
-    <main className="pt-5 mt-5 bg-surface" style={{ minHeight: '80vh' }}>
+    <main className="bg-surface" style={{ minHeight: '80vh' }}>
       {data?.bannerImage && (
         <section className="container-fluid px-0 position-relative overflow-hidden" style={{ height: '250px' }}>
           <img src={data.bannerImage} className="w-100 h-100 object-fit-cover opacity-50" alt="FAQ" />

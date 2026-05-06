@@ -24,7 +24,7 @@ const Returns = () => {
   const content = data?.content || {};
 
   return (
-    <main className="pt-5 mt-5 bg-surface" style={{ minHeight: '80vh' }}>
+    <main className="bg-surface" style={{ minHeight: '80vh' }}>
       {data?.bannerImage && (
         <section className="container-fluid px-0 position-relative overflow-hidden" style={{ height: '250px' }}>
           <img src={data.bannerImage} className="w-100 h-100 object-fit-cover opacity-50" alt="Returns" />
@@ -34,7 +34,7 @@ const Returns = () => {
         </section>
       )}
 
-      <section className="container-lg py-5 px-4" style={{ maxWidth: '800px' }}>
+      <section className="container-lg py-5 px-4" style={{ maxWidth: '900px' }}>
         {!data?.bannerImage && (
           <>
             <h1 className="font-headline text-primary mb-4 text-center">Returns & Refunds</h1>
@@ -42,10 +42,10 @@ const Returns = () => {
           </>
         )}
         
-        <div className="bg-white p-5 rounded-4 shadow-sm border border-opacity-10 font-body text-primary opacity-75 lh-lg">
-          {content.text ? content.text.split('\n').map((para, i) => (
-            <p key={i} className="mb-4">{para.trim()}</p>
-          )) : (
+        <div className="bg-white p-4 p-md-5 rounded-4 shadow-sm border border-opacity-10 font-body text-primary opacity-75 lh-lg policy-content">
+          {content.text ? (
+            <div dangerouslySetInnerHTML={{ __html: content.text }} />
+          ) : (
             <>
               <p className="mb-4">We want you to be completely satisfied with your purchase. Due to the perishable nature of our products, our return policy is as follows:</p>
               <h4 className="font-headline fs-5 text-primary mb-3">1. Eligibility for Returns</h4>
@@ -56,6 +56,11 @@ const Returns = () => {
           )}
         </div>
       </section>
+      <style>{`
+        .policy-content p { margin-bottom: 1.5rem; }
+        .policy-content ul, .policy-content ol { margin-bottom: 1.5rem; padding-left: 1.5rem; }
+        .policy-content h1, .policy-content h2, .policy-content h3, .policy-content h4 { margin-top: 2rem; margin-bottom: 1rem; color: var(--primary); font-family: var(--font-heading); }
+      `}</style>
     </main>
   );
 };

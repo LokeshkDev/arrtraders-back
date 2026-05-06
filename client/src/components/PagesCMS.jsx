@@ -1,13 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import JoditEditor from 'jodit-react';
 import axios from 'axios';
 import { 
     Save, FileText, Info, Image as ImageIcon, 
     Plus, Trash, ChevronRight, Phone, Mail, 
     MapPin, Clock, MessageSquare, HelpCircle, 
-    Shield, RefreshCw, Truck
+    Shield, RefreshCw, Truck, LayoutDashboard
 } from 'lucide-react';
 
 const PagesCMS = ({ showToast, setConfirmModal }) => {
+    const editorConfig = useMemo(() => ({
+        readonly: false,
+        placeholder: 'Start typing policy details...',
+        height: 500,
+        toolbarButtonSize: 'middle',
+        buttons: [
+            'source', '|',
+            'bold', 'italic', 'underline', 'strikethrough', '|',
+            'superscript', 'subscript', '|',
+            'ul', 'ol', '|',
+            'outdent', 'indent', '|',
+            'font', 'fontsize', 'brush', 'paragraph', '|',
+            'image', 'table', 'link', '|',
+            'align', 'undo', 'redo', '|',
+            'hr', 'eraser', 'fullsize'
+        ],
+        showCharsCounter: true,
+        showWordsCounter: true,
+        showXPathInStatusbar: false,
+        askBeforePasteHTML: false,
+        askBeforePasteFromWord: false,
+        defaultActionOnPaste: 'insert_clear_html',
+        beautyHTML: true,
+        style: {
+            font: '16px Lora, serif'
+        }
+    }), []);
     const [selectedSlug, setSelectedSlug] = useState('about');
     const [pageData, setPageData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -20,6 +48,7 @@ const PagesCMS = ({ showToast, setConfirmModal }) => {
         { name: 'Return & Refund', slug: 'returns', icon: RefreshCw },
         { name: 'Privacy Policy', slug: 'privacy', icon: Shield },
         { name: 'FAQ', slug: 'faq', icon: HelpCircle },
+        { name: 'Footer Settings', slug: 'footer', icon: LayoutDashboard },
     ];
 
     const fetchPage = async (slug) => {
@@ -53,11 +82,12 @@ const PagesCMS = ({ showToast, setConfirmModal }) => {
                 storyText1: 'AR Rahman Dates and Nuts brings you nature\'s finest treasures...',
                 storyText2: 'Our journey began with a simple vision...',
                 storyImage: '',
-                features: [
-                    { icon: '🌿', title: 'Pure Quality', desc: 'No additives or artificial preservatives.' },
-                    { icon: '🌍', title: 'Direct Sourcing', desc: 'We work directly with farms.' },
-                    { icon: '📦', title: 'Quality Packaging', desc: 'Carefully packed for freshness.' }
-                ],
+                visionTitle: 'Our Vision',
+                visionText: 'To be the most trusted source of premium dates and nuts globally.',
+                visionImage: '',
+                missionTitle: 'Our Mission',
+                missionText: 'Providing the highest quality artisanal products while supporting sustainable farming practices.',
+                missionImage: '',
                 footerTitle: 'Our Quality Standard',
                 footerText: 'Every product is hand-picked and carefully inspected.'
             };
@@ -66,7 +96,26 @@ const PagesCMS = ({ showToast, setConfirmModal }) => {
                 phone: '+91 98765 43210',
                 email: 'info@arrahmandates.com',
                 address: 'Alwarpet, Chennai, Tamil Nadu',
-                hours: 'Mon-Sat: 10:00 AM - 8:00 PM'
+                hours: 'Mon-Sat: 10:00 AM - 8:00 PM',
+                whatsapp: '',
+                instagram: '',
+                facebook: '',
+                twitter: '',
+                youtube: '',
+                mapEmbed: ''
+            };
+            case 'footer': return {
+                categoriesTitle: 'Shop Premium Categories',
+                categories: [
+                    { name: 'Premium Dates Online', link: '/categories?selected=Premium Dates' },
+                    { name: 'Medjool Dates', link: '/categories?selected=Medjool Dates' },
+                    { name: 'Ajwa Dates', link: '/categories?selected=Ajwa Dates' },
+                    { name: 'Dry Fruits', link: '/categories?selected=Dry Fruits' },
+                    { name: 'Exotic Nuts', link: '/categories?selected=Exotic Nuts' },
+                    { name: 'Dates Gift Hampers', link: '/categories?selected=Gift Hampers' },
+                    { name: 'Healthy Snack Mixes', link: '/categories?selected=Wellness Mix' },
+                    { name: 'Organic Honey', link: '/categories?selected=Organic Honey' }
+                ]
             };
             case 'faq': return {
                 items: [
@@ -115,10 +164,18 @@ const PagesCMS = ({ showToast, setConfirmModal }) => {
         }
     };
 
+    const extractMapSrc = (val) => {
+        if (!val) return '';
+        const srcMatch = val.match(/src=["']([^"']+)["']/);
+        return srcMatch ? srcMatch[1] : val;
+    };
+
     const updateContentField = (field, value) => {
+        // Auto-extract src from iframe for mapEmbed
+        const finalValue = field === 'mapEmbed' ? extractMapSrc(value) : value;
         setPageData({
             ...pageData,
-            content: { ...pageData.content, [field]: value }
+            content: { ...pageData.content, [field]: finalValue }
         });
     };
 
@@ -227,36 +284,44 @@ const PagesCMS = ({ showToast, setConfirmModal }) => {
                                             <input type="file" className="form-control rounded-4 py-3" onChange={(e) => handleImageUpload(e, 'storyImage')} />
                                         </div>
                                     </div>
+                                    {/* Vision Section */}
                                     <div className="col-12 mt-5">
-                                        <h6 className="font-headline text-primary border-bottom pb-2 mb-4">Values / Features</h6>
-                                        {(pageData.content.features || []).map((f, idx) => (
-                                            <div key={idx} className="row g-3 mb-4 p-3 bg-light bg-opacity-30 rounded-4 border">
-                                                <div className="col-md-2">
-                                                    <label className="extra-small fw-bold opacity-50 mb-1">ICON/EMOJI</label>
-                                                    <input type="text" className="form-control text-center py-2" value={f.icon} onChange={(e) => {
-                                                        const nf = [...pageData.content.features];
-                                                        nf[idx].icon = e.target.value;
-                                                        updateContentField('features', nf);
-                                                    }} />
-                                                </div>
-                                                <div className="col-md-4">
-                                                    <label className="extra-small fw-bold opacity-50 mb-1">TITLE</label>
-                                                    <input type="text" className="form-control py-2" value={f.title} onChange={(e) => {
-                                                        const nf = [...pageData.content.features];
-                                                        nf[idx].title = e.target.value;
-                                                        updateContentField('features', nf);
-                                                    }} />
-                                                </div>
-                                                <div className="col-md-6">
-                                                    <label className="extra-small fw-bold opacity-50 mb-1">DESCRIPTION</label>
-                                                    <input type="text" className="form-control py-2" value={f.desc} onChange={(e) => {
-                                                        const nf = [...pageData.content.features];
-                                                        nf[idx].desc = e.target.value;
-                                                        updateContentField('features', nf);
-                                                    }} />
-                                                </div>
+                                        <h6 className="font-headline text-primary border-bottom pb-2 mb-4">Our Vision</h6>
+                                        <div className="row g-4">
+                                            <div className="col-md-8">
+                                                <label className="extra-small text-muted fw-bold mb-2 d-block font-label">VISION TITLE</label>
+                                                <input type="text" className="form-control rounded-4 py-3 shadow-sm mb-3" value={pageData.content.visionTitle || ''} onChange={(e) => updateContentField('visionTitle', e.target.value)} />
+                                                <label className="extra-small text-muted fw-bold mb-2 d-block font-label">VISION DESCRIPTION</label>
+                                                <textarea className="form-control rounded-4 py-3 shadow-sm" rows="4" value={pageData.content.visionText || ''} onChange={(e) => updateContentField('visionText', e.target.value)} />
                                             </div>
-                                        ))}
+                                            <div className="col-md-4">
+                                                <label className="extra-small text-muted fw-bold mb-2 d-block font-label">VISION IMAGE</label>
+                                                <div className="bg-light rounded-4 border p-2 mb-3 shadow-sm" style={{ height: '180px' }}>
+                                                    {pageData.content.visionImage ? <img src={pageData.content.visionImage} className="w-100 h-100 object-fit-cover rounded-3" alt="" /> : <ImageIcon className="m-auto opacity-10" size={48} />}
+                                                </div>
+                                                <input type="file" className="form-control rounded-4 py-2" onChange={(e) => handleImageUpload(e, 'visionImage')} />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Mission Section */}
+                                    <div className="col-12 mt-5">
+                                        <h6 className="font-headline text-primary border-bottom pb-2 mb-4">Our Mission</h6>
+                                        <div className="row g-4">
+                                            <div className="col-md-8">
+                                                <label className="extra-small text-muted fw-bold mb-2 d-block font-label">MISSION TITLE</label>
+                                                <input type="text" className="form-control rounded-4 py-3 shadow-sm mb-3" value={pageData.content.missionTitle || ''} onChange={(e) => updateContentField('missionTitle', e.target.value)} />
+                                                <label className="extra-small text-muted fw-bold mb-2 d-block font-label">MISSION DESCRIPTION</label>
+                                                <textarea className="form-control rounded-4 py-3 shadow-sm" rows="4" value={pageData.content.missionText || ''} onChange={(e) => updateContentField('missionText', e.target.value)} />
+                                            </div>
+                                            <div className="col-md-4">
+                                                <label className="extra-small text-muted fw-bold mb-2 d-block font-label">MISSION IMAGE</label>
+                                                <div className="bg-light rounded-4 border p-2 mb-3 shadow-sm" style={{ height: '180px' }}>
+                                                    {pageData.content.missionImage ? <img src={pageData.content.missionImage} className="w-100 h-100 object-fit-cover rounded-3" alt="" /> : <ImageIcon className="m-auto opacity-10" size={48} />}
+                                                </div>
+                                                <input type="file" className="form-control rounded-4 py-2" onChange={(e) => handleImageUpload(e, 'missionImage')} />
+                                            </div>
+                                        </div>
                                     </div>
                                     <div className="col-md-6 mt-5">
                                         <label className="extra-small text-muted fw-bold mb-2 d-block font-label">FOOTER SECTION TITLE</label>
@@ -287,9 +352,53 @@ const PagesCMS = ({ showToast, setConfirmModal }) => {
                                         <label className="extra-small text-muted fw-bold mb-2 d-block font-label">STORE ADDRESS</label>
                                         <input type="text" className="form-control rounded-4 py-3 shadow-sm" value={pageData.content.address} onChange={(e) => updateContentField('address', e.target.value)} />
                                     </div>
-                                    <div className="col-12">
+                                    <div className="col-md-6">
                                         <label className="extra-small text-muted fw-bold mb-2 d-block font-label">BUSINESS HOURS TEXT</label>
                                         <input type="text" className="form-control rounded-4 py-3 shadow-sm" value={pageData.content.hours} onChange={(e) => updateContentField('hours', e.target.value)} />
+                                    </div>
+                                    <div className="col-md-6">
+                                        <label className="extra-small text-muted fw-bold mb-2 d-block font-label">WHATSAPP NUMBER <span className="opacity-50">(with country code, e.g. 919876543210)</span></label>
+                                        <input type="text" className="form-control rounded-4 py-3 shadow-sm" placeholder="e.g. 919876543210" value={pageData.content.whatsapp || ''} onChange={(e) => updateContentField('whatsapp', e.target.value)} />
+                                    </div>
+
+                                    <div className="col-12 mt-4">
+                                        <h6 className="font-headline text-primary border-bottom pb-2 mb-3">Social Media Links</h6>
+                                    </div>
+                                    <div className="col-md-6">
+                                        <label className="extra-small text-muted fw-bold mb-2 d-block font-label">INSTAGRAM URL</label>
+                                        <input type="url" className="form-control rounded-4 py-3 shadow-sm" placeholder="https://instagram.com/..." value={pageData.content.instagram || ''} onChange={(e) => updateContentField('instagram', e.target.value)} />
+                                    </div>
+                                    <div className="col-md-6">
+                                        <label className="extra-small text-muted fw-bold mb-2 d-block font-label">FACEBOOK URL</label>
+                                        <input type="url" className="form-control rounded-4 py-3 shadow-sm" placeholder="https://facebook.com/..." value={pageData.content.facebook || ''} onChange={(e) => updateContentField('facebook', e.target.value)} />
+                                    </div>
+                                    <div className="col-md-6">
+                                        <label className="extra-small text-muted fw-bold mb-2 d-block font-label">YOUTUBE URL</label>
+                                        <input type="url" className="form-control rounded-4 py-3 shadow-sm" placeholder="https://youtube.com/@..." value={pageData.content.youtube || ''} onChange={(e) => updateContentField('youtube', e.target.value)} />
+                                    </div>
+                                    <div className="col-md-6">
+                                        <label className="extra-small text-muted fw-bold mb-2 d-block font-label">TWITTER / X URL</label>
+                                        <input type="url" className="form-control rounded-4 py-3 shadow-sm" placeholder="https://x.com/..." value={pageData.content.twitter || ''} onChange={(e) => updateContentField('twitter', e.target.value)} />
+                                    </div>
+
+                                    <div className="col-12 mt-4">
+                                        <h6 className="font-headline text-primary border-bottom pb-2 mb-3">Google Map Embed</h6>
+                                        <label className="extra-small text-muted fw-bold mb-2 d-block font-label">MAP EMBED <span className="opacity-50">(paste the full iframe code or just the src URL)</span></label>
+                                        <textarea
+                                            className="form-control rounded-4 py-3 shadow-sm font-body"
+                                            rows="3"
+                                            placeholder='Paste full <iframe src="https://www.google.com/maps/embed?pb=..."></iframe> code here'
+                                            value={pageData.content.mapEmbed || ''}
+                                            onChange={(e) => updateContentField('mapEmbed', e.target.value)}
+                                        />
+                                        {pageData.content.mapEmbed && pageData.content.mapEmbed.startsWith('https://') && (
+                                            <>
+                                                <p className="extra-small text-success mt-2 mb-0 fw-bold">✓ Map URL extracted successfully</p>
+                                                <div className="mt-3 rounded-4 overflow-hidden border shadow-sm" style={{ height: '200px' }}>
+                                                    <iframe src={pageData.content.mapEmbed} width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade" title="Map Preview" />
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -326,17 +435,79 @@ const PagesCMS = ({ showToast, setConfirmModal }) => {
                                 </div>
                             )}
 
+                            {selectedSlug === 'footer' && (
+                                <div className="animate-fade-in">
+                                    <div className="d-flex justify-content-between align-items-center mb-4">
+                                        <div className="flex-grow-1 me-3">
+                                            <label className="extra-small text-muted fw-bold mb-2 d-block font-label">CATEGORIES SECTION TITLE</label>
+                                            <input type="text" className="form-control rounded-4 py-3 shadow-sm" value={pageData.content.categoriesTitle || ''} onChange={(e) => updateContentField('categoriesTitle', e.target.value)} />
+                                        </div>
+                                        <button 
+                                            className="btn btn-outline-primary rounded-pill px-4 py-2 mt-4 font-label extra-small fw-bold shadow-sm"
+                                            onClick={async () => {
+                                                try {
+                                                    const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/cms/categories`);
+                                                    const autoCats = data.map(c => ({
+                                                        name: c.name,
+                                                        link: `/categories?selected=${encodeURIComponent(c.name)}`
+                                                    }));
+                                                    updateContentField('categories', autoCats);
+                                                    showToast(`Successfully populated ${autoCats.length} categories!`, 'success');
+                                                } catch (e) {
+                                                    showToast('Failed to fetch store categories', 'error');
+                                                }
+                                            }}
+                                        >
+                                            <RefreshCw size={16} className="me-2" /> SYNC WITH STORE CATEGORIES
+                                        </button>
+                                    </div>
+
+                                    <label className="extra-small text-muted fw-bold mb-3 d-block font-label uppercase ls-sm">Premium Categories Links</label>
+                                    <div className="row g-3">
+                                        {(pageData.content.categories || []).map((cat, idx) => (
+                                            <div key={idx} className="col-md-6">
+                                                <div className="p-3 border rounded-4 bg-light bg-opacity-25 position-relative">
+                                                    <button className="btn btn-sm btn-white border rounded-circle position-absolute top-0 end-0 m-1 text-danger shadow-sm" style={{ zIndex: 2 }} onClick={() => {
+                                                        const nc = pageData.content.categories.filter((_, i) => i !== idx);
+                                                        updateContentField('categories', nc);
+                                                    }}><Trash size={12} /></button>
+                                                    <div className="mb-2">
+                                                        <label className="extra-small opacity-50 fw-bold mb-1">LABEL</label>
+                                                        <input type="text" className="form-control form-control-sm rounded-3" value={cat.name} onChange={(e) => {
+                                                            const nc = [...pageData.content.categories];
+                                                            nc[idx].name = e.target.value;
+                                                            updateContentField('categories', nc);
+                                                        }} />
+                                                    </div>
+                                                    <div>
+                                                        <label className="extra-small opacity-50 fw-bold mb-1">LINK (Slug or URL)</label>
+                                                        <input type="text" className="form-control form-control-sm rounded-3" value={cat.link} onChange={(e) => {
+                                                            const nc = [...pageData.content.categories];
+                                                            nc[idx].link = e.target.value;
+                                                            updateContentField('categories', nc);
+                                                        }} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <button className="btn btn-outline-primary rounded-pill px-4 py-2 font-label extra-small fw-bold mt-4" onClick={() => {
+                                        updateContentField('categories', [...(pageData.content.categories || []), { name: '', link: '' }]);
+                                    }}><Plus size={16} /> ADD CATEGORY LINK</button>
+                                </div>
+                            )}
+
                             {['shipping', 'returns', 'privacy'].includes(selectedSlug) && (
                                 <div className="animate-fade-in">
-                                    <label className="extra-small text-muted fw-bold mb-2 d-block font-label uppercase ls-sm">Policy Content</label>
-                                    <textarea 
-                                        className="form-control rounded-5 p-4 border-opacity-25 shadow-sm font-body lh-lg" 
-                                        rows="15" 
-                                        placeholder="Paste your policy text here. Use separate paragraphs for clarity..."
-                                        value={pageData.content.text}
-                                        onChange={(e) => updateContentField('text', e.target.value)}
-                                    />
-                                    <p className="extra-small text-muted mt-3 d-flex align-items-center gap-2"> <Info size={14} /> Tip: You can use simple text. Each new line will be treated as a new paragraph in the public view.</p>
+                                    <label className="extra-small text-muted fw-bold mb-3 d-block font-label uppercase ls-sm">Policy Content (Rich Text / Word Style)</label>
+                                    <div className="rounded-4 overflow-hidden border">
+                                        <JoditEditor
+                                            value={pageData.content.text || ''}
+                                            config={editorConfig}
+                                            onBlur={(newContent) => updateContentField('text', newContent)}
+                                        />
+                                    </div>
+                                    <p className="extra-small text-muted mt-3 d-flex align-items-center gap-2"> <Info size={14} /> Tip: Use the toolbar above for formatting like Bold, Lists, and Alignment. You can also paste directly from Word.</p>
                                 </div>
                             )}
                         </div>
