@@ -119,7 +119,11 @@ const AdminDashboard = () => {
         }
         audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
         audioRef.current.loop = true;
-        audioRef.current.play().catch(e => console.error('Audio play blocked:', e));
+        audioRef.current.play().catch((error) => {
+            if (error?.name !== 'AbortError' && error?.name !== 'NotAllowedError') {
+                console.error('Audio play failed:', error);
+            }
+        });
 
         setTimeout(() => {
             if (audioRef.current) {
@@ -540,6 +544,8 @@ const AdminDashboard = () => {
                             setSelectedOrder={setSelectedOrder}
                             showModal={showModal}
                             setShowModal={setShowModal}
+                            trackingInput={trackingInput}
+                            setTrackingInput={setTrackingInput}
                             updateOrderStatus={updateOrderStatus}
                             generateInvoice={generateInvoice}
                             generateReceipt={generateReceipt}
@@ -2358,7 +2364,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
     );
 };
 
-const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled, showToast, setConfirmModal, selectedOrder, setSelectedOrder, showModal, setShowModal, updateOrderStatus, generateInvoice, generateReceipt }) => {
+const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled, showToast, setConfirmModal, selectedOrder, setSelectedOrder, showModal, setShowModal, trackingInput, setTrackingInput, updateOrderStatus, generateInvoice, generateReceipt }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
     const [currentPage, setCurrentPage] = useState(1);
