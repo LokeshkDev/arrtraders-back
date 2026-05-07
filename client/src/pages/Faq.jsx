@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 
 const Faq = () => {
   const [activeIndex, setActiveIndex] = useState(null);
@@ -10,7 +11,7 @@ const Faq = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/cms/pages/faq`);
+        const { data } = await axios.get(`${API_BASE_URL}/api/cms/pages/faq`);
         setData(data);
       } catch (error) {
         console.error('Fetch error:', error);

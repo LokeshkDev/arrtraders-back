@@ -4,6 +4,7 @@ import { Heart, ShoppingCart, Sparkles, ArrowRight, X } from 'lucide-react';
 import { WishlistContext } from '../context/WishlistContext';
 import { CartContext } from '../context/CartContext';
 import './Wishlist.css';
+import { API_BASE_URL } from '../config/api';
 
 const Wishlist = () => {
     const { wishlist, toggleWishlist } = useContext(WishlistContext);
@@ -63,7 +64,7 @@ const Wishlist = () => {
 
                                 <div className="wishlist-art-img-box position-relative overflow-hidden rounded-2">
                                     <img
-                                        src={product.image?.startsWith('http') ? product.image : `${import.meta.env.VITE_API_URL}${product.image}`}
+                                        src={product.image?.startsWith('http') ? product.image : `${API_BASE_URL}${product.image}`}
                                         className="w-100 h-100 object-fit-cover transition-all hover-jewel"
                                         alt={product.name}
                                     />

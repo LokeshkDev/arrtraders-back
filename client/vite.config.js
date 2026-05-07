@@ -11,11 +11,11 @@ export default defineConfig({
   build: {
     // Increase chunk size limit to suppress warning (optional)
     chunkSizeWarningLimit: 1000,
-    // Disable sourcemaps to save memory during build on Render
+    // Disable sourcemaps to keep production builds lighter.
     sourcemap: false,
     rollupOptions: {
       output: {
-        // Manual chunking to split large vendor libraries and prevent OOM on Render
+        // Split large vendor libraries for lower memory usage during production builds.
         manualChunks(id) {
           if (id.includes('node_modules')) {
             if (id.includes('firebase')) return 'vendor-firebase';

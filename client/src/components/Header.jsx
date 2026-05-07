@@ -8,6 +8,7 @@ import SideCategoryMenu from './SideCategoryMenu';
 import LocationPicker from './LocationPicker';
 import './Header.css';
 import './LocationPicker.css';
+import { API_BASE_URL } from '../config/api';
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -72,7 +73,7 @@ const Header = () => {
 
     const fetchShippingSettings = async () => {
       try {
-        const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/cms/homepage`);
+        const { data } = await axios.get(`${API_BASE_URL}/api/cms/homepage`);
         if (data.freeShippingThreshold) setShippingThreshold(data.freeShippingThreshold);
         if (data.promos) setPromos(data.promos);
       } catch (e) { console.error('Failed to fetch shipping settings'); }

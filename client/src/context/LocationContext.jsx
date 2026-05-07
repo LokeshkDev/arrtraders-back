@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 
 const LocationContext = createContext();
 
@@ -18,7 +19,7 @@ export const LocationProvider = ({ children }) => {
         if (!loc || !loc.pincode) return null;
         setLoading(true);
         try {
-            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/delivery/validate`, {
+            const { data } = await axios.post(`${API_BASE_URL}/api/delivery/validate`, {
                 pincode: loc.pincode,
                 city: loc.city,
                 state: loc.state

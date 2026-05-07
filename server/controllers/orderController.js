@@ -93,12 +93,12 @@ export const ensureOrderTrackingSchema = async () => {
 };
 
 const getClientUrl = (req) => {
-    // Priority: Env Var > Request Origin (Dynamic) > Fallback
     if (process.env.CLIENT_URL) return process.env.CLIENT_URL;
     if (process.env.FRONTEND_URL) return process.env.FRONTEND_URL;
     if (req && req.headers.origin) return req.headers.origin;
     if (process.env.ALLOWED_ORIGINS) return process.env.ALLOWED_ORIGINS.split(',')[0];
-    return 'http://localhost:5173';
+    if (req && req.get('host')) return `${req.protocol}://${req.get('host')}`;
+    return '';
 };
 
 const normalizePhone = (phone) => {

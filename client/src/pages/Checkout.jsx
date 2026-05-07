@@ -5,6 +5,7 @@ import { MapPin, CreditCard, Package, ShieldCheck, Truck, ChevronRight, Phone, H
 import { CartContext } from '../context/CartContext';
 import { useLocation } from '../context/LocationContext';
 import './Checkout.css';
+import { API_BASE_URL } from '../config/api';
 
 const Checkout = () => {
     const navigate = useNavigate();
@@ -78,7 +79,7 @@ const Checkout = () => {
 
     const fetchAddresses = async () => {
         try {
-            const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/profile`);
+            const { data } = await axios.get(`${API_BASE_URL}/api/users/profile`);
             const validAddresses = (data.addresses || []).filter(isValidAddress);
             setAddresses(validAddresses);
 
@@ -101,7 +102,7 @@ const Checkout = () => {
         const validateAddr = async () => {
             if (!selectedAddress) return;
             try {
-                const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/delivery/validate`, {
+                const { data } = await axios.post(`${API_BASE_URL}/api/delivery/validate`, {
                     pincode: selectedAddress.pincode,
                     city: selectedAddress.city,
                     state: selectedAddress.state
@@ -132,8 +133,8 @@ const Checkout = () => {
         const fetchSettingsAndCoupons = async () => {
             try {
                 const [cmsRes, couponsRes] = await Promise.all([
-                    axios.get(`${import.meta.env.VITE_API_URL}/api/cms/homepage`),
-                    axios.get(`${import.meta.env.VITE_API_URL}/api/coupons/active`)
+                    axios.get(`${API_BASE_URL}/api/cms/homepage`),
+                    axios.get(`${API_BASE_URL}/api/coupons/active`)
                 ]);
 
                 if (cmsRes.data.freeShippingThreshold !== undefined) setFreeShippingThreshold(cmsRes.data.freeShippingThreshold);
@@ -158,7 +159,7 @@ const Checkout = () => {
         setPincodeCheck({ status: 'checking', serviceable: false, message: 'Checking serviceability...', deliveryCharge: 0 });
         pincodeTimerRef.current = setTimeout(async () => {
             try {
-                const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/delivery/check-pincode/${pin}`);
+                const { data } = await axios.get(`${API_BASE_URL}/api/delivery/check-pincode/${pin}`);
                 if (data.serviceable) {
                     setPincodeCheck({ status: 'success', serviceable: true, message: `Serviceable — Delivery: ₹${data.deliveryCharge}`, deliveryCharge: data.deliveryCharge });
                 } else {
@@ -198,7 +199,7 @@ const Checkout = () => {
         if (!window.confirm('Are you sure you want to delete this address?')) return;
         try {
             setLoading(true);
-            await axios.delete(`${import.meta.env.VITE_API_URL}/api/users/address/${addressId}`);
+            await axios.delete(`${API_BASE_URL}/api/users/address/${addressId}`);
             await fetchAddresses();
         } catch (error) {
             console.error(error);
@@ -217,9 +218,9 @@ const Checkout = () => {
         try {
             setLoading(true);
             if (editingAddressId) {
-                await axios.put(`${import.meta.env.VITE_API_URL}/api/users/address/${editingAddressId}`, newAddress);
+                await axios.put(`${API_BASE_URL}/api/users/address/${editingAddressId}`, newAddress);
             } else {
-                await axios.post(`${import.meta.env.VITE_API_URL}/api/users/address`, newAddress);
+                await axios.post(`${API_BASE_URL}/api/users/address`, newAddress);
             }
 
             await fetchAddresses();
@@ -242,7 +243,7 @@ const Checkout = () => {
         setCouponError('');
         setCouponApplied(null);
         try {
-            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/coupons/validate`, {
+            const { data } = await axios.post(`${API_BASE_URL}/api/coupons/validate`, {
                 code: couponCode.trim(),
                 cartTotal: subtotal
             });
@@ -337,7 +338,7 @@ const Checkout = () => {
             };
 
             console.log('[CHECKOUT] Creating order with method:', paymentMethod);
-            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/orders`, orderData);
+            const { data } = await axios.post(`${API_BASE_URL}/api/orders`, orderData);
             console.log('[CHECKOUT] Order created:', data._id, 'Payment Session:', data.paymentSessionId ? 'YES' : 'NO');
             orderPlacedRef.current = true;
 
@@ -645,7 +646,7 @@ const Checkout = () => {
                                 {cart.map((item, idx) => (
                                     <div key={idx} className="summary-item-row">
                                         <div className="position-relative flex-shrink-0" style={{ width: '65px', height: '65px' }}>
-                                            <img src={item.image?.startsWith('http') ? item.image : `${import.meta.env.VITE_API_URL}${item.image}`} className="w-100 h-100 object-fit-cover rounded-2" alt="" />
+                                            <img src={item.image?.startsWith('http') ? item.image : `${API_BASE_URL}${item.image}`} className="w-100 h-100 object-fit-cover rounded-2" alt="" />
                                             <span className="summary-qty-bubble">{item.qty}</span>
                                         </div>
                                         <div className="flex-grow-1 min-w-0">

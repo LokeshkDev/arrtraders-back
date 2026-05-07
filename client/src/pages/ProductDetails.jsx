@@ -30,6 +30,7 @@ import { WishlistContext } from '../context/WishlistContext';
 import { useLocation } from '../context/LocationContext';
 import ProductCard from '../components/ProductCard';
 import './ProductDetails.css';
+import { API_BASE_URL } from '../config/api';
 
 const ProductDetails = () => {
   const { categorySlug, productSlug } = useParams();
@@ -62,7 +63,7 @@ const ProductDetails = () => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/products/slug/${categorySlug}/${productSlug}`);
+        const { data } = await axios.get(`${API_BASE_URL}/api/products/slug/${categorySlug}/${productSlug}`);
         setProduct(data);
         
         // Synthesize weights including Primary Weight
@@ -88,7 +89,7 @@ const ProductDetails = () => {
     // Fetch global shipping info from CMS
     const fetchShipping = async () => {
       try {
-        const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/cms/homepage`);
+        const { data } = await axios.get(`${API_BASE_URL}/api/cms/homepage`);
         if (data?.shippingInfo) setShippingInfo(data.shippingInfo);
       } catch (e) { console.error('Shipping fetch error:', e); }
     };
@@ -97,7 +98,7 @@ const ProductDetails = () => {
     // Fetch featured products
     const fetchFeatured = async () => {
       try {
-        const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/products`);
+        const { data } = await axios.get(`${API_BASE_URL}/api/products`);
         const fp = data.filter(p => p.isFeatured).slice(0, 8);
         setFeaturedProducts(fp);
       } catch (e) { console.error('Featured fetch error:', e); }

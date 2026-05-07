@@ -84,7 +84,7 @@ export const googleLogin = async (req, res) => {
         }
 
         const token = generateToken(user.id);
-        const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
+        const isProduction = process.env.NODE_ENV === 'production';
 
         res.cookie('jwt', token, {
             httpOnly: true,
@@ -142,7 +142,7 @@ export const phoneLogin = async (req, res) => {
         }
 
         const token = generateToken(user.id);
-        const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
+        const isProduction = process.env.NODE_ENV === 'production';
 
         res.cookie('jwt', token, {
             httpOnly: true,
@@ -177,7 +177,7 @@ export const authUser = async (req, res) => {
 
         if (user && (await user.matchPassword(trimmedPassword))) {
             const token = generateToken(user.id);
-            const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
+            const isProduction = process.env.NODE_ENV === 'production';
 
             res.cookie('jwt', token, {
                 httpOnly: true,
@@ -223,7 +223,7 @@ export const registerUser = async (req, res) => {
 
         if (user) {
             const token = generateToken(user.id);
-            const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
+            const isProduction = process.env.NODE_ENV === 'production';
 
             res.cookie('jwt', token, {
                 httpOnly: true,
@@ -297,7 +297,7 @@ export const updateUserProfile = async (req, res) => {
             }
             const updatedUser = await user.save();
             const token = generateToken(updatedUser.id);
-            const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
+            const isProduction = process.env.NODE_ENV === 'production';
 
             res.cookie('jwt', token, {
                 httpOnly: true,
@@ -526,7 +526,7 @@ export const getDashboardStats = async (req, res) => {
 // @desc    Logout user / clear cookie
 // @route   POST /api/users/logout
 export const logoutUser = (req, res) => {
-    const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
+    const isProduction = process.env.NODE_ENV === 'production';
     res.cookie('jwt', '', {
         httpOnly: true,
         expires: new Date(0),

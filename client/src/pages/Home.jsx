@@ -8,6 +8,7 @@ import { CartContext } from '../context/CartContext';
 import { ArrowRight, ShoppingCart, Heart, Eye, TrendingUp, Star, ShieldCheck, Truck, RefreshCcw, Clock, ChevronLeft, ChevronRight, Mail } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import Testimonials from '../components/Testimonials';
+import { API_BASE_URL } from '../config/api';
 
 // Import Swiper styles
 import 'swiper/css';
@@ -52,7 +53,7 @@ const Home = () => {
   useEffect(() => {
     const fetchCMS = async () => {
       try {
-        const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/cms/homepage`);
+        const { data } = await axios.get(`${API_BASE_URL}/api/cms/homepage`);
         setCmsData(data);
       } catch (error) {
         console.error('CMS fetch error:', error);
@@ -97,7 +98,7 @@ const Home = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/products`);
+        const { data } = await axios.get(`${API_BASE_URL}/api/products`);
 
         // 1. Best Sellers
         const bs = data.filter(p => p.isBestSeller).slice(0, 8);

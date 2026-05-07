@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Truck, ShieldCheck, Headphones, Leaf } from 'lucide-react';
 import './Features.css';
+import { API_BASE_URL } from '../config/api';
 
 const Features = () => {
   const [threshold, setThreshold] = useState(1999);
@@ -9,7 +10,7 @@ const Features = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/cms/homepage`);
+        const { data } = await axios.get(`${API_BASE_URL}/api/cms/homepage`);
         if (data.freeShippingThreshold) setThreshold(data.freeShippingThreshold);
       } catch (e) { console.error(e); }
     };

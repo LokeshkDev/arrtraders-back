@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 
 const Shipping = () => {
   const [data, setData] = useState(null);
@@ -10,8 +11,8 @@ const Shipping = () => {
     const fetchData = async () => {
       try {
         const [pageRes, cmsRes] = await Promise.all([
-          axios.get(`${import.meta.env.VITE_API_URL}/api/cms/pages/shipping`),
-          axios.get(`${import.meta.env.VITE_API_URL}/api/cms/homepage`)
+          axios.get(`${API_BASE_URL}/api/cms/pages/shipping`),
+          axios.get(`${API_BASE_URL}/api/cms/homepage`)
         ]);
         setData(pageRes.data);
         if (cmsRes.data.freeShippingThreshold) setThreshold(cmsRes.data.freeShippingThreshold);

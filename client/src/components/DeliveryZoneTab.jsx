@@ -3,6 +3,7 @@ import axios from 'axios';
 import {
     Plus, Trash, Edit, Search, MapPin, Upload, Filter, X, CheckCircle, AlertCircle
 } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 
 const STATE_OPTIONS = [
     {
@@ -131,7 +132,7 @@ const DeliveryZoneTab = ({ showToast, setConfirmModal }) => {
     const fetchZones = async () => {
         try {
             setLoading(true);
-            const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/delivery/zones`);
+            const { data } = await axios.get(`${API_BASE_URL}/api/delivery/zones`);
             setZones(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Failed to fetch zones:', error);
@@ -144,7 +145,7 @@ const DeliveryZoneTab = ({ showToast, setConfirmModal }) => {
     const fetchShippingSettings = async () => {
         try {
             setSettingsLoading(true);
-            const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/cms/homepage`);
+            const { data } = await axios.get(`${API_BASE_URL}/api/cms/homepage`);
             setShippingSettings({
                 freeShippingThreshold: data.freeShippingThreshold ?? 1999
             });
@@ -159,7 +160,7 @@ const DeliveryZoneTab = ({ showToast, setConfirmModal }) => {
         e.preventDefault();
         try {
             setSavingSettings(true);
-            await axios.put(`${import.meta.env.VITE_API_URL}/api/cms/homepage`, {
+            await axios.put(`${API_BASE_URL}/api/cms/homepage`, {
                 freeShippingThreshold: Number(shippingSettings.freeShippingThreshold)
             });
             showToast('Free shipping rule updated');
@@ -256,7 +257,7 @@ const DeliveryZoneTab = ({ showToast, setConfirmModal }) => {
         setIsSaving(true);
         try {
             if (coverage === 'pincodes' && !editId) {
-                await axios.post(`${import.meta.env.VITE_API_URL}/api/delivery/zones/bulk`, {
+                await axios.post(`${API_BASE_URL}/api/delivery/zones/bulk`, {
                     pincodes: parsedPincodes,
                     name: payload.name || `${selectedState} Pincode Zone`,
                     deliveryCharge: payload.deliveryCharge
@@ -268,10 +269,10 @@ const DeliveryZoneTab = ({ showToast, setConfirmModal }) => {
                     setIsSaving(false);
                     return;
                 }
-                await axios.put(`${import.meta.env.VITE_API_URL}/api/delivery/zones/${editId}`, payload);
+                await axios.put(`${API_BASE_URL}/api/delivery/zones/${editId}`, payload);
                 showToast('Delivery zone updated successfully');
             } else {
-                await axios.post(`${import.meta.env.VITE_API_URL}/api/delivery/zones`, payload);
+                await axios.post(`${API_BASE_URL}/api/delivery/zones`, payload);
                 showToast('New delivery zone created');
             }
 
@@ -308,7 +309,7 @@ const DeliveryZoneTab = ({ showToast, setConfirmModal }) => {
 
         setIsSaving(true);
         try {
-            await axios.post(`${import.meta.env.VITE_API_URL}/api/delivery/zones/bulk`, {
+            await axios.post(`${API_BASE_URL}/api/delivery/zones/bulk`, {
                 pincodes: bulkParsedPincodes,
                 name: bulkData.name,
                 deliveryCharge: bulkData.deliveryCharge
@@ -332,7 +333,7 @@ const DeliveryZoneTab = ({ showToast, setConfirmModal }) => {
             message: 'Are you sure you want to remove this delivery zone? Customers in this area may no longer be able to place orders.',
             onConfirm: async () => {
                 try {
-                    await axios.delete(`${import.meta.env.VITE_API_URL}/api/delivery/zones/${id}`);
+                    await axios.delete(`${API_BASE_URL}/api/delivery/zones/${id}`);
                     showToast('Zone deleted successfully');
                     fetchZones();
                 } catch (error) {

@@ -3,6 +3,7 @@ dotenv.config();
 
 import express from 'express';
 import cors from 'cors';
+import fs from 'fs';
 import path from 'path';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
@@ -39,7 +40,7 @@ initializeApp();
 
 const app = express();
 
-// Trust proxy for Render load balancer (necessary for Secure cookies)
+// Trust the reverse proxy on Lightsail/Nginx so secure cookies and client IPs work correctly.
 app.set('trust proxy', 1);
 
 const __filename = fileURLToPath(import.meta.url);
@@ -53,27 +54,36 @@ const authLimiter = rateLimit({
 });
 
 // Middleware
-const allowedOrigins = process.env.ALLOWED_ORIGINS 
-    ? process.env.ALLOWED_ORIGINS.split(',') 
-    : ['http://localhost:5173', 'http://127.0.0.1:5173'];
+const parseOrigins = (value) => (value || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 
-app.use(cors({
-    origin: (origin, callback) => {
-        // allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        
-        // Trust any Render subdomain or localhost
-        const isRender = origin.endsWith('.onrender.com');
-        const isLocal = origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1');
-        
-        if (isRender || isLocal || allowedOrigins.indexOf(origin) !== -1) {
-            return callback(null, true);
-        } else {
-            const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-            return callback(new Error(msg), false);
-        }
-    },
-    credentials: true,
+const allowedOrigins = [
+    ...parseOrigins(process.env.ALLOWED_ORIGINS),
+    ...parseOrigins(process.env.CLIENT_URL),
+    ...parseOrigins(process.env.FRONTEND_URL)
+];
+
+const isProduction = process.env.NODE_ENV === 'production';
+
+app.use(cors((req, callback) => {
+    const origin = req.header('Origin');
+
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, { origin: true, credentials: true });
+
+    const isLocal = origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1');
+    const sameOrigin = req.get('host') && origin === `${req.protocol}://${req.get('host')}`;
+
+    if (sameOrigin || (!isProduction && isLocal) || allowedOrigins.includes(origin)) {
+        return callback(null, { origin: true, credentials: true });
+    }
+
+    return callback(new Error('The CORS policy for this site does not allow access from the specified Origin.'), {
+        origin: false,
+        credentials: true
+    });
 }));
 app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -103,9 +113,7 @@ app.use(helmet({
                 "https://sdk.cashfree.com",
                 "https://*.cashfree.com",
                 "https://sandbox.cashfree.com",
-                "https://api.cashfree.com",
-                "http://localhost:*",
-                "ws://localhost:*"
+                "https://api.cashfree.com"
             ],
             frameSrc: [
                 "'self'",
@@ -147,10 +155,25 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/delivery', deliveryRoutes);
 
-// Root route
-app.get('/', (req, res) => {
+app.get('/api/health', (req, res) => {
     res.send('API is running...');
 });
+
+const clientDistPath = path.resolve(__dirname, '../client/dist');
+
+if (fs.existsSync(clientDistPath)) {
+    app.use(express.static(clientDistPath));
+    app.get('/', (req, res) => {
+        res.sendFile(path.join(clientDistPath, 'index.html'));
+    });
+    app.get(/^(?!\/api|\/images|\/uploads).*/, (req, res) => {
+        res.sendFile(path.join(clientDistPath, 'index.html'));
+    });
+} else {
+    app.get('/', (req, res) => {
+        res.send('API is running...');
+    });
+}
 
 app.use(notFound);
 app.use(errorHandler);
@@ -169,5 +192,5 @@ const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
     console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-    console.log(`Production Robustness: NODE_ENV=${process.env.NODE_ENV}, RENDER=${!!process.env.RENDER}`);
+    console.log(`Allowed origins: ${allowedOrigins.length ? allowedOrigins.join(', ') : 'same-origin only'}`);
 });

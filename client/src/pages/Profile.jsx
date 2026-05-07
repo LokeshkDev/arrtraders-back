@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import './Profile.css';
+import { API_BASE_URL } from '../config/api';
 
 const Profile = () => {
     const navigate = useNavigate();
@@ -63,8 +64,8 @@ const Profile = () => {
             setLoading(true);
 
             const [profileRes, ordersRes] = await Promise.all([
-                axios.get(`${import.meta.env.VITE_API_URL}/api/users/profile`),
-                axios.get(`${import.meta.env.VITE_API_URL}/api/orders/myorders`)
+                axios.get(`${API_BASE_URL}/api/users/profile`),
+                axios.get(`${API_BASE_URL}/api/orders/myorders`)
             ]);
 
             setUser(profileRes.data);
@@ -92,7 +93,7 @@ const Profile = () => {
             const updateData = { name: profileForm.name, email: profileForm.email, phone: profileForm.phone };
             if (profileForm.newPassword) updateData.password = profileForm.newPassword;
 
-            const { data } = await axios.put(`${import.meta.env.VITE_API_URL}/api/users/profile`, updateData);
+            const { data } = await axios.put(`${API_BASE_URL}/api/users/profile`, updateData);
 
             localStorage.setItem('userInfo', JSON.stringify({ ...userInfo, name: data.name, email: data.email, phone: data.phone }));
 
@@ -114,9 +115,9 @@ const Profile = () => {
         try {
             const userInfo = JSON.parse(localStorage.getItem('userInfo'));
             if (addressForm._id) {
-                await axios.put(`${import.meta.env.VITE_API_URL}/api/users/address/${addressForm._id}`, addressForm);
+                await axios.put(`${API_BASE_URL}/api/users/address/${addressForm._id}`, addressForm);
             } else {
-                await axios.post(`${import.meta.env.VITE_API_URL}/api/users/address`, addressForm);
+                await axios.post(`${API_BASE_URL}/api/users/address`, addressForm);
             }
 
             setShowAddressModal(false);
@@ -130,7 +131,7 @@ const Profile = () => {
         if (!window.confirm('Are you sure you want to delete this address?')) return;
         try {
             const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-            await axios.delete(`${import.meta.env.VITE_API_URL}/api/users/address/${id}`);
+            await axios.delete(`${API_BASE_URL}/api/users/address/${id}`);
             fetchProfileData();
         } catch (error) {
             alert('Failed to delete address');
@@ -264,7 +265,7 @@ const Profile = () => {
                                                 {/* Preview Items Strip */}
                                                 <div className="order-strip-preview mt-4 pt-3 border-top d-flex gap-2">
                                                     {order.orderItems.map((item, i) => (
-                                                        <img key={i} src={item.image?.startsWith('http') ? item.image : `${import.meta.env.VITE_API_URL}${item.image}`} className="rounded-3 border shadow-xs object-fit-cover" style={{ width: '45px', height: '45px' }} alt="" />
+                                                        <img key={i} src={item.image?.startsWith('http') ? item.image : `${API_BASE_URL}${item.image}`} className="rounded-3 border shadow-xs object-fit-cover" style={{ width: '45px', height: '45px' }} alt="" />
                                                     ))}
                                                     {order.orderItems.length > 5 && <span className="more-count">+{order.orderItems.length - 5}</span>}
                                                 </div>
@@ -500,7 +501,7 @@ const Profile = () => {
                                         <div key={i} className="frontend-item-card-premium d-flex align-items-center gap-3 p-3 rounded-4 mb-2 border border-transparent hover-bg-light transition-all">
                                             <div className="item-img-box rounded-3 overflow-hidden border shadow-sm" style={{ width: '56px', height: '56px' }}>
                                                 <img
-                                                    src={item.image?.startsWith('http') ? item.image : `${import.meta.env.VITE_API_URL}${item.image}`}
+                                                    src={item.image?.startsWith('http') ? item.image : `${API_BASE_URL}${item.image}`}
                                                     alt=""
                                                     className="w-100 h-100 object-fit-cover"
                                                 />

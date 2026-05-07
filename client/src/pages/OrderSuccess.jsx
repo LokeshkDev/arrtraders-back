@@ -4,6 +4,7 @@ import axios from 'axios';
 import { CheckCircle2, Package, Calendar, ArrowRight, Home, ShoppingBag, Loader2 } from 'lucide-react';
 import { CartContext } from '../context/CartContext';
 import './OrderSuccess.css';
+import { API_BASE_URL } from '../config/api';
 
 const OrderSuccess = () => {
     const { id } = useParams();
@@ -22,7 +23,7 @@ const OrderSuccess = () => {
             if (!cashfreeOrderId) return;
 
             try {
-                const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/orders/${id}/verify-payment`, {
+                const { data } = await axios.post(`${API_BASE_URL}/api/orders/${id}/verify-payment`, {
                     cashfreeOrderId
                 });
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import './CategoriesSection.css';
+import { API_BASE_URL } from '../config/api';
 
 const CategoriesSection = ({ categories }) => {
   return (
@@ -17,7 +18,7 @@ const CategoriesSection = ({ categories }) => {
             <div key={cat._id || idx} className="category-card-organio animated fadeInUp">
               <div className="category-img-wrap">
                 <img 
-                  src={cat.image?.startsWith('http') ? cat.image : `${import.meta.env.VITE_API_URL}${cat.image}`} 
+                  src={cat.image?.startsWith('http') ? cat.image : `${API_BASE_URL}${cat.image}`} 
                   alt={cat.name} 
                 />
               </div>

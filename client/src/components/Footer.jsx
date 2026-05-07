@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import './Footer.css';
+import { API_BASE_URL } from '../config/api';
 
 const Footer = () => {
   const [footerData, setFooterData] = useState(null);
@@ -11,8 +12,8 @@ const Footer = () => {
     const fetchData = async () => {
       try {
         const [contactRes, footerRes] = await Promise.all([
-          axios.get(`${import.meta.env.VITE_API_URL}/api/cms/pages/contact`),
-          axios.get(`${import.meta.env.VITE_API_URL}/api/cms/pages/footer`)
+          axios.get(`${API_BASE_URL}/api/cms/pages/contact`),
+          axios.get(`${API_BASE_URL}/api/cms/pages/footer`)
         ]);
         
         if (contactRes.data?.content) setSocialLinks(contactRes.data.content);

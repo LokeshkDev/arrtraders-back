@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 
 export const ShopContext = createContext();
 
@@ -13,7 +14,7 @@ export const ShopProvider = ({ children }) => {
         const fetchShopData = async () => {
             setLoading(true);
             try {
-                const apiURL = import.meta.env.VITE_API_URL || '';
+                const apiURL = API_BASE_URL || '';
                 const [catsRes, prodsRes] = await Promise.all([
                     axios.get(`${apiURL}/api/cms/categories`),
                     axios.get(`${apiURL}/api/products`)
@@ -35,7 +36,7 @@ export const ShopProvider = ({ children }) => {
     const getImageUrl = (imagePath) => {
         if (!imagePath) return '/images/reference/placeholder.png'; // Fallback
         if (imagePath.startsWith('http')) return imagePath;
-        const apiURL = import.meta.env.VITE_API_URL || '';
+        const apiURL = API_BASE_URL || '';
         return `${apiURL}${imagePath}`;
     };
 

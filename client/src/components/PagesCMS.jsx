@@ -7,6 +7,7 @@ import {
     MapPin, Clock, MessageSquare, HelpCircle, 
     Shield, RefreshCw, Truck, LayoutDashboard
 } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 
 const PagesCMS = ({ showToast, setConfirmModal }) => {
     const editorConfig = useMemo(() => ({
@@ -55,7 +56,7 @@ const PagesCMS = ({ showToast, setConfirmModal }) => {
         try {
             setLoading(true);
             setPageData(null); // Reset pageData to prevent stale data rendering
-            const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/cms/pages/${slug}`);
+            const { data } = await axios.get(`${API_BASE_URL}/api/cms/pages/${slug}`);
             setPageData(data);
         } catch (error) {
             if (error.response?.status === 404) {
@@ -133,7 +134,7 @@ const PagesCMS = ({ showToast, setConfirmModal }) => {
     const handleSave = async () => {
         try {
             setSaving(true);
-            await axios.put(`${import.meta.env.VITE_API_URL}/api/cms/pages/${selectedSlug}`, pageData);
+            await axios.put(`${API_BASE_URL}/api/cms/pages/${selectedSlug}`, pageData);
             showToast('Page updated successfully!');
         } catch (error) {
             showToast('Failed to save page: ' + (error.response?.data?.message || error.message), 'error');
@@ -150,7 +151,7 @@ const PagesCMS = ({ showToast, setConfirmModal }) => {
         formData.append('image', file);
 
         try {
-            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/cms/pages/upload`, formData);
+            const { data } = await axios.post(`${API_BASE_URL}/api/cms/pages/upload`, formData);
             if (field === 'bannerImage') {
                 setPageData({ ...pageData, bannerImage: data.url });
             } else {
@@ -446,7 +447,7 @@ const PagesCMS = ({ showToast, setConfirmModal }) => {
                                             className="btn btn-outline-primary rounded-pill px-4 py-2 mt-4 font-label extra-small fw-bold shadow-sm"
                                             onClick={async () => {
                                                 try {
-                                                    const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/cms/categories`);
+                                                    const { data } = await axios.get(`${API_BASE_URL}/api/cms/categories`);
                                                     const autoCats = data.map(c => ({
                                                         name: c.name,
                                                         link: `/categories?selected=${encodeURIComponent(c.name)}`

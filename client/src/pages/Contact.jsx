@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Phone, Mail, MapPin, Send, Clock, MessageSquare } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 
 const WhatsAppIcon = ({ size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -39,7 +40,7 @@ const Contact = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/cms/pages/contact`);
+        const { data } = await axios.get(`${API_BASE_URL}/api/cms/pages/contact`);
         setData(data);
       } catch (error) {
         console.error('Fetch error:', error);

@@ -63,6 +63,7 @@ import './AdminDashboard.css';
 import PagesCMS from '../components/PagesCMS.jsx';
 import DeliveryZoneTab from '../components/DeliveryZoneTab.jsx';
 import JoditEditor from 'jodit-react';
+import { API_BASE_URL } from '../config/api';
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('Overview');
@@ -130,7 +131,7 @@ const AdminDashboard = () => {
 
     const fetchOrders = async (silent = false) => {
         try {
-            const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/orders`);
+            const { data } = await axios.get(`${API_BASE_URL}/api/orders`);
             const currentIds = new Set(data.map(o => o._id));
 
             if (!isInitialMount.current) {
@@ -151,7 +152,7 @@ const AdminDashboard = () => {
 
     const updateOrderStatus = async (id, status, trackingNumber = null) => {
         try {
-            await axios.put(`${import.meta.env.VITE_API_URL}/api/orders/${id}/status`, { status, trackingNumber });
+            await axios.put(`${API_BASE_URL}/api/orders/${id}/status`, { status, trackingNumber });
             fetchOrders();
             showToast('Order status updated');
         } catch (error) { showToast('Order status update failed', 'error'); }
@@ -828,11 +829,11 @@ const AdminDashboard = () => {
                             e.preventDefault();
                             setIsSavingUser(true);
                             try {
-                                await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${editUser._id}`, {
+                                await axios.put(`${API_BASE_URL}/api/users/${editUser._id}`, {
                                     name: editForm.name, email: editForm.email, isAdmin: editForm.isAdmin
                                 });
                                 if (editForm.password) {
-                                    await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${editUser._id}/reset-password`, { password: editForm.password });
+                                    await axios.put(`${API_BASE_URL}/api/users/${editUser._id}/reset-password`, { password: editForm.password });
                                 }
                                 showToast('Identity profile synchronized');
                                 setEditUser(null);
@@ -952,10 +953,10 @@ const AdminDashboard = () => {
                                     isActive: couponForm.isActive
                                 };
                                 if (selectedCoupon) {
-                                    await axios.put(`${import.meta.env.VITE_API_URL}/api/coupons/${selectedCoupon._id}`, payload);
+                                    await axios.put(`${API_BASE_URL}/api/coupons/${selectedCoupon._id}`, payload);
                                     showToast('Campaign coupon updated');
                                 } else {
-                                    await axios.post(`${import.meta.env.VITE_API_URL}/api/coupons`, payload);
+                                    await axios.post(`${API_BASE_URL}/api/coupons`, payload);
                                     showToast('New reward campaign initiated');
                                 }
                                 setShowCouponModal(false);
@@ -1154,9 +1155,9 @@ const OverviewTab = ({ setActiveTab, orders = [] }) => {
         const fetchStats = async () => {
             try {
                 const [userRes, orderRes, prodRes] = await Promise.all([
-                    axios.get(`${import.meta.env.VITE_API_URL}/api/users/stats`),
-                    axios.get(`${import.meta.env.VITE_API_URL}/api/orders/stats`),
-                    axios.get(`${import.meta.env.VITE_API_URL}/api/products`)
+                    axios.get(`${API_BASE_URL}/api/users/stats`),
+                    axios.get(`${API_BASE_URL}/api/orders/stats`),
+                    axios.get(`${API_BASE_URL}/api/products`)
                 ]);
                 const lowStockCount = prodRes.data.filter(p => p.stock < 10).length;
                 setStats({
@@ -1351,8 +1352,8 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
         try {
             setLoading(true);
             const [prodRes, catRes] = await Promise.all([
-                axios.get(`${import.meta.env.VITE_API_URL}/api/products?admin=true`),
-                axios.get(`${import.meta.env.VITE_API_URL}/api/cms/categories?admin=true`)
+                axios.get(`${API_BASE_URL}/api/products?admin=true`),
+                axios.get(`${API_BASE_URL}/api/cms/categories?admin=true`)
             ]);
             setProducts(prodRes.data);
             setCategories(catRes.data);
@@ -1363,8 +1364,8 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
         const newOrder = direction === 'up' ? Math.max(0, (currentOrder || 0) - 1) : (currentOrder || 0) + 1;
         try {
             const url = type === 'category' 
-                ? `${import.meta.env.VITE_API_URL}/api/cms/categories/${id}`
-                : `${import.meta.env.VITE_API_URL}/api/products/${id}`;
+                ? `${API_BASE_URL}/api/cms/categories/${id}`
+                : `${API_BASE_URL}/api/products/${id}`;
             
             const formData = new FormData();
             formData.append('displayOrder', newOrder);
@@ -1421,7 +1422,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
             message: 'Are you sure you want to permanently delete this product from the inventory?',
             onConfirm: async () => {
                 try {
-                    await axios.delete(`${import.meta.env.VITE_API_URL}/api/products/${id}`);
+                    await axios.delete(`${API_BASE_URL}/api/products/${id}`);
                     showToast('Product deleted successfully');
                     fetchData();
                 } catch (error) { showToast('Delete failed: ' + error.message, 'error'); }
@@ -1436,7 +1437,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
             message: 'Deleting this category might affect associated products. Continue?',
             onConfirm: async () => {
                 try {
-                    await axios.delete(`${import.meta.env.VITE_API_URL}/api/cms/categories/${id}`);
+                    await axios.delete(`${API_BASE_URL}/api/cms/categories/${id}`);
                     showToast('Category deleted successfully');
                     fetchData();
                 } catch (error) { showToast('Delete failed: ' + error.message, 'error'); }
@@ -1468,7 +1469,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
             formData.append('isActive', catForm.isActive);
             formData.append('displayOrder', catForm.displayOrder);
             if (catFile) formData.append('image', catFile);
-            await axios.post(`${import.meta.env.VITE_API_URL}/api/cms/categories`, formData);
+            await axios.post(`${API_BASE_URL}/api/cms/categories`, formData);
             showToast('Category created successfully!');
             setView('list');
             fetchData();
@@ -1487,7 +1488,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
             formData.append('isActive', catForm.isActive);
             formData.append('displayOrder', catForm.displayOrder);
             if (catFile) formData.append('image', catFile);
-            await axios.put(`${import.meta.env.VITE_API_URL}/api/cms/categories/${editCatId}`, formData);
+            await axios.put(`${API_BASE_URL}/api/cms/categories/${editCatId}`, formData);
             showToast('Category updated!');
             setView('list');
             fetchData();
@@ -1520,10 +1521,10 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
             }
 
             if (view === 'editProduct') {
-                await axios.put(`${import.meta.env.VITE_API_URL}/api/products/${editId}`, formData);
+                await axios.put(`${API_BASE_URL}/api/products/${editId}`, formData);
                 showToast('Product updated!');
             } else {
-                await axios.post(`${import.meta.env.VITE_API_URL}/api/products`, formData);
+                await axios.post(`${API_BASE_URL}/api/products`, formData);
                 showToast('Product created!');
             }
             setView('list');
@@ -2078,7 +2079,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                             <tr key={prod._id}>
                                                 <td className="ps-4 py-3">
                                                     <div className="d-flex align-items-center gap-3">
-                                                        <img src={prod.image?.startsWith('http') ? prod.image : `${import.meta.env.VITE_API_URL}${prod.image}`} className="rounded-3 border" style={{ width: 40, height: 40, objectFit: 'cover' }} />
+                                                        <img src={prod.image?.startsWith('http') ? prod.image : `${API_BASE_URL}${prod.image}`} className="rounded-3 border" style={{ width: 40, height: 40, objectFit: 'cover' }} />
                                                         <div>
                                                             <div className="fw-bold text-primary">{prod.name}</div>
                                                             <div className="extra-small text-muted">{prod.category}</div>
@@ -2128,7 +2129,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                                     onClick={() => setOpenCategory(isOpen ? null : cat._id)}
                                                 >
                                                     <div className="cat-thumb shadow-sm border border-opacity-10 rounded-4 overflow-hidden" style={{ width: '64px', height: '64px' }}>
-                                                        <img src={(cat.image?.startsWith('http') || cat.image?.startsWith('/Reference') || cat.image?.startsWith('/images')) ? cat.image : `${import.meta.env.VITE_API_URL}${cat.image}`} alt="" className="w-100 h-100 object-fit-cover transition-all" />
+                                                        <img src={(cat.image?.startsWith('http') || cat.image?.startsWith('/Reference') || cat.image?.startsWith('/images')) ? cat.image : `${API_BASE_URL}${cat.image}`} alt="" className="w-100 h-100 object-fit-cover transition-all" />
                                                     </div>
                                                     <div className="flex-grow-1">
                                                         <h4 className="fw-bold m-0 font-headline d-flex align-items-center gap-3 text-danger">
@@ -2173,7 +2174,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                                                     const formData = new FormData();
                                                                     formData.append('name', cat.name);
                                                                     formData.append('isActive', newStatus);
-                                                                    await axios.put(`${import.meta.env.VITE_API_URL}/api/cms/categories/${cat._id}`, formData);
+                                                                    await axios.put(`${API_BASE_URL}/api/cms/categories/${cat._id}`, formData);
                                                                     fetchData();
                                                                 } catch (err) { showToast('Status update failed', 'error'); }
                                                             }}
@@ -2195,7 +2196,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                                                         <div className="bg-white p-3 rounded-4 border border-opacity-50 d-flex align-items-center justify-content-between shadow-sm hover-shadow-md transition-all">
                                                                             <div className="d-flex align-items-center gap-3">
                                                                                 <div className="cat-thumb-mini border rounded-3 overflow-hidden" style={{ width: '40px', height: '40px' }}>
-                                                                                    <img src={(sc.image?.startsWith('http') || sc.image?.startsWith('/Reference') || sc.image?.startsWith('/images')) ? sc.image : `${import.meta.env.VITE_API_URL}${sc.image}`} alt="" className="w-100 h-100 object-fit-cover" />
+                                                                                    <img src={(sc.image?.startsWith('http') || sc.image?.startsWith('/Reference') || sc.image?.startsWith('/images')) ? sc.image : `${API_BASE_URL}${sc.image}`} alt="" className="w-100 h-100 object-fit-cover" />
                                                                                 </div>
                                                                                 <span className="fw-bold small text-primary">{sc.name}</span>
                                                                             </div>
@@ -2233,7 +2234,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                                                             <div className="d-flex align-items-center gap-4">
                                                                                 <div className="position-relative">
                                                                                     <img
-                                                                                        src={(prod.image?.startsWith('http') || prod.image?.startsWith('/Reference') || prod.image?.startsWith('/images')) ? prod.image : `${import.meta.env.VITE_API_URL}${prod.image}`}
+                                                                                        src={(prod.image?.startsWith('http') || prod.image?.startsWith('/Reference') || prod.image?.startsWith('/images')) ? prod.image : `${API_BASE_URL}${prod.image}`}
                                                                                         className="cat-thumb-mini border border-opacity-50 rounded-4 shadow-sm transition-all hover-zoom"
                                                                                         alt=""
                                                                                         style={{ width: '60px', height: '60px', objectFit: 'cover' }}
@@ -2307,7 +2308,7 @@ const ProductsTab = ({ showToast, setConfirmModal }) => {
                                                                                                 const formData = new FormData();
                                                                                                 formData.append('name', prod.name);
                                                                                                 formData.append('isActive', newStatus);
-                                                                                                await axios.put(`${import.meta.env.VITE_API_URL}/api/products/${prod._id}`, formData);
+                                                                                                await axios.put(`${API_BASE_URL}/api/products/${prod._id}`, formData);
                                                                                                 fetchData();
                                                                                             } catch (err) { showToast('Status update failed', 'error'); }
                                                                                         }}
@@ -2373,7 +2374,7 @@ const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled, sh
             message: 'Are you sure you want to delete this order? This action cannot be undone.',
             onConfirm: async () => {
                 try {
-                    await axios.delete(`${import.meta.env.VITE_API_URL}/api/orders/${id}`);
+                    await axios.delete(`${API_BASE_URL}/api/orders/${id}`);
                     fetchOrders();
                     showToast('Order deleted successfully');
                 } catch (error) {
@@ -2630,7 +2631,7 @@ const CustomersTab = ({ showToast, setConfirmModal, editUser, setEditUser, editF
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/users`);
+            const { data } = await axios.get(`${API_BASE_URL}/api/users`);
             setUsers(data);
         } catch (error) {
             console.error('User fetch error:', error);
@@ -2654,7 +2655,7 @@ const CustomersTab = ({ showToast, setConfirmModal, editUser, setEditUser, editF
             message: 'Are you sure you want to permanently erase this user record? This action cannot be undone.',
             onConfirm: async () => {
                 try {
-                    await axios.delete(`${import.meta.env.VITE_API_URL}/api/users/${id}`);
+                    await axios.delete(`${API_BASE_URL}/api/users/${id}`);
                     setUsers(users.filter(u => u._id !== id));
                     showToast('Identity record removed');
                 } catch (error) {
@@ -2668,11 +2669,11 @@ const CustomersTab = ({ showToast, setConfirmModal, editUser, setEditUser, editF
         e.preventDefault();
         setIsSaving(true);
         try {
-            await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${editUser._id}`, {
+            await axios.put(`${API_BASE_URL}/api/users/${editUser._id}`, {
                 name: editForm.name, email: editForm.email, isAdmin: editForm.isAdmin
             });
             if (editForm.password) {
-                await axios.put(`${import.meta.env.VITE_API_URL}/api/users/${editUser._id}/reset-password`, { password: editForm.password });
+                await axios.put(`${API_BASE_URL}/api/users/${editUser._id}/reset-password`, { password: editForm.password });
             }
             showToast('Identity profile synchronized');
             setEditUser(null);
@@ -2883,7 +2884,7 @@ const CouponsTab = ({
     const fetchCoupons = async () => {
         try {
             setLoading(true);
-            const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/coupons`);
+            const { data } = await axios.get(`${API_BASE_URL}/api/coupons`);
             setCoupons(data);
         } catch (error) { console.error('Coupon fetch error:', error); } finally { setLoading(false); }
     };
@@ -2922,10 +2923,10 @@ const CouponsTab = ({
         try {
             setIsSaving(true);
             if (selectedCoupon) {
-                await axios.put(`${import.meta.env.VITE_API_URL}/api/coupons/${selectedCoupon._id}`, couponForm);
+                await axios.put(`${API_BASE_URL}/api/coupons/${selectedCoupon._id}`, couponForm);
                 showToast('Coupon updated successfully');
             } else {
-                await axios.post(`${import.meta.env.VITE_API_URL}/api/coupons`, couponForm);
+                await axios.post(`${API_BASE_URL}/api/coupons`, couponForm);
                 showToast('Coupon created successfully');
             }
             setShowCouponModal(false);
@@ -2945,7 +2946,7 @@ const CouponsTab = ({
             message: 'Are you sure you want to permanently delete this coupon code?',
             onConfirm: async () => {
                 try {
-                    await axios.delete(`${import.meta.env.VITE_API_URL}/api/coupons/${id}`);
+                    await axios.delete(`${API_BASE_URL}/api/coupons/${id}`);
                     showToast('Coupon deleted');
                     fetchCoupons();
                 } catch (error) {
@@ -2957,7 +2958,7 @@ const CouponsTab = ({
 
     const toggleActive = async (coupon) => {
         try {
-            await axios.put(`${import.meta.env.VITE_API_URL}/api/coupons/${coupon._id}`, { isActive: !coupon.isActive });
+            await axios.put(`${API_BASE_URL}/api/coupons/${coupon._id}`, { isActive: !coupon.isActive });
             fetchCoupons();
         } catch (error) { showToast('Failed to update status', 'error'); }
     };
@@ -3136,7 +3137,7 @@ const CMSContentTab = ({ showToast, setConfirmModal }) => {
 
     const fetchCategories = async () => {
         try {
-            const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/cms/categories`);
+            const { data } = await axios.get(`${API_BASE_URL}/api/cms/categories`);
             setCategories(data);
         } catch (error) { console.error('Fetch categories error:', error); }
     };
@@ -3144,7 +3145,7 @@ const CMSContentTab = ({ showToast, setConfirmModal }) => {
     const fetchCMS = async () => {
         try {
             setLoading(true);
-            const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/cms/homepage`);
+            const { data } = await axios.get(`${API_BASE_URL}/api/cms/homepage`);
             setCmsData(data);
             setInitialCmsData(JSON.parse(JSON.stringify(data)));
             setIsDirty(false);
@@ -3165,7 +3166,7 @@ const CMSContentTab = ({ showToast, setConfirmModal }) => {
     const handleSaveCMS = async () => {
         setIsSaving(true);
         try {
-            await axios.put(`${import.meta.env.VITE_API_URL}/api/cms/homepage`, cmsData);
+            await axios.put(`${API_BASE_URL}/api/cms/homepage`, cmsData);
             showToast('Settings saved successfully!');
             fetchCMS();
         } catch (error) {
@@ -3384,7 +3385,7 @@ const CMSContentTab = ({ showToast, setConfirmModal }) => {
                                                             const formData = new FormData();
                                                             formData.append('image', file);
                                                             try {
-                                                                const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/cms/hero-bg`, formData, {
+                                                                const { data } = await axios.post(`${API_BASE_URL}/api/cms/hero-bg`, formData, {
                                                                     headers: { 'Content-Type': 'multipart/form-data' }
                                                                 });
                                                                 const nhs = [...cmsData.heroSlides]; nhs[idx].bgImg = data.url; setCmsData({ ...cmsData, heroSlides: nhs });
@@ -3569,7 +3570,7 @@ const CMSContentTab = ({ showToast, setConfirmModal }) => {
                                                         const formData = new FormData();
                                                         formData.append('image', file);
                                                         try {
-                                                            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/cms/hero-bg`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+                                                            const { data } = await axios.post(`${API_BASE_URL}/api/cms/hero-bg`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
                                                             const nci = [...cmsData.categoryItems];
                                                             nci[idx].img = data.url;
                                                             setCmsData({ ...cmsData, categoryItems: nci });
@@ -3744,7 +3745,7 @@ const CMSContentTab = ({ showToast, setConfirmModal }) => {
                                                         const formData = new FormData();
                                                         formData.append('image', file);
                                                         try {
-                                                            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/api/cms/hero-bg`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+                                                            const { data } = await axios.post(`${API_BASE_URL}/api/cms/hero-bg`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
                                                             const ntm = [...cmsData.testimonials]; ntm[idx].img = data.url; setCmsData({ ...cmsData, testimonials: ntm });
                                                         } catch (err) { showToast('Upload failed', 'error'); }
                                                     }} />
@@ -3845,7 +3846,7 @@ const HighlightsTab = ({ showToast, setConfirmModal }) => {
     const fetchProducts = async () => {
         try {
             setLoading(true);
-            const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/products`);
+            const { data } = await axios.get(`${API_BASE_URL}/api/products`);
             setProducts(data);
         } catch (error) { console.error('Fetch error:', error); } finally { setLoading(false); }
     };
@@ -3857,7 +3858,7 @@ const HighlightsTab = ({ showToast, setConfirmModal }) => {
             const formData = new FormData();
             formData.append(field, !currentVal);
 
-            await axios.put(`${import.meta.env.VITE_API_URL}/api/products/${productId}`, formData);
+            await axios.put(`${API_BASE_URL}/api/products/${productId}`, formData);
 
             showToast(`${field} status updated`);
             setProducts(products.map(p => p._id === productId ? { ...p, [field]: !currentVal } : p));
@@ -3965,7 +3966,7 @@ const BulkUploadTab = ({ onComplete, showToast, setConfirmModal }) => {
 
     useEffect(() => {
         const fetchCats = async () => {
-            const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/cms/categories`);
+            const { data } = await axios.get(`${API_BASE_URL}/api/cms/categories`);
             setCategories(data);
         };
         fetchCats();
@@ -3992,7 +3993,7 @@ const BulkUploadTab = ({ onComplete, showToast, setConfirmModal }) => {
 
         try {
             setLoading(true);
-            await axios.post(`${import.meta.env.VITE_API_URL}/api/products/bulk`, { products: rows }, {
+            await axios.post(`${API_BASE_URL}/api/products/bulk`, { products: rows }, {
                 headers: { Authorization: `Bearer ${JSON.parse(localStorage.getItem('userInfo')).token}` }
             });
             showToast('Bulk products uploaded successfully!');

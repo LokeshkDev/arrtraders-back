@@ -35,6 +35,7 @@ import Faq from './pages/Faq';
 import OrderSuccess from './pages/OrderSuccess';
 import OrderFailure from './pages/OrderFailure';
 import NotFound from './pages/NotFound';
+import { API_BASE_URL } from './config/api';
 
 const ProductRedirect = () => {
   const { id } = useParams();
@@ -43,7 +44,7 @@ const ProductRedirect = () => {
   useEffect(() => {
     const redirectToSlug = async () => {
       try {
-        const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/products/${id}`);
+        const { data } = await axios.get(`${API_BASE_URL}/api/products/${id}`);
         if (data && data.slug) {
           const createSlug = (text) => text.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-');
           const categorySlug = createSlug(data.category);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../config/api';
 
 const About = () => {
   const [data, setData] = useState(null);
@@ -8,7 +9,7 @@ const About = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/cms/pages/about`);
+        const { data } = await axios.get(`${API_BASE_URL}/api/cms/pages/about`);
         setData(data);
       } catch (error) {
         console.error('Fetch error:', error);
