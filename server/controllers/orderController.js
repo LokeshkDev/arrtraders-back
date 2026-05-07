@@ -331,11 +331,20 @@ export const updateOrderStatus = async (req, res) => {
         await ensureOrderTrackingSchema();
         const order = await Order.findByPk(req.params.id);
         if (order) {
-            order.status = req.body.status || order.status;
-            if (req.body.trackingNumber) {
-                order.trackingNumber = req.body.trackingNumber;
+            const nextStatus = req.body.status || order.status;
+            const trackingNumber = typeof req.body.trackingNumber === 'string'
+                ? req.body.trackingNumber.trim()
+                : req.body.trackingNumber;
+
+            if (nextStatus === 'Shipped' && !trackingNumber && !order.trackingNumber) {
+                return res.status(400).json({ message: 'Tracking number is required before marking an order as shipped' });
             }
-            if (req.body.status === 'Delivered') {
+
+            order.status = nextStatus;
+            if (trackingNumber !== undefined && trackingNumber !== null) {
+                order.trackingNumber = trackingNumber;
+            }
+            if (nextStatus === 'Delivered') {
                 order.deliveredAt = new Date();
             }
             if (req.body.isPaid !== undefined) {

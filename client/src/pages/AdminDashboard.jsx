@@ -156,10 +156,20 @@ const AdminDashboard = () => {
 
     const updateOrderStatus = async (id, status, trackingNumber = null) => {
         try {
-            await axios.put(`${API_BASE_URL}/api/orders/${id}/status`, { status, trackingNumber });
-            fetchOrders();
+            const { data: updatedOrder } = await axios.put(`${API_BASE_URL}/api/orders/${id}/status`, { status, trackingNumber });
+            setOrders((currentOrders) => currentOrders.map((order) => (
+                order._id === updatedOrder._id ? updatedOrder : order
+            )));
+            setSelectedOrder((currentOrder) => (
+                currentOrder?._id === updatedOrder._id ? updatedOrder : currentOrder
+            ));
+            await fetchOrders(true);
             showToast('Order status updated');
-        } catch (error) { showToast('Order status update failed', 'error'); }
+            return updatedOrder;
+        } catch (error) {
+            showToast(error.response?.data?.message || 'Order status update failed', 'error');
+            return null;
+        }
     };
 
     const generateInvoice = (order) => {
@@ -755,17 +765,17 @@ const AdminDashboard = () => {
                                         <button 
                                             className="btn-sheet-secondary flex-grow-1 d-flex align-items-center justify-content-center" 
                                             style={{ background: '#e3f2fd', color: '#1976d2' }} 
-                                            onClick={() => { 
-                                                if (!trackingInput) {
+                                            onClick={async () => { 
+                                                const nextTrackingNumber = trackingInput.trim();
+                                                if (!nextTrackingNumber) {
                                                     alert('Please enter a tracking number');
                                                     return;
                                                 }
-                                                updateOrderStatus(selectedOrder._id, 'Shipped', trackingInput); 
-                                                setTrackingInput('');
-                                                // We don't close modal here so user sees it's updated (optionally)
-                                                // but the fetchOrders in updateOrderStatus will refresh the data
-                                                // Actually, better to just update the local selectedOrder or close it
-                                                setShowModal(false);
+                                                const updatedOrder = await updateOrderStatus(selectedOrder._id, 'Shipped', nextTrackingNumber);
+                                                if (updatedOrder) {
+                                                    setTrackingInput('');
+                                                    setShowModal(false);
+                                                }
                                             }}
                                         >
                                             <Package size={18} className="me-2" /> UPDATE SHIPMENT
@@ -787,14 +797,17 @@ const AdminDashboard = () => {
                                         <button 
                                             className="btn-sheet-secondary flex-grow-1 d-flex align-items-center justify-content-center" 
                                             style={{ background: '#e8f5e9', color: '#2e7d32' }} 
-                                            onClick={() => { 
-                                                if (!trackingInput) {
+                                            onClick={async () => { 
+                                                const nextTrackingNumber = trackingInput.trim();
+                                                if (!nextTrackingNumber) {
                                                     alert('Please enter a tracking number first');
                                                     return;
                                                 }
-                                                updateOrderStatus(selectedOrder._id, 'Shipped', trackingInput); 
-                                                setShowModal(false); 
-                                                setTrackingInput('');
+                                                const updatedOrder = await updateOrderStatus(selectedOrder._id, 'Shipped', nextTrackingNumber);
+                                                if (updatedOrder) {
+                                                    setShowModal(false);
+                                                    setTrackingInput('');
+                                                }
                                             }}
                                         >
                                             <Truck size={18} className="me-2" /> MARK SHIPPED
