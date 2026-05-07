@@ -381,27 +381,86 @@ export const getOrderStats = async (req, res) => {
             attributes: ['totalPrice', 'orderItems', 'createdAt']
         });
 
-        // Monthly Sales (Last 12 months)
+        const projectStartDate = new Date(2026, 4, 1); // May 1, 2026
+        const toDateKey = (date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+        const toMonthKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        const getProjectYearKey = (date) => {
+            const startYear = date.getMonth() >= 4 ? date.getFullYear() : date.getFullYear() - 1;
+            return `${startYear}-${startYear + 1}`;
+        };
+
+        // Project reports start from May 2026.
+        const dailyStats = {};
         const monthlyStats = {};
+        const yearlyStats = {};
         const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-        
-        // Initialize last 12 months
+
         const now = new Date();
-        for (let i = 0; i < 12; i++) {
-            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-            const key = `${months[d.getMonth()]} ${d.getFullYear()}`;
-            monthlyStats[key] = { label: months[d.getMonth()], total: 0, count: 0 };
+        for (let d = new Date(projectStartDate); d <= now; d.setDate(d.getDate() + 1)) {
+            const key = toDateKey(d);
+            dailyStats[key] = {
+                key,
+                label: d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
+                total: 0,
+                count: 0
+            };
+        }
+
+        for (let d = new Date(projectStartDate.getFullYear(), projectStartDate.getMonth(), 1); d <= now; d.setMonth(d.getMonth() + 1)) {
+            const key = toMonthKey(d);
+            monthlyStats[key] = {
+                key,
+                label: `${months[d.getMonth()]} ${d.getFullYear()}`,
+                shortLabel: months[d.getMonth()],
+                total: 0,
+                count: 0
+            };
+        }
+
+        const startProjectYear = getProjectYearKey(projectStartDate);
+        const currentProjectYear = getProjectYearKey(now);
+        const [startYear] = startProjectYear.split('-').map(Number);
+        const [endYear] = currentProjectYear.split('-').map(Number);
+        for (let year = startYear; year <= endYear; year++) {
+            const key = `${year}-${year + 1}`;
+            yearlyStats[key] = {
+                key,
+                label: `${year}-${year + 1}`,
+                period: `May ${year} - Apr ${year + 1}`,
+                total: 0,
+                count: 0
+            };
         }
 
         const productStats = {};
 
         allOrders.forEach(order => {
             const date = new Date(order.createdAt);
-            const monthKey = `${months[date.getMonth()]} ${date.getFullYear()}`;
+            if (date < projectStartDate) return;
+
+            const dayKey = toDateKey(date);
+            const monthKey = toMonthKey(date);
+            const yearKey = getProjectYearKey(date);
+            const orderTotal = Number(order.totalPrice) || 0;
+
+            if (dailyStats[dayKey]) {
+                dailyStats[dayKey].total += orderTotal;
+                dailyStats[dayKey].count += 1;
+            }
             
             if (monthlyStats[monthKey]) {
-                monthlyStats[monthKey].total += order.totalPrice;
+                monthlyStats[monthKey].total += orderTotal;
                 monthlyStats[monthKey].count += 1;
+            }
+
+            if (yearlyStats[yearKey]) {
+                yearlyStats[yearKey].total += orderTotal;
+                yearlyStats[yearKey].count += 1;
             }
 
             // Top Products
@@ -425,8 +484,10 @@ export const getOrderStats = async (req, res) => {
             });
         });
 
-        // Format Monthly Sales (reversed to be chronological)
-        const salesChart = Object.values(monthlyStats).reverse();
+        const dailySales = Object.values(dailyStats);
+        const salesChart = Object.values(monthlyStats);
+        const monthlyReport = salesChart;
+        const yearlyReport = Object.values(yearlyStats);
 
         // Format Top Products
         const topProducts = Object.values(productStats)
@@ -444,7 +505,10 @@ export const getOrderStats = async (req, res) => {
             processingOrders,
             deliveredOrders,
             totalRevenue: totalRevenue || 0,
+            dailySales,
             salesChart,
+            monthlyReport,
+            yearlyReport,
             topProducts
         });
     } catch (error) {

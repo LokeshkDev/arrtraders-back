@@ -1166,9 +1166,21 @@ const AdminDashboard = () => {
 const OverviewTab = ({ setActiveTab, orders = [] }) => {
     const [stats, setStats] = useState({ 
         users: 0, orders: 0, revenue: 0, lowStock: 0,
-        salesChart: [], topProducts: []
+        products: [], dailySales: [], salesChart: [], monthlyReport: [], yearlyReport: [], topProducts: []
     });
-    const [chartFilter, setChartFilter] = useState('MONTHLY');
+    const [chartFilter, setChartFilter] = useState('DAILY');
+    const [downloadPeriod, setDownloadPeriod] = useState('DAILY');
+    const [downloadDateRange, setDownloadDateRange] = useState({
+        from: '2026-05-01',
+        to: new Date().toISOString().slice(0, 10)
+    });
+    const [productFilters, setProductFilters] = useState({
+        category: 'All',
+        stock: 'All',
+        status: 'All',
+        feature: 'All',
+        movement: 'All'
+    });
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -1184,7 +1196,11 @@ const OverviewTab = ({ setActiveTab, orders = [] }) => {
                     orders: orderRes.data.totalOrders,
                     revenue: orderRes.data.totalRevenue,
                     lowStock: lowStockCount,
+                    products: prodRes.data || [],
+                    dailySales: orderRes.data.dailySales || [],
                     salesChart: orderRes.data.salesChart || [],
+                    monthlyReport: orderRes.data.monthlyReport || orderRes.data.salesChart || [],
+                    yearlyReport: orderRes.data.yearlyReport || [],
                     topProducts: orderRes.data.topProducts || []
                 });
             } catch (error) {
@@ -1216,11 +1232,273 @@ const OverviewTab = ({ setActiveTab, orders = [] }) => {
         { name: 'Premium Walnuts', category: 'Dry Fruits', sold: '112 Sold', price: '₹750', img: '/Reference/images/product-thumb-14.png', tag: 'POPULAR' }
     ];
 
+    const formatCurrency = (value) => `Rs. ${Math.round(Number(value) || 0).toLocaleString()}`;
+
     const chartData = chartFilter === 'MONTHLY' 
         ? stats.salesChart 
-        : stats.salesChart.slice(-4); // Last 4 items as "Weekly" approximation if we don't have true weekly
+        : stats.dailySales;
 
     const maxVal = Math.max(...chartData.map(d => d.total), 1);
+    const dailyReport = stats.dailySales.slice().reverse();
+    const monthlyAuditReport = stats.monthlyReport.slice().reverse();
+    const yearlyAuditReport = stats.yearlyReport.slice().reverse();
+    const productSalesMap = orders.reduce((acc, order) => {
+        if (order.status === 'Cancelled') return acc;
+        const items = Array.isArray(order.orderItems) ? order.orderItems : [];
+        items.forEach((item) => {
+            const key = String(item.product || item.id || item._id || item.name || '').toLowerCase();
+            if (!key) return;
+            if (!acc[key]) acc[key] = { units: 0, revenue: 0 };
+            const qty = Number(item.qty) || 1;
+            const price = Number(item.price) || 0;
+            acc[key].units += qty;
+            acc[key].revenue += price * qty;
+        });
+        return acc;
+    }, {});
+
+    const getProductSales = (product) => {
+        const keys = [product._id, product.id, product.name].filter(Boolean).map((value) => String(value).toLowerCase());
+        return keys.reduce((best, key) => {
+            const current = productSalesMap[key];
+            return current && current.revenue > best.revenue ? current : best;
+        }, { units: 0, revenue: 0 });
+    };
+
+    const productCategoryOptions = [...new Set((stats.products || []).map((product) => product.category).filter(Boolean))].sort();
+    const enrichedProducts = (stats.products || []).map((product) => {
+        const sales = getProductSales(product);
+        const stock = Number(product.stock) || 0;
+        const price = Number(String(product.price || 0).replace(/[^0-9.]/g, '')) || 0;
+        return {
+            ...product,
+            stock,
+            numericPrice: price,
+            soldUnits: sales.units,
+            salesRevenue: sales.revenue,
+            inventoryValue: stock * price
+        };
+    });
+
+    const filteredProductBI = enrichedProducts.filter((product) => {
+        const matchesCategory = productFilters.category === 'All' || product.category === productFilters.category;
+        const matchesStock = productFilters.stock === 'All'
+            || (productFilters.stock === 'In Stock' && product.stock >= 10)
+            || (productFilters.stock === 'Low Stock' && product.stock > 0 && product.stock < 10)
+            || (productFilters.stock === 'Out of Stock' && product.stock === 0);
+        const matchesStatus = productFilters.status === 'All'
+            || (productFilters.status === 'Active' && product.isActive !== false)
+            || (productFilters.status === 'Hidden' && product.isActive === false);
+        const matchesFeature = productFilters.feature === 'All'
+            || (productFilters.feature === 'Best Seller' && product.isBestSeller)
+            || (productFilters.feature === 'Featured' && product.isFeatured)
+            || (productFilters.feature === 'Top Rated' && product.isTopRated)
+            || (productFilters.feature === 'Flash Sale' && product.flashSale);
+        const matchesMovement = productFilters.movement === 'All'
+            || (productFilters.movement === 'Sold' && product.soldUnits > 0)
+            || (productFilters.movement === 'No Sales' && product.soldUnits === 0);
+        return matchesCategory && matchesStock && matchesStatus && matchesFeature && matchesMovement;
+    });
+
+    const productBIStats = {
+        total: filteredProductBI.length,
+        active: filteredProductBI.filter((product) => product.isActive !== false).length,
+        lowStock: filteredProductBI.filter((product) => product.stock > 0 && product.stock < 10).length,
+        outOfStock: filteredProductBI.filter((product) => product.stock === 0).length,
+        inventoryValue: filteredProductBI.reduce((sum, product) => sum + product.inventoryValue, 0),
+        soldUnits: filteredProductBI.reduce((sum, product) => sum + product.soldUnits, 0),
+        revenue: filteredProductBI.reduce((sum, product) => sum + product.salesRevenue, 0)
+    };
+
+    const categoryBI = productCategoryOptions.map((category) => {
+        const categoryProducts = enrichedProducts.filter((product) => product.category === category);
+        return {
+            category,
+            products: categoryProducts.length,
+            stock: categoryProducts.reduce((sum, product) => sum + product.stock, 0),
+            revenue: categoryProducts.reduce((sum, product) => sum + product.salesRevenue, 0)
+        };
+    }).sort((a, b) => b.revenue - a.revenue).slice(0, 6);
+
+    const topProductBI = filteredProductBI
+        .slice()
+        .sort((a, b) => b.salesRevenue - a.salesRevenue || b.soldUnits - a.soldUnits || a.stock - b.stock)
+        .slice(0, 8);
+
+    const reportFileDate = new Date().toISOString().slice(0, 10);
+    const reportFromDate = downloadDateRange.from || '2026-05-01';
+    const reportToDate = downloadDateRange.to || reportFileDate;
+    const kpiRows = [
+        ['Total Revenue', formatCurrency(stats.revenue)],
+        ['Total Orders', stats.orders],
+        ['Average Order Value', formatCurrency(avgOrderValue)],
+        ['Customers', stats.users],
+        ['Stock Alerts', stats.lowStock]
+    ];
+    const dailyReportInRange = stats.dailySales.filter((row) => {
+        if (!row.key) return false;
+        return row.key >= reportFromDate && row.key <= reportToDate;
+    });
+    const dailyRows = dailyReportInRange.slice().reverse().map((row) => [row.label, row.count || 0, formatCurrency(row.total)]);
+    const weeklyReport = dailyReportInRange.reduce((weeks, row) => {
+        if (!row.key) return weeks;
+        const date = new Date(`${row.key}T00:00:00`);
+        const day = date.getDay() || 7;
+        const weekStart = new Date(date);
+        weekStart.setDate(date.getDate() - day + 1);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        const key = weekStart.toISOString().slice(0, 10);
+        if (!weeks[key]) {
+            weeks[key] = {
+                label: `${weekStart.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} - ${weekEnd.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}`,
+                count: 0,
+                total: 0
+            };
+        }
+        weeks[key].count += Number(row.count) || 0;
+        weeks[key].total += Number(row.total) || 0;
+        return weeks;
+    }, {});
+    const weeklyRows = Object.values(weeklyReport).reverse().map((row) => [row.label, row.count || 0, formatCurrency(row.total)]);
+    const monthlyReportFromDays = dailyReportInRange.reduce((months, row) => {
+        const date = new Date(`${row.key}T00:00:00`);
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        if (!months[key]) {
+            months[key] = {
+                label: date.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }),
+                count: 0,
+                total: 0
+            };
+        }
+        months[key].count += Number(row.count) || 0;
+        months[key].total += Number(row.total) || 0;
+        return months;
+    }, {});
+    const monthlyRows = Object.values(monthlyReportFromDays).reverse().map((row) => [row.label, row.count || 0, formatCurrency(row.total)]);
+    const yearlyReportFromDays = dailyReportInRange.reduce((years, row) => {
+        const date = new Date(`${row.key}T00:00:00`);
+        const startYear = date.getMonth() >= 4 ? date.getFullYear() : date.getFullYear() - 1;
+        const key = `${startYear}-${startYear + 1}`;
+        if (!years[key]) {
+            years[key] = {
+                label: key,
+                period: `May ${startYear} - Apr ${startYear + 1}`,
+                count: 0,
+                total: 0
+            };
+        }
+        years[key].count += Number(row.count) || 0;
+        years[key].total += Number(row.total) || 0;
+        return years;
+    }, {});
+    const yearlyRows = Object.values(yearlyReportFromDays).reverse().map((row) => [row.label, row.period, row.count || 0, formatCurrency(row.total)]);
+    const periodReports = {
+        DAILY: {
+            title: 'Daily Sales Audit From May 2026',
+            headers: ['Date', 'Paid Orders', 'Sales'],
+            rows: dailyRows
+        },
+        WEEKLY: {
+            title: 'Weekly Sales Audit From May 2026',
+            headers: ['Week', 'Paid Orders', 'Sales'],
+            rows: weeklyRows
+        },
+        MONTHLY: {
+            title: 'Monthly Sales Audit From May 2026',
+            headers: ['Month', 'Paid Orders', 'Sales'],
+            rows: monthlyRows
+        },
+        YEARLY: {
+            title: 'Yearly Audit Report',
+            headers: ['Year', 'Period', 'Paid Orders', 'Sales'],
+            rows: yearlyRows
+        }
+    };
+    const selectedPeriodReport = periodReports[downloadPeriod];
+    const productRows = filteredProductBI.map((product) => [
+        product.name,
+        product.category,
+        product.isActive === false ? 'Hidden' : 'Active',
+        product.stock,
+        product.soldUnits,
+        formatCurrency(product.salesRevenue),
+        formatCurrency(product.inventoryValue)
+    ]);
+
+    const downloadBlob = (content, filename, type) => {
+        const blob = new Blob([content], { type });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+    };
+
+    const exportOverviewPdf = () => {
+        const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+        doc.setFontSize(16);
+        doc.text('AR Rahman BI Audit Report', 40, 36);
+        doc.setFontSize(9);
+        doc.text(`Generated: ${new Date().toLocaleString('en-IN')}`, 40, 52);
+        doc.text(`Period: ${reportFromDate} to ${reportToDate}`, 40, 66);
+
+        const addTable = (title, head, body) => {
+            const startY = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 28 : 72;
+            if (startY > 500) doc.addPage();
+            const y = doc.lastAutoTable?.finalY && startY <= 500 ? startY : 72;
+            doc.setFontSize(11);
+            doc.text(title, 40, y);
+            autoTable(doc, {
+                startY: y + 8,
+                head: [head],
+                body,
+                theme: 'grid',
+                styles: { fontSize: 8, cellPadding: 4 },
+                headStyles: { fillColor: [54, 65, 39] },
+                margin: { left: 40, right: 40 }
+            });
+        };
+
+        addTable('KPI Summary', ['Metric', 'Value'], kpiRows);
+        addTable(selectedPeriodReport.title, selectedPeriodReport.headers, selectedPeriodReport.rows);
+        addTable('Product BI Report - Current Filters', ['Product', 'Category', 'Status', 'Stock', 'Sold', 'Sales', 'Stock Value'], productRows);
+
+        doc.save(`ar-rahman-${downloadPeriod.toLowerCase()}-bi-report-${reportFromDate}-to-${reportToDate}.pdf`);
+    };
+
+    const exportOverviewExcel = () => {
+        const escapeCell = (value) => String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+        const table = (title, headers, rows) => `
+            <h3>${escapeCell(title)}</h3>
+            <table border="1">
+                <thead><tr>${headers.map((header) => `<th>${escapeCell(header)}</th>`).join('')}</tr></thead>
+                <tbody>${rows.map((row) => `<tr>${row.map((cell) => `<td>${escapeCell(cell)}</td>`).join('')}</tr>`).join('')}</tbody>
+            </table>
+            <br/>
+        `;
+        const html = `
+            <html>
+                <head><meta charset="UTF-8" /></head>
+                <body>
+                    <h2>AR Rahman BI Audit Report</h2>
+                    <p>Generated: ${escapeCell(new Date().toLocaleString('en-IN'))}</p>
+                    <p>Period: ${escapeCell(reportFromDate)} to ${escapeCell(reportToDate)}</p>
+                    ${table('KPI Summary', ['Metric', 'Value'], kpiRows)}
+                    ${table(selectedPeriodReport.title, selectedPeriodReport.headers, selectedPeriodReport.rows)}
+                    ${table('Product BI Report - Current Filters', ['Product', 'Category', 'Status', 'Stock', 'Sold', 'Sales', 'Stock Value'], productRows)}
+                </body>
+            </html>
+        `;
+        downloadBlob(html, `ar-rahman-${downloadPeriod.toLowerCase()}-bi-report-${reportFromDate}-to-${reportToDate}.xls`, 'application/vnd.ms-excel;charset=utf-8;');
+    };
 
     return (
         <div className="container-fluid p-0 animate-fade-in">
@@ -1234,8 +1512,31 @@ const OverviewTab = ({ setActiveTab, orders = [] }) => {
                     <h2 className="font-headline fs-2 text-primary m-0 fw-bold">Management Overview</h2>
                     <p className="font-body text-muted small mt-1">Real-time performance analytics for AR Rahman Dates and Nuts.</p>
                 </div>
-                <div className="d-flex gap-2">
-                    <button className="btn btn-white border fw-bold px-4 rounded-pill d-flex align-items-center gap-2 shadow-sm"> <Download size={16} /> Download Report</button>
+                <div className="d-flex gap-2 flex-wrap justify-content-end">
+                    <select className="form-select rounded-pill fw-bold border shadow-sm" style={{ width: '150px' }} value={downloadPeriod} onChange={(e) => setDownloadPeriod(e.target.value)}>
+                        <option value="DAILY">Daily</option>
+                        <option value="WEEKLY">Weekly</option>
+                        <option value="MONTHLY">Monthly</option>
+                        <option value="YEARLY">Yearly</option>
+                    </select>
+                    <input
+                        type="date"
+                        className="form-control rounded-pill fw-bold border shadow-sm"
+                        style={{ width: '155px' }}
+                        min="2026-05-01"
+                        value={downloadDateRange.from}
+                        onChange={(e) => setDownloadDateRange({ ...downloadDateRange, from: e.target.value })}
+                    />
+                    <input
+                        type="date"
+                        className="form-control rounded-pill fw-bold border shadow-sm"
+                        style={{ width: '155px' }}
+                        min="2026-05-01"
+                        value={downloadDateRange.to}
+                        onChange={(e) => setDownloadDateRange({ ...downloadDateRange, to: e.target.value })}
+                    />
+                    <button className="btn btn-white border fw-bold px-4 rounded-pill d-flex align-items-center gap-2 shadow-sm" onClick={exportOverviewPdf}> <FileText size={16} /> PDF</button>
+                    <button className="btn btn-white border fw-bold px-4 rounded-pill d-flex align-items-center gap-2 shadow-sm" onClick={exportOverviewExcel}> <Download size={16} /> Excel</button>
                     <button className="btn btn-primary text-white fw-bold px-4 rounded-pill d-flex align-items-center gap-2 shadow-sm border-0" onClick={() => setActiveTab('Products')}> <Plus size={16} /> Add Product</button>
                 </div>
             </div>
@@ -1265,14 +1566,14 @@ const OverviewTab = ({ setActiveTab, orders = [] }) => {
                         <div className="d-flex justify-content-between align-items-center mb-5 px-2">
                             <div>
                                 <h4 className="font-headline fs-5 text-primary fw-bold mb-0">Sales Momentum</h4>
-                                <p className="text-muted extra-small fw-bold mb-0 uppercase opacity-75">ORDER VOLUME OVER 12 MONTHS</p>
+                                <p className="text-muted extra-small fw-bold mb-0 uppercase opacity-75">{chartFilter === 'DAILY' ? 'DAILY PAID SALES FROM MAY 2026' : 'MONTHLY PAID SALES FROM MAY 2026'}</p>
                             </div>
                             <div className="d-flex gap-2 bg-light p-1 rounded-pill border">
                                 <button 
-                                    className={`btn btn-sm rounded-pill px-3 extra-small fw-bold border-0 font-label ${chartFilter === 'WEEKLY' ? 'btn-primary shadow-sm text-white' : 'text-muted'}`}
-                                    onClick={() => setChartFilter('WEEKLY')}
+                                    className={`btn btn-sm rounded-pill px-3 extra-small fw-bold border-0 font-label ${chartFilter === 'DAILY' ? 'btn-primary shadow-sm text-white' : 'text-muted'}`}
+                                    onClick={() => setChartFilter('DAILY')}
                                 >
-                                    WEEKLY
+                                    DAILY
                                 </button>
                                 <button 
                                     className={`btn btn-sm rounded-pill px-3 extra-small fw-bold border-0 font-label ${chartFilter === 'MONTHLY' ? 'btn-primary shadow-sm text-white' : 'text-muted'}`}
@@ -1291,14 +1592,14 @@ const OverviewTab = ({ setActiveTab, orders = [] }) => {
                                         height: `${(d.total / maxVal) * 100}%`, 
                                         transition: 'height 1s cubic-bezier(0.16, 1, 0.3, 1)' 
                                     }}
-                                    title={`₹${d.total.toLocaleString()}`}
+                                    title={`${formatCurrency(d.total)} - ${d.count || 0} orders`}
                                 >
-                                    <div className="bar-value">₹{Math.round(d.total/1000)}k</div>
+                                    <div className="bar-value">{d.total >= 1000 ? `Rs. ${Math.round(d.total/1000)}k` : formatCurrency(d.total)}</div>
                                 </div>
                             ))}
                         </div>
                         <div className="d-flex justify-content-between extra-small text-muted fw-bold mt-3 px-2 font-label" style={{ letterSpacing: '1px' }}>
-                            {chartData.map((d, i) => <span key={i}>{d.label}</span>)}
+                            {chartData.map((d, i) => <span key={i}>{d.shortLabel || d.label}</span>)}
                         </div>
                     </div>
                 </div>
@@ -1330,6 +1631,232 @@ const OverviewTab = ({ setActiveTab, orders = [] }) => {
                         <button className="btn btn-outline-primary border-2 fw-bold extra-small mt-5 w-100 rounded-pill py-3 d-flex align-items-center justify-content-center gap-2 transition-all hover-invert font-label" onClick={() => setActiveTab('Products')}>
                             <Plus size={14} /> VIEW ALL INVENTORY
                         </button>
+                    </div>
+                </div>
+            </div>
+
+            <div className="bg-white p-4 rounded-4 shadow-sm border border-opacity-50 mt-4">
+                <div className="d-flex flex-column flex-xl-row justify-content-between align-items-xl-center gap-4 mb-4 pb-2 border-bottom border-opacity-10">
+                    <div>
+                        <h4 className="font-headline fs-5 text-primary fw-bold mb-0">Product BI Report</h4>
+                        <p className="text-muted extra-small fw-bold mb-0 uppercase opacity-75">INVENTORY, MOVEMENT, AND SALES PERFORMANCE</p>
+                    </div>
+                    <div className="row g-2 w-100" style={{ maxWidth: '760px' }}>
+                        <div className="col-6 col-lg">
+                            <select className="form-select form-select-sm rounded-pill fw-bold extra-small" value={productFilters.category} onChange={(e) => setProductFilters({ ...productFilters, category: e.target.value })}>
+                                <option value="All">All Categories</option>
+                                {productCategoryOptions.map((category) => <option key={category} value={category}>{category}</option>)}
+                            </select>
+                        </div>
+                        <div className="col-6 col-lg">
+                            <select className="form-select form-select-sm rounded-pill fw-bold extra-small" value={productFilters.stock} onChange={(e) => setProductFilters({ ...productFilters, stock: e.target.value })}>
+                                <option value="All">All Stock</option>
+                                <option value="In Stock">In Stock</option>
+                                <option value="Low Stock">Low Stock</option>
+                                <option value="Out of Stock">Out of Stock</option>
+                            </select>
+                        </div>
+                        <div className="col-6 col-lg">
+                            <select className="form-select form-select-sm rounded-pill fw-bold extra-small" value={productFilters.status} onChange={(e) => setProductFilters({ ...productFilters, status: e.target.value })}>
+                                <option value="All">All Status</option>
+                                <option value="Active">Active</option>
+                                <option value="Hidden">Hidden</option>
+                            </select>
+                        </div>
+                        <div className="col-6 col-lg">
+                            <select className="form-select form-select-sm rounded-pill fw-bold extra-small" value={productFilters.feature} onChange={(e) => setProductFilters({ ...productFilters, feature: e.target.value })}>
+                                <option value="All">All Flags</option>
+                                <option value="Best Seller">Best Seller</option>
+                                <option value="Featured">Featured</option>
+                                <option value="Top Rated">Top Rated</option>
+                                <option value="Flash Sale">Flash Sale</option>
+                            </select>
+                        </div>
+                        <div className="col-6 col-lg">
+                            <select className="form-select form-select-sm rounded-pill fw-bold extra-small" value={productFilters.movement} onChange={(e) => setProductFilters({ ...productFilters, movement: e.target.value })}>
+                                <option value="All">All Movement</option>
+                                <option value="Sold">Sold</option>
+                                <option value="No Sales">No Sales</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="row g-3 mb-4">
+                    <div className="col-6 col-lg">
+                        <div className="admin-order-stat-card"><span>Products</span><strong>{productBIStats.total}</strong></div>
+                    </div>
+                    <div className="col-6 col-lg">
+                        <div className="admin-order-stat-card"><span>Active</span><strong>{productBIStats.active}</strong></div>
+                    </div>
+                    <div className="col-6 col-lg">
+                        <div className="admin-order-stat-card"><span>Low Stock</span><strong>{productBIStats.lowStock}</strong></div>
+                    </div>
+                    <div className="col-6 col-lg">
+                        <div className="admin-order-stat-card"><span>Stock Value</span><strong>{formatCurrency(productBIStats.inventoryValue)}</strong></div>
+                    </div>
+                    <div className="col-6 col-lg">
+                        <div className="admin-order-stat-card"><span>Sold Units</span><strong>{productBIStats.soldUnits}</strong></div>
+                    </div>
+                    <div className="col-6 col-lg">
+                        <div className="admin-order-stat-card"><span>Product Sales</span><strong>{formatCurrency(productBIStats.revenue)}</strong></div>
+                    </div>
+                </div>
+
+                <div className="row g-4">
+                    <div className="col-lg-5">
+                        <div className="p-3 rounded-4 bg-light bg-opacity-50 h-100">
+                            <div className="extra-small text-muted fw-bold uppercase mb-3 font-label">Category Performance</div>
+                            <div className="d-flex flex-column gap-3">
+                                {categoryBI.map((row) => (
+                                    <div key={row.category}>
+                                        <div className="d-flex justify-content-between align-items-center mb-1">
+                                            <span className="small fw-bold text-primary">{row.category}</span>
+                                            <span className="extra-small fw-bold text-muted">{formatCurrency(row.revenue)}</span>
+                                        </div>
+                                        <div className="progress rounded-pill" style={{ height: 8 }}>
+                                            <div className="progress-bar bg-success rounded-pill" style={{ width: `${Math.min((row.revenue / Math.max(...categoryBI.map(c => c.revenue), 1)) * 100, 100)}%` }}></div>
+                                        </div>
+                                        <div className="extra-small text-muted mt-1">{row.products} products • {row.stock} units in stock</div>
+                                    </div>
+                                ))}
+                                {categoryBI.length === 0 && <div className="text-muted small">No product data available.</div>}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="col-lg-7">
+                        <div className="table-responsive">
+                            <table className="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr className="extra-small text-muted fw-bold uppercase font-label">
+                                        <th>Product</th>
+                                        <th>Category</th>
+                                        <th className="text-center">Stock</th>
+                                        <th className="text-center">Sold</th>
+                                        <th className="text-end">Sales</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {topProductBI.map((product) => (
+                                        <tr key={product._id || product.id || product.name}>
+                                            <td>
+                                                <div className="fw-bold text-primary small">{product.name}</div>
+                                                <div className="extra-small text-muted">{product.isActive === false ? 'Hidden' : 'Active'}{product.flashSale ? ' • Flash Sale' : ''}</div>
+                                            </td>
+                                            <td className="small">{product.category}</td>
+                                            <td className={`text-center fw-bold small ${product.stock === 0 ? 'text-danger' : product.stock < 10 ? 'text-warning' : 'text-success'}`}>{product.stock}</td>
+                                            <td className="text-center small">{product.soldUnits}</td>
+                                            <td className="text-end fw-bold small">{formatCurrency(product.salesRevenue)}</td>
+                                        </tr>
+                                    ))}
+                                    {topProductBI.length === 0 && (
+                                        <tr><td colSpan="5" className="text-center text-muted small py-4">No products match the selected filters.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="row g-4 mt-1">
+                <div className="col-lg-6">
+                    <div className="bg-white p-4 rounded-4 shadow-sm border border-opacity-50 h-100">
+                        <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-opacity-10">
+                            <div>
+                                <h4 className="font-headline fs-5 text-primary fw-bold mb-0">Daily Audit Report</h4>
+                                <p className="text-muted extra-small fw-bold mb-0 uppercase opacity-75">PAID ORDER SUMMARY FROM MAY 2026</p>
+                            </div>
+                            <Calendar size={18} className="text-secondary" />
+                        </div>
+                        <div className="table-responsive">
+                            <table className="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr className="extra-small text-muted fw-bold uppercase font-label">
+                                        <th>Date</th>
+                                        <th className="text-center">Orders</th>
+                                        <th className="text-end">Sales</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {dailyReport.map((row) => (
+                                        <tr key={row.key || row.label}>
+                                            <td className="fw-bold text-primary small">{row.label}</td>
+                                            <td className="text-center small">{row.count || 0}</td>
+                                            <td className="text-end fw-bold small">{formatCurrency(row.total)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="col-lg-6">
+                    <div className="bg-white p-4 rounded-4 shadow-sm border border-opacity-50 h-100">
+                        <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-opacity-10">
+                            <div>
+                                <h4 className="font-headline fs-5 text-primary fw-bold mb-0">Monthly Audit Report</h4>
+                                <p className="text-muted extra-small fw-bold mb-0 uppercase opacity-75">PAID ORDER SUMMARY FROM MAY 2026</p>
+                            </div>
+                            <FileText size={18} className="text-secondary" />
+                        </div>
+                        <div className="table-responsive">
+                            <table className="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr className="extra-small text-muted fw-bold uppercase font-label">
+                                        <th>Month</th>
+                                        <th className="text-center">Orders</th>
+                                        <th className="text-end">Sales</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {monthlyAuditReport.map((row) => (
+                                        <tr key={row.key || row.label}>
+                                            <td className="fw-bold text-primary small">{row.label}</td>
+                                            <td className="text-center small">{row.count || 0}</td>
+                                            <td className="text-end fw-bold small">{formatCurrency(row.total)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="row g-4 mt-1">
+                <div className="col-12">
+                    <div className="bg-white p-4 rounded-4 shadow-sm border border-opacity-50">
+                        <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-opacity-10">
+                            <div>
+                                <h4 className="font-headline fs-5 text-primary fw-bold mb-0">Yearly Audit Report</h4>
+                                <p className="text-muted extra-small fw-bold mb-0 uppercase opacity-75">PROJECT YEAR RUNS FROM MAY TO APRIL</p>
+                            </div>
+                            <Briefcase size={18} className="text-secondary" />
+                        </div>
+                        <div className="table-responsive">
+                            <table className="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr className="extra-small text-muted fw-bold uppercase font-label">
+                                        <th>Year</th>
+                                        <th>Period</th>
+                                        <th className="text-center">Orders</th>
+                                        <th className="text-end">Sales</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {yearlyAuditReport.map((row) => (
+                                        <tr key={row.key || row.label}>
+                                            <td className="fw-bold text-primary small">{row.label}</td>
+                                            <td className="small text-muted">{row.period}</td>
+                                            <td className="text-center small">{row.count || 0}</td>
+                                            <td className="text-end fw-bold small">{formatCurrency(row.total)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
