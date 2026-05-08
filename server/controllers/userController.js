@@ -1,6 +1,7 @@
 import User from '../models/sql/User.js';
 import Product from '../models/sql/Product.js';
 import generateToken from '../utils/generateToken.js';
+import sendEmail from '../utils/sendEmail.js';
 import { admin, isFirebaseInitialized } from '../config/firebaseAdmin.js';
 
 // Helper to format Mongo-like ID if needed for new users
@@ -81,6 +82,30 @@ export const googleLogin = async (req, res) => {
                 isAdmin: false,
                 phone: ''
             });
+
+            // Send Welcome Email for New Google User
+            sendEmail({
+                to: user.email,
+                subject: 'Welcome to AR Rahman Traders Family',
+                type: 'WELCOME',
+                data: {
+                    name: user.name,
+                    shopUrl: `${process.env.CLIENT_URL || 'https://arrahmantraders.com'}`
+                }
+            });
+
+            // Notify Admin
+            if (process.env.ADMIN_EMAIL) {
+                sendEmail({
+                    to: process.env.ADMIN_EMAIL,
+                    subject: 'New User Registration (Google)',
+                    type: 'WELCOME',
+                    data: {
+                        name: `Admin (New User: ${user.name})`,
+                        shopUrl: `${process.env.CLIENT_URL || 'https://arrahmantraders.com'}`
+                    }
+                });
+            }
         }
 
         const token = generateToken(user.id);
@@ -139,6 +164,30 @@ export const phoneLogin = async (req, res) => {
                 isAdmin: false,
                 phone: firebasePhone
             });
+
+            // Send Welcome Email for New Phone User
+            sendEmail({
+                to: user.email,
+                subject: 'Welcome to AR Rahman Traders Family',
+                type: 'WELCOME',
+                data: {
+                    name: user.name,
+                    shopUrl: `${process.env.CLIENT_URL || 'https://arrahmantraders.com'}`
+                }
+            });
+
+            // Notify Admin
+            if (process.env.ADMIN_EMAIL) {
+                sendEmail({
+                    to: process.env.ADMIN_EMAIL,
+                    subject: 'New User Registration (Phone)',
+                    type: 'WELCOME',
+                    data: {
+                        name: `Admin (New User: ${user.phone})`,
+                        shopUrl: `${process.env.CLIENT_URL || 'https://arrahmantraders.com'}`
+                    }
+                });
+            }
         }
 
         const token = generateToken(user.id);
@@ -222,6 +271,30 @@ export const registerUser = async (req, res) => {
         });
 
         if (user) {
+            // Send Welcome Email
+            sendEmail({
+                to: user.email,
+                subject: 'Welcome to AR Rahman Traders Family',
+                type: 'WELCOME',
+                data: {
+                    name: user.name,
+                    shopUrl: `${process.env.CLIENT_URL || 'https://arrahmantraders.com'}`
+                }
+            });
+
+            // Notify Admin
+            if (process.env.ADMIN_EMAIL) {
+                sendEmail({
+                    to: process.env.ADMIN_EMAIL,
+                    subject: 'New Customer Registration Alert',
+                    type: 'WELCOME',
+                    data: {
+                        name: `Admin (New User: ${user.name})`,
+                        shopUrl: `${process.env.CLIENT_URL || 'https://arrahmantraders.com'}`
+                    }
+                });
+            }
+
             const token = generateToken(user.id);
             const isProduction = process.env.NODE_ENV === 'production';
 

@@ -3,6 +3,7 @@ import User from '../models/sql/User.js';
 import Coupon from '../models/sql/Coupon.js';
 import { DataTypes } from 'sequelize';
 import { createCashfreeOrder, getCashfreeMode, getCashfreeOrder } from '../utils/cashfree.js';
+import sendEmail from '../utils/sendEmail.js';
 
 // Helper to format ID for responses and parse JSON fields
 const parseJson = (val) => {
@@ -201,6 +202,36 @@ export const createOrder = async (req, res) => {
 
         await incrementCouponUsage(couponCode);
 
+        // Send Order Confirmation Email for COD
+        if (paymentMethod === 'COD') {
+            sendEmail({
+                to: req.user.email,
+                subject: `Order Confirmed: #ORD-${order.id.substring(order.id.length - 6).toUpperCase()}`,
+                type: 'ORDER_CONFIRMED',
+                data: {
+                    name: req.user.name,
+                    orderId: order.id,
+                    items: order.orderItems,
+                    totalPrice: order.totalPrice
+                }
+            });
+
+            // Notify Admin of New COD Order
+            if (process.env.ADMIN_EMAIL) {
+                sendEmail({
+                    to: process.env.ADMIN_EMAIL,
+                    subject: `NEW COD ORDER ALERT: #ORD-${order.id.substring(order.id.length - 6).toUpperCase()}`,
+                    type: 'ORDER_CONFIRMED',
+                    data: {
+                        name: 'Admin',
+                        orderId: order.id,
+                        items: order.orderItems,
+                        totalPrice: order.totalPrice
+                    }
+                });
+            }
+        }
+
         res.status(201).json(formatResponse(order));
     } catch (error) {
         console.error('[ORDER CREATE ERROR]:', error);
@@ -251,6 +282,37 @@ export const verifyCashfreePayment = async (req, res) => {
                 order.paidAt = new Date();
                 order.status = 'Confirmed';
                 await incrementCouponUsage(order.couponCode);
+
+                // Send Confirmation Email for Paid Order
+                const user = await User.findByPk(order.userId);
+                if (user) {
+                    sendEmail({
+                        to: user.email,
+                        subject: `Order Confirmed: #ORD-${order.id.substring(order.id.length - 6).toUpperCase()}`,
+                        type: 'ORDER_CONFIRMED',
+                        data: {
+                            name: user.name,
+                            orderId: order.id,
+                            items: parseJson(order.orderItems),
+                            totalPrice: order.totalPrice
+                        }
+                    });
+                }
+
+                // Notify Admin of Successful Payment
+                if (process.env.ADMIN_EMAIL) {
+                    sendEmail({
+                        to: process.env.ADMIN_EMAIL,
+                        subject: `PAYMENT RECEIVED ALERT: #ORD-${order.id.substring(order.id.length - 6).toUpperCase()}`,
+                        type: 'ORDER_CONFIRMED',
+                        data: {
+                            name: 'Admin',
+                            orderId: order.id,
+                            items: parseJson(order.orderItems),
+                            totalPrice: order.totalPrice
+                        }
+                    });
+                }
             }
         } else if (cashfreeOrder.order_status === 'FAILED') {
             order.status = 'Failed';
@@ -352,6 +414,26 @@ export const updateOrderStatus = async (req, res) => {
                 if (req.body.isPaid) order.paidAt = new Date();
             }
             const updatedOrder = await order.save();
+
+            // Send Status Update Email
+            if (['Shipped', 'Delivered', 'Cancelled'].includes(nextStatus)) {
+                const user = await User.findByPk(order.userId);
+                if (user) {
+                    sendEmail({
+                        to: user.email,
+                        subject: `Order Update: #ORD-${order.id.substring(order.id.length - 6).toUpperCase()}`,
+                        type: 'ORDER_STATUS_UPDATE',
+                        data: {
+                            name: user.name,
+                            orderId: order.id,
+                            status: nextStatus,
+                            trackingNumber: order.trackingNumber,
+                            orderUrl: `${getClientUrl(req)}/profile`
+                        }
+                    });
+                }
+            }
+
             res.json(formatResponse(updatedOrder));
         } else {
             res.status(404).json({ message: 'Order not found' });
