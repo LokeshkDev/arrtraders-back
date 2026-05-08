@@ -54,33 +54,46 @@ const authLimiter = rateLimit({
 });
 
 // Middleware
+const normalizeOrigin = (origin) => {
+    if (!origin) return '';
+    try {
+        const url = new URL(origin.trim());
+        return url.origin;
+    } catch {
+        return origin.trim().replace(/\/+$/, '');
+    }
+};
+
 const parseOrigins = (value) => (value || '')
     .split(',')
-    .map((origin) => origin.trim())
+    .map(normalizeOrigin)
     .filter(Boolean);
 
-const allowedOrigins = [
+const allowedOrigins = [...new Set([
     ...parseOrigins(process.env.ALLOWED_ORIGINS),
     ...parseOrigins(process.env.CLIENT_URL),
     ...parseOrigins(process.env.FRONTEND_URL)
-];
+])];
 
 const isProduction = process.env.NODE_ENV === 'production';
 
 app.use(cors((req, callback) => {
-    const origin = req.header('Origin');
+    const origin = normalizeOrigin(req.header('Origin'));
 
     // allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, { origin: true, credentials: true });
 
     const isLocal = origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1');
+    const requestHost = req.hostname || req.get('host')?.split(':')[0];
+    const isLocalServer = requestHost === 'localhost' || requestHost === '127.0.0.1' || requestHost === '::1';
     const sameOrigin = req.get('host') && origin === `${req.protocol}://${req.get('host')}`;
 
-    if (sameOrigin || (!isProduction && isLocal) || allowedOrigins.includes(origin)) {
+    if (sameOrigin || (isLocal && (!isProduction || isLocalServer)) || allowedOrigins.includes(origin)) {
         return callback(null, { origin: true, credentials: true });
     }
 
-    return callback(new Error('The CORS policy for this site does not allow access from the specified Origin.'), {
+    console.warn(`Blocked CORS request from origin: ${origin}`);
+    return callback(null, {
         origin: false,
         credentials: true
     });
@@ -160,33 +173,26 @@ app.get('/api/health', (req, res) => {
 });
 
 const clientDistPath = path.resolve(__dirname, '../client/dist');
+const clientDistExists = fs.existsSync(clientDistPath);
+console.log(`Client dist path: ${clientDistPath} — exists: ${clientDistExists}`);
 
-if (fs.existsSync(clientDistPath)) {
+if (clientDistExists) {
+    // Serve static assets from the built client (JS, CSS, images, etc.)
     app.use(express.static(clientDistPath));
-    app.get('/', (req, res) => {
-        res.sendFile(path.join(clientDistPath, 'index.html'));
-    });
-    app.get(/^(?!\/api|\/images|\/uploads).*/, (req, res) => {
+
+    // SPA catch-all: any GET request that doesn't match an API or static
+    // route gets index.html so React Router can handle the route.
+    app.get('*', (req, res) => {
         res.sendFile(path.join(clientDistPath, 'index.html'));
     });
 } else {
     app.get('/', (req, res) => {
-        res.send('API is running...');
+        res.send('API is running... (client not built)');
     });
 }
 
 app.use(notFound);
 app.use(errorHandler);
-
-// Error Handling Middleware
-app.use((err, req, res, next) => {
-    console.error(`[SERVER ERROR] ${err.message}`);
-    console.error(err.stack);
-    res.status(500).json({ 
-        message: 'Internal Server Error', 
-        error: process.env.NODE_ENV === 'production' ? 'See server logs' : err.message 
-    });
-});
 
 const PORT = process.env.PORT || 5000;
 

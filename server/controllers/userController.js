@@ -89,7 +89,7 @@ export const googleLogin = async (req, res) => {
         res.cookie('jwt', token, {
             httpOnly: true,
             secure: isProduction,
-            sameSite: isProduction ? 'none' : 'lax',
+            sameSite: 'lax',
             maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
         });
 
@@ -147,7 +147,7 @@ export const phoneLogin = async (req, res) => {
         res.cookie('jwt', token, {
             httpOnly: true,
             secure: isProduction,
-            sameSite: isProduction ? 'none' : 'lax',
+            sameSite: 'lax',
             maxAge: 30 * 24 * 60 * 60 * 1000
         });
 
@@ -182,7 +182,7 @@ export const authUser = async (req, res) => {
             res.cookie('jwt', token, {
                 httpOnly: true,
                 secure: isProduction,
-                sameSite: isProduction ? 'none' : 'lax',
+                sameSite: 'lax',
                 maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
             });
 
@@ -228,7 +228,7 @@ export const registerUser = async (req, res) => {
             res.cookie('jwt', token, {
                 httpOnly: true,
                 secure: isProduction,
-                sameSite: isProduction ? 'none' : 'lax',
+                sameSite: 'lax',
                 maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
             });
 
@@ -302,7 +302,7 @@ export const updateUserProfile = async (req, res) => {
             res.cookie('jwt', token, {
                 httpOnly: true,
                 secure: isProduction,
-                sameSite: isProduction ? 'none' : 'lax',
+                sameSite: 'lax',
                 maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
             });
 
@@ -531,7 +531,7 @@ export const logoutUser = (req, res) => {
         httpOnly: true,
         expires: new Date(0),
         secure: isProduction,
-        sameSite: isProduction ? 'none' : 'lax',
+        sameSite: 'lax',
     });
     res.status(200).json({ message: 'Logged out successfully' });
 };
