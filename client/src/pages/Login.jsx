@@ -22,9 +22,15 @@ const Login = () => {
   const isAdminLogin = redirectPath?.includes('/arrt-panel') || location.pathname === '/arrt-panel/login';
 
   useEffect(() => {
-    const userInfo = localStorage.getItem('userInfo');
-    if (userInfo) {
-      navigate(redirectPath || '/profile');
+    const userInfoStr = localStorage.getItem('userInfo');
+    if (userInfoStr) {
+      const parsed = JSON.parse(userInfoStr);
+      // If redirect target is admin panel but user is NOT admin, go to profile
+      if (redirectPath?.includes('/arrt-panel') && !parsed.isAdmin) {
+        navigate('/profile');
+      } else {
+        navigate(redirectPath || '/profile');
+      }
     }
   }, [navigate, redirectPath]);
 
@@ -39,7 +45,7 @@ const Login = () => {
       window.dispatchEvent(new Event('storage'));
       
       const nextPath = redirectPath || (data.isAdmin ? '/arrt-panel' : '/');
-      window.location.href = nextPath;
+      navigate(nextPath, { replace: true });
     } catch (error) {
       console.error('Login error:', error);
       alert(error.response?.data?.message || 'Login failed');
@@ -60,7 +66,7 @@ const Login = () => {
       if (data.token) localStorage.setItem('userToken', data.token);
       window.dispatchEvent(new Event('storage'));
       
-      window.location.href = redirectPath || '/';
+      navigate(redirectPath || '/', { replace: true });
     } catch (error) {
       console.error('Google Auth Error:', error);
       if (error.code !== 'auth/popup-closed-by-user') {
