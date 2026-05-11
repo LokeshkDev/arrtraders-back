@@ -60,7 +60,8 @@ import {
     Printer,
     Ban,
     CheckCircle,
-    RefreshCw
+    RefreshCw,
+    Check
 } from 'lucide-react';
 import './AdminDashboard.css';
 import PagesCMS from '../components/PagesCMS.jsx';
@@ -784,7 +785,7 @@ const AdminDashboard = () => {
                                                 }
                                             }}
                                         >
-                                            \u2713 PAYMENT RECEIVED
+                                            <Check size={14} className="me-1" /> PAYMENT RECEIVED
                                         </button>
                                         <button
                                             className="btn btn-outline-danger btn-sm rounded-pill px-4 py-2 fw-bold flex-grow-1"
@@ -800,7 +801,7 @@ const AdminDashboard = () => {
                                                 }
                                             }}
                                         >
-                                            \u2715 NOT RECEIVED
+                                            <X size={14} className="me-1" /> NOT RECEIVED
                                         </button>
                                     </div>
                                 )}
@@ -816,7 +817,7 @@ const AdminDashboard = () => {
                                     </div>
                                     <div>
                                         <div className="font-headline small fw-bold text-primary">Coupon: {selectedOrder.couponCode.toUpperCase()}</div>
-                                        <div className="extra-small text-muted fw-bold">DISCOUNT APPLIED: \u20b9{(selectedOrder.discountAmount || 0).toLocaleString()}</div>
+                                        <div className="extra-small text-muted fw-bold">DISCOUNT APPLIED: ₹{(selectedOrder.discountAmount || 0).toLocaleString()}</div>
                                     </div>
                                 </div>
                             </div>
@@ -3191,8 +3192,8 @@ const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled, sh
                                     </td>
                                     <td>
                                         <span className={`admin-payment-pill ${order.isPaid ? 'paid' : 'pending'}`}>{order.paymentMethod === 'COD' ? 'COD' : (order.paymentDetails?.manualPayment ? 'UPI' : (order.paymentMethod || 'ONLINE'))}</span>
-                                        <div className="admin-muted-line mt-1">{order.isPaid ? 'Paid' : (order.paymentDetails?.manualPayment ? '\u23f3 Verify' : 'Pending')}</div>
-                                        {order.couponCode && <div className="admin-muted-line" style={{ color: '#52c41a' }}>\ud83c\udf9f {order.couponCode}</div>}
+                                        <div className="admin-muted-line mt-1">{order.isPaid ? 'Paid' : (order.paymentDetails?.manualPayment ? <span className="d-inline-flex align-items-center gap-1"><Clock size={10} /> Verify</span> : 'Pending')}</div>
+                                        {order.couponCode && <div className="admin-muted-line d-flex align-items-center gap-1" style={{ color: '#52c41a' }}><Ticket size={10} /> {order.couponCode}</div>}
                                     </td>
                                     <td><div className="admin-total-value">Rs. {Number(order.totalPrice || 0).toLocaleString()}</div></td>
                                     <td>
@@ -3283,9 +3284,9 @@ const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled, sh
                         <div className="admin-mobile-grid">
                             <div><span>Customer</span><strong>{order.shippingAddress?.name || 'Customer'}</strong></div>
                             <div><span>Items</span><strong>{order.orderItems?.length || 0} SKU</strong></div>
-                            <div><span>Payment</span><strong>{order.paymentMethod === 'COD' ? 'COD' : (order.paymentDetails?.manualPayment ? 'UPI' : 'ONLINE')}{order.isPaid ? '' : ' \u23f3'}</strong></div>
+                            <div><span>Payment</span><strong>{order.paymentMethod === 'COD' ? 'COD' : (order.paymentDetails?.manualPayment ? 'UPI' : 'ONLINE')}{order.isPaid ? '' : ' '}<Clock size={12} className="ms-1" style={{ verticalAlign: 'middle' }} /></strong></div>
                             <div><span>City</span><strong>{order.shippingAddress?.city || 'N/A'}</strong></div>
-                            {order.couponCode && <div><span>Coupon</span><strong style={{ color: '#52c41a' }}>\ud83c\udf9f {order.couponCode}</strong></div>}
+                            {order.couponCode && <div><span>Coupon</span><strong style={{ color: '#52c41a' }} className="d-flex align-items-center gap-1"><Ticket size={12} /> {order.couponCode}</strong></div>}
                         </div>
                         <select 
                             className="admin-status-select w-100 mt-3" 
