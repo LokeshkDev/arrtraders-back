@@ -57,7 +57,10 @@ import {
     FileText,
     MapPin,
     HelpCircle,
-    Printer
+    Printer,
+    Ban,
+    CheckCircle,
+    RefreshCw
 } from 'lucide-react';
 import './AdminDashboard.css';
 import PagesCMS from '../components/PagesCMS.jsx';
@@ -862,81 +865,117 @@ const AdminDashboard = () => {
                         </div>
 
                         <div className="admin-sheet-footer">
-                            <div className="d-flex gap-2 w-100 mb-2">
-                                <button className="btn-sheet-primary flex-grow-1 d-flex align-items-center justify-content-center" onClick={() => generateReceipt(selectedOrder, true)}>
-                                    <Printer size={18} className="me-2" /> PRINT RECEIPT
-                                </button>
-                                {selectedOrder.status === 'Shipped' && (
-                                    <div className="d-flex flex-column w-100 gap-2">
+                            {/* Primary Status Actions */}
+                            <div className="status-actions-container mb-3 border-bottom pb-3 border-opacity-10 border-secondary">
+                                {/* Step 1: Mark as Processing (if Pending) */}
+                                {selectedOrder.status === 'Pending' && (
+                                    <button 
+                                        className="btn-sheet-primary w-100 mb-2 py-3 rounded-4 shadow-sm"
+                                        onClick={() => updateOrderStatus(selectedOrder._id, 'Processing')}
+                                    >
+                                        <RefreshCw size={18} className="me-2" /> START PROCESSING
+                                    </button>
+                                )}
+
+                                {/* Step 2: Mark as Shipped (if Processing or Confirmed) */}
+                                {['Processing', 'Confirmed'].includes(selectedOrder.status) && (
+                                    <div className="d-flex flex-column gap-2">
                                         <div className="sheet-field-group mb-0">
                                             <input 
                                                 type="text" 
-                                                className="tracking-input-field" 
-                                                placeholder="Update AWB Number..." 
+                                                className="tracking-input-field w-100 p-3 rounded-4 border" 
+                                                placeholder="Enter ST Courier AWB Number..." 
                                                 value={trackingInput}
                                                 onChange={(e) => setTrackingInput(e.target.value)}
-                                                autoFocus
                                             />
                                         </div>
                                         <button 
-                                            className="btn-sheet-secondary flex-grow-1 d-flex align-items-center justify-content-center" 
-                                            style={{ background: '#e3f2fd', color: '#1976d2' }} 
-                                            onClick={async () => { 
-                                                const nextTrackingNumber = trackingInput.trim();
-                                                if (!nextTrackingNumber) {
-                                                    alert('Please enter a tracking number');
-                                                    return;
-                                                }
-                                                const updatedOrder = await updateOrderStatus(selectedOrder._id, 'Shipped', nextTrackingNumber);
-                                                if (updatedOrder) {
+                                            className="btn-sheet-secondary w-100 py-3 rounded-4 shadow-sm" 
+                                            style={{ background: '#e8f5e9', color: '#2e7d32', border: '1px solid #c8e6c9' }}
+                                            onClick={async () => {
+                                                const awb = trackingInput.trim();
+                                                if (!awb) return alert('AWB number is required to ship');
+                                                const updated = await updateOrderStatus(selectedOrder._id, 'Shipped', awb);
+                                                if (updated) {
                                                     setTrackingInput('');
                                                     setShowModal(false);
                                                 }
                                             }}
                                         >
-                                            <Package size={18} className="me-2" /> UPDATE SHIPMENT
+                                            <Truck size={18} className="me-2" /> MARK AS SHIPPED
                                         </button>
                                     </div>
                                 )}
-                                {selectedOrder.status === 'Processing' && (
-                                    <div className="d-flex flex-column w-100 gap-2">
-                                        <div className="sheet-field-group mb-0">
+
+                                {/* Step 3: Out for Delivery (if Shipped) */}
+                                {selectedOrder.status === 'Shipped' && (
+                                    <div className="d-flex flex-column gap-2">
+                                        <button 
+                                            className="btn-sheet-secondary w-100 py-3 rounded-4 shadow-sm" 
+                                            style={{ background: '#fff3e0', color: '#e65100', border: '1px solid #ffe0b2' }}
+                                            onClick={() => updateOrderStatus(selectedOrder._id, 'Out for Delivery')}
+                                        >
+                                            <Package size={18} className="me-2" /> OUT FOR DELIVERY
+                                        </button>
+                                        <div className="d-flex gap-2 align-items-center mt-1">
                                             <input 
                                                 type="text" 
-                                                className="tracking-input-field" 
-                                                placeholder="Enter ST Courier AWB No..." 
+                                                className="tracking-input-field flex-grow-1 p-2 rounded-3 border small" 
+                                                placeholder="Update AWB..." 
                                                 value={trackingInput}
                                                 onChange={(e) => setTrackingInput(e.target.value)}
-                                                autoFocus
                                             />
-                                        </div>
-                                        <button 
-                                            className="btn-sheet-secondary flex-grow-1 d-flex align-items-center justify-content-center" 
-                                            style={{ background: '#e8f5e9', color: '#2e7d32' }} 
-                                            onClick={async () => { 
-                                                const nextTrackingNumber = trackingInput.trim();
-                                                if (!nextTrackingNumber) {
-                                                    alert('Please enter a tracking number first');
-                                                    return;
-                                                }
-                                                const updatedOrder = await updateOrderStatus(selectedOrder._id, 'Shipped', nextTrackingNumber);
-                                                if (updatedOrder) {
-                                                    setShowModal(false);
+                                            <button 
+                                                className="btn btn-sm btn-outline-primary rounded-3 px-3 py-2 fw-bold"
+                                                onClick={() => {
+                                                    if (!trackingInput) return;
+                                                    updateOrderStatus(selectedOrder._id, 'Shipped', trackingInput);
                                                     setTrackingInput('');
-                                                }
-                                            }}
-                                        >
-                                            <Truck size={18} className="me-2" /> MARK SHIPPED
-                                        </button>
+                                                }}
+                                            >
+                                                UPDATE AWB
+                                            </button>
+                                        </div>
                                     </div>
+                                )}
+
+                                {/* Step 4: Mark as Delivered (if Out for Delivery) */}
+                                {selectedOrder.status === 'Out for Delivery' && (
+                                    <button 
+                                        className="btn-sheet-secondary w-100 py-3 rounded-4 shadow-sm" 
+                                        style={{ background: '#e1f5fe', color: '#0277bd', border: '1px solid #b3e5fc' }}
+                                        onClick={() => updateOrderStatus(selectedOrder._id, 'Delivered')}
+                                    >
+                                        <CheckCircle size={18} className="me-2" /> MARK AS DELIVERED
+                                    </button>
                                 )}
                             </div>
-                            <div className="admin-sheet-keyboard-spacer" style={{ height: '250px', display: 'none' }}></div>
-                            <div className="d-flex gap-2 w-100">
-                                <button className="btn-sheet-secondary flex-grow-1 d-flex align-items-center justify-content-center" onClick={() => generateReceipt(selectedOrder)}>
-                                    <Download size={16} className="me-2" /> RECEIPT (SHOP)
+
+                            <div className="d-flex gap-2 w-100 mb-3">
+                                <button className="btn-sheet-primary flex-grow-1 d-flex align-items-center justify-content-center py-2 rounded-3" onClick={() => generateReceipt(selectedOrder, true)}>
+                                    <Printer size={18} className="me-2" /> PRINT RECEIPT
                                 </button>
-                                <button className="btn-sheet-secondary flex-grow-1 d-flex align-items-center justify-content-center" onClick={() => generateInvoice(selectedOrder)}>
+                                
+                                {!['Delivered', 'Cancelled', 'Failed'].includes(selectedOrder.status) && (
+                                    <button 
+                                        className="btn-sheet-secondary border-danger text-danger px-3 rounded-3"
+                                        title="Cancel Order"
+                                        onClick={() => {
+                                            if (window.confirm('Are you sure you want to cancel this order?')) {
+                                                updateOrderStatus(selectedOrder._id, 'Cancelled');
+                                            }
+                                        }}
+                                    >
+                                        <Ban size={18} />
+                                    </button>
+                                )}
+                            </div>
+                            
+                            <div className="d-flex gap-2 w-100">
+                                <button className="btn-sheet-secondary flex-grow-1 py-2 rounded-3" style={{ background: '#f5f5f5' }} onClick={() => generateReceipt(selectedOrder)}>
+                                    <Download size={16} className="me-2" /> SHOP RECEIPT
+                                </button>
+                                <button className="btn-sheet-secondary flex-grow-1 py-2 rounded-3" style={{ background: '#f5f5f5' }} onClick={() => generateInvoice(selectedOrder)}>
                                     <FileText size={16} className="me-2" /> A4 INVOICE
                                 </button>
                             </div>

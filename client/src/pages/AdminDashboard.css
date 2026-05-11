@@ -2201,3 +2201,65 @@
   50% { left: 0; }
   100% { left: 100%; }
 }
+/* Order Status Management Extensions */
+.status-actions-container {
+    padding: 0.5rem 0;
+}
+
+.tracking-input-field:focus {
+    border-color: var(--admin-accent) !important;
+    box-shadow: 0 0 0 3px var(--admin-accent-subtle) !important;
+    outline: none;
+}
+
+.btn-sheet-primary, .btn-sheet-secondary {
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-sheet-primary:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+.btn-sheet-secondary:hover {
+    filter: brightness(0.95);
+    transform: translateY(-1px);
+}
+
+.uppercase {
+    text-transform: uppercase;
+}
+
+.extra-small {
+    font-size: 10px;
+}
+
+.font-label {
+    font-family: var(--font-label);
+}
+
+.font-headline {
+    font-family: var(--font-heading);
+}
+
+/* Ensure modal body is scrollable but buttons stay at bottom */
+.admin-sheet-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-sheet-body {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.admin-sheet-footer {
+    flex-shrink: 0;
+    padding-top: 1rem;
+    background: white;
+}
