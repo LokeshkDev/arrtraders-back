@@ -72,6 +72,15 @@ export const ensureOrderPaymentSchema = async () => {
                 await queryInterface.addColumn(Order.getTableName(), name, definition);
             }
         }
+
+        // Ensure 'Failed' is in the status ENUM (MySQL won't auto-alter ENUMs)
+        try {
+            await Order.sequelize.query(
+                `ALTER TABLE \`${Order.getTableName()}\` MODIFY COLUMN \`status\` ENUM('Processing','Confirmed','Shipped','Out for Delivery','Delivered','Cancelled','Failed') NOT NULL DEFAULT 'Processing'`
+            );
+        } catch (enumErr) {
+            // Ignore if already applied
+        }
     } catch (error) {
         console.error('Error ensuring order payment schema:', error);
     }
@@ -610,6 +619,75 @@ export const deleteOrder = async (req, res) => {
         } else {
             res.status(404).json({ message: 'Order not found' });
         }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Confirm manual UPI payment
+// @route   POST /api/orders/:id/confirm-upi
+export const confirmUPIPayment = async (req, res) => {
+    console.log(`[UPI CONFIRM] Received request for order: ${req.params.id}`);
+    try {
+        const { paidPhoneNumber } = req.body;
+        console.log(`[UPI CONFIRM] Paid Phone Number: ${paidPhoneNumber}`);
+        
+        const order = await Order.findByPk(req.params.id);
+
+        if (!order) {
+            console.warn(`[UPI CONFIRM] Order NOT FOUND: ${req.params.id}`);
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        console.log(`[UPI CONFIRM] Found order. Current Status: ${order.status}, User ID: ${order.userId}`);
+
+        if ((req.user.id || req.user._id) !== order.userId && !req.user.isAdmin) {
+            return res.status(403).json({ message: 'Not authorized to confirm this order' });
+        }
+
+        order.paymentStatus = 'UPI_VERIFICATION_PENDING';
+        order.paymentDetails = { 
+            ...(parseJson(order.paymentDetails) || {}),
+            paidPhoneNumber,
+            manualPayment: true
+        };
+        order.status = 'Confirmed';
+        
+        await order.save();
+        await incrementCouponUsage(order.couponCode);
+
+        // Notify Admin of Manual Payment
+        if (process.env.ADMIN_EMAIL) {
+            sendEmail({
+                to: process.env.ADMIN_EMAIL,
+                subject: `MANUAL UPI PAYMENT: #ORD-${order.id.substring(order.id.length - 6).toUpperCase()}`,
+                type: 'ORDER_CONFIRMED',
+                data: {
+                    name: 'Admin',
+                    orderId: order.id,
+                    items: parseJson(order.orderItems),
+                    totalPrice: order.totalPrice,
+                    customMessage: `Payment from number: ${paidPhoneNumber}`
+                }
+            });
+        }
+
+        res.json({ message: 'Payment info submitted', order: formatResponse(order) });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Mark order as failed (cancelled during payment)
+// @route   POST /api/orders/:id/fail
+export const failOrder = async (req, res) => {
+    try {
+        const order = await Order.findByPk(req.params.id);
+        if (!order) return res.status(404).json({ message: 'Order not found' });
+        
+        order.status = 'Failed';
+        await order.save();
+        res.json({ message: 'Order marked as failed' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

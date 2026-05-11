@@ -7,24 +7,31 @@ import {
     updateOrderStatus,
     getOrderStats,
     deleteOrder,
-    verifyCashfreePayment
+    verifyCashfreePayment,
+    confirmUPIPayment,
+    failOrder
 } from '../controllers/orderController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.use((req, res, next) => {
-    console.log(`[ORDER ROUTE] ${req.method} ${req.originalUrl}`);
-    next();
-});
+// Admin stats
+router.get('/stats', protect, admin, getOrderStats);
 
+// User's own orders
+router.get('/myorders', protect, getMyOrders);
+
+// Payment & Lifecycle Sub-routes (MUST be above /:id)
+router.post('/:id/verify-payment', protect, verifyCashfreePayment);
+router.post('/:id/confirm-upi', protect, confirmUPIPayment);
+router.post('/:id/fail', protect, failOrder);
+
+// Base route operations
 router.route('/')
     .post(protect, createOrder)
     .get(protect, admin, getOrders);
-    
-router.get('/myorders', protect, getMyOrders);
-router.get('/stats', protect, admin, getOrderStats);
-router.post('/:id/verify-payment', protect, verifyCashfreePayment);
+
+// Individual order operations
 router.route('/:id')
     .get(protect, getOrderById)
     .put(protect, admin, updateOrderStatus)

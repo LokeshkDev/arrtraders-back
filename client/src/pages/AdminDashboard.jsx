@@ -253,16 +253,32 @@ const AdminDashboard = () => {
         doc.text('Shipping Fee:', summaryX, finalY + 7);
         doc.text(`Rs. ${order.deliveryPrice.toLocaleString()}`, 190, finalY + 7, { align: 'right' });
 
+        let extraOffset = 0;
         if (order.discountAmount > 0) {
             doc.text('Discount:', summaryX, finalY + 14);
             doc.text(`- Rs. ${order.discountAmount.toLocaleString()}`, 190, finalY + 14, { align: 'right' });
+            extraOffset += 7;
+        }
+
+        if (order.couponCode) {
+            doc.text('Coupon Applied:', summaryX, finalY + 14 + extraOffset);
+            doc.setFont('helvetica', 'bold');
+            doc.text(order.couponCode.toUpperCase(), 190, finalY + 14 + extraOffset, { align: 'right' });
+            doc.setFont('helvetica', 'normal');
+            extraOffset += 7;
+        }
+
+        if (order.paymentDetails?.paidPhoneNumber) {
+            doc.text('Paid From:', summaryX, finalY + 14 + extraOffset);
+            doc.text(order.paymentDetails.paidPhoneNumber, 190, finalY + 14 + extraOffset, { align: 'right' });
+            extraOffset += 7;
         }
 
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(54, 65, 39);
-        doc.text('GRAND TOTAL:', summaryX, finalY + 27);
-        doc.text(`Rs. ${order.totalPrice.toLocaleString()}`, 190, finalY + 27, { align: 'right' });
+        doc.text('GRAND TOTAL:', summaryX, finalY + 21 + extraOffset);
+        doc.text(`Rs. ${order.totalPrice.toLocaleString()}`, 190, finalY + 21 + extraOffset, { align: 'right' });
 
         // Footer
         const pageHeight = doc.internal.pageSize.height;
@@ -361,6 +377,13 @@ const AdminDashboard = () => {
             currentY += 5;
             doc.text('Discount:', 10, currentY);
             doc.text(`-Rs. ${order.discountAmount.toLocaleString()}`, 70, currentY, { align: 'right' });
+        }
+
+        if (order.couponCode) {
+            currentY += 5;
+            doc.setFontSize(7);
+            doc.text(`Coupon: ${order.couponCode.toUpperCase()}`, 10, currentY);
+            doc.setFontSize(9);
         }
 
         currentY += 10;
@@ -724,6 +747,78 @@ const AdminDashboard = () => {
                             </div>
                         )}
 
+                        {/* UPI Payment Verification Card */}
+                        {selectedOrder.paymentMethod === 'CASHFREE' && selectedOrder.paymentDetails?.manualPayment && (
+                            <div className={`customer-sheet-card mt-3 border-2 ${selectedOrder.isPaid ? 'border-success' : 'border-warning'}`} style={{ background: selectedOrder.isPaid ? '#f6ffed' : '#fffbe6' }}>
+                                <div className="d-flex justify-content-between align-items-center mb-2">
+                                    <span className="label-top opacity-50" style={{ fontSize: '10px' }}>MANUAL UPI PAYMENT</span>
+                                    <span className={`badge ${selectedOrder.isPaid ? 'bg-success' : 'bg-warning text-dark'} extra-small fw-bold px-2 py-1`}>
+                                        {selectedOrder.isPaid ? 'VERIFIED' : 'PENDING VERIFICATION'}
+                                    </span>
+                                </div>
+                                <div className="d-flex align-items-center gap-3 mb-3">
+                                    <div className="nav-icon-box bg-white shadow-sm" style={{ width: '32px', height: '32px', minWidth: '32px' }}>
+                                        <CreditCard size={16} className="text-secondary" />
+                                    </div>
+                                    <div>
+                                        <div className="font-headline small fw-bold text-primary">Paid from: {selectedOrder.paymentDetails?.paidPhoneNumber || 'N/A'}</div>
+                                        <div className="extra-small text-muted fw-bold">AWAITING ADMIN CONFIRMATION</div>
+                                    </div>
+                                </div>
+                                {!selectedOrder.isPaid && (
+                                    <div className="d-flex gap-2">
+                                        <button
+                                            className="btn btn-success btn-sm rounded-pill px-4 py-2 fw-bold flex-grow-1 shadow-sm"
+                                            style={{ fontSize: '11px', letterSpacing: '1px' }}
+                                            onClick={async () => {
+                                                try {
+                                                    const { data: updatedOrder } = await axios.put(`${API_BASE_URL}/api/orders/${selectedOrder._id}/status`, { status: selectedOrder.status, isPaid: true });
+                                                    setSelectedOrder(updatedOrder);
+                                                    await fetchOrders(true);
+                                                    showToast('Payment verified successfully!');
+                                                } catch (err) {
+                                                    showToast('Failed to verify payment', 'error');
+                                                }
+                                            }}
+                                        >
+                                            \u2713 PAYMENT RECEIVED
+                                        </button>
+                                        <button
+                                            className="btn btn-outline-danger btn-sm rounded-pill px-4 py-2 fw-bold flex-grow-1"
+                                            style={{ fontSize: '11px', letterSpacing: '1px' }}
+                                            onClick={async () => {
+                                                try {
+                                                    const { data: updatedOrder } = await axios.put(`${API_BASE_URL}/api/orders/${selectedOrder._id}/status`, { status: 'Failed', isPaid: false });
+                                                    setSelectedOrder(updatedOrder);
+                                                    await fetchOrders(true);
+                                                    showToast('Payment rejected, order failed');
+                                                } catch (err) {
+                                                    showToast('Failed to update', 'error');
+                                                }
+                                            }}
+                                        >
+                                            \u2715 NOT RECEIVED
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Coupon Code Display */}
+                        {selectedOrder.couponCode && (
+                            <div className="customer-sheet-card mt-3 bg-light border-0 shadow-none" style={{ background: '#f0fdf4' }}>
+                                <div className="d-flex align-items-center gap-3">
+                                    <div className="nav-icon-box bg-white shadow-sm" style={{ width: '32px', height: '32px', minWidth: '32px' }}>
+                                        <Ticket size={16} className="text-secondary" />
+                                    </div>
+                                    <div>
+                                        <div className="font-headline small fw-bold text-primary">Coupon: {selectedOrder.couponCode.toUpperCase()}</div>
+                                        <div className="extra-small text-muted fw-bold">DISCOUNT APPLIED: \u20b9{(selectedOrder.discountAmount || 0).toLocaleString()}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="items-section-sheet">
                             <h3 className="section-title">ORDER ITEMS ({selectedOrder.orderItems.length})</h3>
                             <div className="items-list-sheet">
@@ -742,6 +837,27 @@ const AdminDashboard = () => {
                                         </div>
                                     </div>
                                 ))}
+                            </div>
+                        </div>
+
+                        <div className="financial-summary-sheet mt-4 p-3 bg-light rounded-4">
+                            <div className="d-flex justify-content-between mb-2">
+                                <span className="extra-small fw-bold text-muted uppercase">Subtotal</span>
+                                <span className="small fw-bold text-primary">₹{(Number(selectedOrder.totalPrice || 0) - Number(selectedOrder.shippingPrice || 0) + Number(selectedOrder.discountAmount || 0)).toLocaleString()}</span>
+                            </div>
+                            <div className="d-flex justify-content-between mb-2">
+                                <span className="extra-small fw-bold text-muted uppercase">Shipping</span>
+                                <span className="small fw-bold text-success">₹{Number(selectedOrder.shippingPrice || 0).toLocaleString()}</span>
+                            </div>
+                            {selectedOrder.discountAmount > 0 && (
+                                <div className="d-flex justify-content-between mb-2">
+                                    <span className="extra-small fw-bold text-muted uppercase">Discount</span>
+                                    <span className="small fw-bold text-danger">-₹{Number(selectedOrder.discountAmount || 0).toLocaleString()}</span>
+                                </div>
+                            )}
+                            <div className="d-flex justify-content-between mt-2 pt-2 border-top border-secondary border-opacity-10">
+                                <span className="small fw-bold text-primary uppercase">Total Amount</span>
+                                <span className="font-headline fw-bold text-primary h5 m-0">₹{Number(selectedOrder.totalPrice || 0).toLocaleString()}</span>
                             </div>
                         </div>
 
@@ -3035,8 +3151,9 @@ const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled, sh
                                         <div className="admin-muted-line">{order.orderItems?.reduce((sum, item) => sum + (item.qty || 0), 0) || 0} units</div>
                                     </td>
                                     <td>
-                                        <span className={`admin-payment-pill ${order.isPaid ? 'paid' : 'pending'}`}>{order.paymentMethod === 'COD' ? 'COD' : (order.paymentMethod || 'ONLINE')}</span>
-                                        <div className="admin-muted-line mt-1">{order.isPaid ? 'Paid' : 'Pending'}</div>
+                                        <span className={`admin-payment-pill ${order.isPaid ? 'paid' : 'pending'}`}>{order.paymentMethod === 'COD' ? 'COD' : (order.paymentDetails?.manualPayment ? 'UPI' : (order.paymentMethod || 'ONLINE'))}</span>
+                                        <div className="admin-muted-line mt-1">{order.isPaid ? 'Paid' : (order.paymentDetails?.manualPayment ? '\u23f3 Verify' : 'Pending')}</div>
+                                        {order.couponCode && <div className="admin-muted-line" style={{ color: '#52c41a' }}>\ud83c\udf9f {order.couponCode}</div>}
                                     </td>
                                     <td><div className="admin-total-value">Rs. {Number(order.totalPrice || 0).toLocaleString()}</div></td>
                                     <td>
@@ -3127,8 +3244,9 @@ const OrdersTab = ({ orders = [], fetchOrders, soundEnabled, setSoundEnabled, sh
                         <div className="admin-mobile-grid">
                             <div><span>Customer</span><strong>{order.shippingAddress?.name || 'Customer'}</strong></div>
                             <div><span>Items</span><strong>{order.orderItems?.length || 0} SKU</strong></div>
-                            <div><span>Payment</span><strong>{order.paymentMethod === 'COD' ? 'COD' : (order.paymentMethod || 'ONLINE')}</strong></div>
+                            <div><span>Payment</span><strong>{order.paymentMethod === 'COD' ? 'COD' : (order.paymentDetails?.manualPayment ? 'UPI' : 'ONLINE')}{order.isPaid ? '' : ' \u23f3'}</strong></div>
                             <div><span>City</span><strong>{order.shippingAddress?.city || 'N/A'}</strong></div>
+                            {order.couponCode && <div><span>Coupon</span><strong style={{ color: '#52c41a' }}>\ud83c\udf9f {order.couponCode}</strong></div>}
                         </div>
                         <select 
                             className="admin-status-select w-100 mt-3" 

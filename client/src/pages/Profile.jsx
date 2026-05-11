@@ -528,19 +528,31 @@ const Profile = () => {
                                 </div>
                                 <div className="d-flex justify-content-between mb-2">
                                     <span className="font-label extra-small text-muted uppercase fw-bold">Cart Subtotal</span>
-                                    <span className="font-body extra-small fw-bold text-primary">₹{selectedOrder.totalPrice - (selectedOrder.shippingPrice || 0)}</span>
+                                    <span className="font-body extra-small fw-bold text-primary">₹{(Number(selectedOrder.totalPrice || 0) - Number(selectedOrder.shippingPrice || 0) + Number(selectedOrder.discountAmount || 0)).toLocaleString()}</span>
                                 </div>
-                                <div className="d-flex justify-content-between mb-4">
+                                <div className="d-flex justify-content-between mb-2">
                                     <span className="font-label extra-small text-muted uppercase fw-bold">Logistics Fee</span>
-                                    <span className="font-body extra-small fw-bold text-success">{selectedOrder.shippingPrice > 0 ? `₹${selectedOrder.shippingPrice}` : 'COMPLIMENTARY'}</span>
+                                    <span className="font-body extra-small fw-bold text-success">{selectedOrder.shippingPrice > 0 ? `₹${Number(selectedOrder.shippingPrice).toLocaleString()}` : 'COMPLIMENTARY'}</span>
                                 </div>
+                                {selectedOrder.couponCode && (
+                                    <div className="d-flex justify-content-between mb-2">
+                                        <span className="font-label extra-small text-muted uppercase fw-bold">Coupon Applied</span>
+                                        <span className="font-body extra-small fw-bold text-success">🎟 {selectedOrder.couponCode.toUpperCase()} (-₹{Number(selectedOrder.discountAmount || 0).toLocaleString()})</span>
+                                    </div>
+                                )}
+                                {selectedOrder.paymentDetails?.paidPhoneNumber && (
+                                    <div className="d-flex justify-content-between mb-4">
+                                        <span className="font-label extra-small text-muted uppercase fw-bold">Paid From</span>
+                                        <span className="font-body extra-small fw-bold text-primary">{selectedOrder.paymentDetails.paidPhoneNumber}</span>
+                                    </div>
+                                )}
                                 <div className="total-reveal-card bg-primary p-4 rounded-4 shadow-lg d-flex justify-content-between align-items-center text-white">
                                     <div>
                                         <p className="extra-small fw-bold uppercase tracking-widest mb-0 opacity-75">Settlement Total</p>
                                         <h4 className="font-headline fw-bold m-0 h5">Final Amount</h4>
                                     </div>
                                     <div className="text-end">
-                                        <h3 className="font-headline fw-bold m-0 h2">₹{selectedOrder.totalPrice}</h3>
+                                        <h3 className="font-headline fw-bold m-0 h2">₹{Number(selectedOrder.totalPrice || 0).toLocaleString()}</h3>
                                     </div>
                                 </div>
                             </div>

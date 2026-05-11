@@ -182,7 +182,7 @@ if (clientDistExists) {
 
     // SPA catch-all: any GET request that doesn't match an API or static
     // route gets index.html so React Router can handle the route.
-    app.get('*', (req, res) => {
+    app.get(/.*/, (req, res) => {
         res.sendFile(path.join(clientDistPath, 'index.html'));
     });
 } else {

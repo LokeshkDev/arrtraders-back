@@ -59,7 +59,7 @@ const Order = sequelize.define('Order', {
         type: DataTypes.DATE
     },
     status: {
-        type: DataTypes.ENUM('Processing', 'Confirmed', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'),
+        type: DataTypes.ENUM('Processing', 'Confirmed', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled', 'Failed'),
         allowNull: false,
         defaultValue: 'Processing'
     },
