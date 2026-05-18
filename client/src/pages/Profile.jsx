@@ -528,11 +528,11 @@ const Profile = () => {
                                 </div>
                                 <div className="d-flex justify-content-between mb-2">
                                     <span className="font-label extra-small text-muted uppercase fw-bold">Cart Subtotal</span>
-                                    <span className="font-body extra-small fw-bold text-primary">₹{(Number(selectedOrder.totalPrice || 0) - Number(selectedOrder.shippingPrice || 0) + Number(selectedOrder.discountAmount || 0)).toLocaleString()}</span>
+                                    <span className="font-body extra-small fw-bold text-primary">₹{(Number(selectedOrder.totalPrice || 0) - Number(selectedOrder.deliveryPrice || 0) + Number(selectedOrder.discountAmount || 0)).toLocaleString()}</span>
                                 </div>
                                 <div className="d-flex justify-content-between mb-2">
                                     <span className="font-label extra-small text-muted uppercase fw-bold">Logistics Fee</span>
-                                    <span className="font-body extra-small fw-bold text-success">{selectedOrder.shippingPrice > 0 ? `₹${Number(selectedOrder.shippingPrice).toLocaleString()}` : 'COMPLIMENTARY'}</span>
+                                    <span className="font-body extra-small fw-bold text-success">{selectedOrder.deliveryPrice > 0 ? `₹${Number(selectedOrder.deliveryPrice).toLocaleString()}` : 'COMPLIMENTARY'}</span>
                                 </div>
                                 {selectedOrder.couponCode && (
                                     <div className="d-flex justify-content-between mb-2">

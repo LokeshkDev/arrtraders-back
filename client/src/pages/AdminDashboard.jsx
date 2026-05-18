@@ -847,11 +847,11 @@ const AdminDashboard = () => {
                         <div className="financial-summary-sheet mt-4 p-3 bg-light rounded-4">
                             <div className="d-flex justify-content-between mb-2">
                                 <span className="extra-small fw-bold text-muted uppercase">Subtotal</span>
-                                <span className="small fw-bold text-primary">₹{(Number(selectedOrder.totalPrice || 0) - Number(selectedOrder.shippingPrice || 0) + Number(selectedOrder.discountAmount || 0)).toLocaleString()}</span>
+                                <span className="small fw-bold text-primary">₹{(Number(selectedOrder.totalPrice || 0) - Number(selectedOrder.deliveryPrice || 0) + Number(selectedOrder.discountAmount || 0)).toLocaleString()}</span>
                             </div>
                             <div className="d-flex justify-content-between mb-2">
                                 <span className="extra-small fw-bold text-muted uppercase">Shipping</span>
-                                <span className="small fw-bold text-success">₹{Number(selectedOrder.shippingPrice || 0).toLocaleString()}</span>
+                                <span className="small fw-bold text-success">₹{Number(selectedOrder.deliveryPrice || 0).toLocaleString()}</span>
                             </div>
                             {selectedOrder.discountAmount > 0 && (
                                 <div className="d-flex justify-content-between mb-2">
