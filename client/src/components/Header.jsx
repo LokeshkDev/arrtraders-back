@@ -87,6 +87,7 @@ const Header = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('userInfo');
+    localStorage.removeItem('userToken');
     setUserInfo(null);
     window.dispatchEvent(new Event('storage'));
     setUserDropdownOpen(false);

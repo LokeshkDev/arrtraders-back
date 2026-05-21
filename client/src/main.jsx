@@ -9,6 +9,19 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
 axios.defaults.withCredentials = true;
 
+const getStoredAuthToken = () => {
+    const directToken = localStorage.getItem('userToken');
+    if (directToken) return directToken;
+
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || 'null');
+    if (userInfo?.token) {
+        localStorage.setItem('userToken', userInfo.token);
+        return userInfo.token;
+    }
+
+    return null;
+};
+
 // Axios Interceptor for Firebase App Check
 axios.interceptors.request.use(async (config) => {
     // 1. Try to add App Check Token (Optional)
@@ -23,7 +36,7 @@ axios.interceptors.request.use(async (config) => {
 
     // 2. Add Auth Token (Mandatory for subdomains)
     try {
-        const userToken = localStorage.getItem('userToken');
+        const userToken = getStoredAuthToken();
         if (userToken) {
             config.headers['Authorization'] = `Bearer ${userToken}`;
         }

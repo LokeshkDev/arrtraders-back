@@ -75,6 +75,7 @@ const Profile = () => {
             console.error('Failed to load profile', error);
             if (error.response?.status === 401) {
                 localStorage.removeItem('userInfo');
+                localStorage.removeItem('userToken');
                 navigate('/login');
             }
         } finally {
@@ -107,6 +108,7 @@ const Profile = () => {
 
     const handleLogout = () => {
         localStorage.removeItem('userInfo');
+        localStorage.removeItem('userToken');
         navigate('/');
     };
 

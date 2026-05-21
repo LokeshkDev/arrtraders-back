@@ -445,6 +445,7 @@ const AdminDashboard = () => {
 
     const handleLogout = () => {
         localStorage.removeItem('userInfo');
+        localStorage.removeItem('userToken');
         window.dispatchEvent(new Event('storage'));
         window.location.href = '/login';
     };

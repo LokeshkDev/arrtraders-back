@@ -42,6 +42,7 @@ const Login = () => {
 
       localStorage.setItem('userInfo', JSON.stringify(data));
       if (data.token) localStorage.setItem('userToken', data.token);
+      else localStorage.removeItem('userToken');
       window.dispatchEvent(new Event('storage'));
       
       const nextPath = redirectPath || (data.isAdmin ? '/arrt-panel' : '/');
@@ -64,6 +65,7 @@ const Login = () => {
 
       localStorage.setItem('userInfo', JSON.stringify(data));
       if (data.token) localStorage.setItem('userToken', data.token);
+      else localStorage.removeItem('userToken');
       window.dispatchEvent(new Event('storage'));
       
       navigate(redirectPath || '/', { replace: true });

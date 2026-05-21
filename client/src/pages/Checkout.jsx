@@ -97,6 +97,11 @@ const Checkout = () => {
             });
         } catch (error) {
             console.error('Failed to fetch addresses', error);
+            if (error.response?.status === 401) {
+                localStorage.removeItem('userInfo');
+                localStorage.removeItem('userToken');
+                navigate('/login?redirect=/checkout');
+            }
         }
     };
 
