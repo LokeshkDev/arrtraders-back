@@ -22,10 +22,7 @@ const Checkout = () => {
     const [loading, setLoading] = useState(false);
     const orderPlacedRef = useRef(false);
 
-    // UPI Manual Payment States
-    const [showUPIModal, setShowUPIModal] = useState(false);
-    const [paidPhoneNumber, setPaidPhoneNumber] = useState('');
-    const [tempOrderId, setTempOrderId] = useState(null);
+
 
     // CMS-driven shipping settings
     const [freeShippingThreshold, setFreeShippingThreshold] = useState(1999);
@@ -348,18 +345,6 @@ const Checkout = () => {
             orderPlacedRef.current = true;
 
             if (paymentMethod === 'CASHFREE') {
-                if (!data._id) {
-                    console.error('[CHECKOUT] No order ID in response');
-                    navigate('/order-failure');
-                    return;
-                }
-
-                setTempOrderId(data._id);
-                setShowUPIModal(true);
-                setLoading(false);
-                return;
-
-                /* KEEPING CASHFREE LOGIC FOR REFERENCE
                 if (!data.paymentSessionId) {
                     console.error('[CHECKOUT] No paymentSessionId in response');
                     navigate('/order-failure');
@@ -390,7 +375,6 @@ const Checkout = () => {
                 }
                 setLoading(false);
                 return;
-                */
             }
 
             clearCart();
@@ -401,39 +385,6 @@ const Checkout = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    const handleUPISubmit = async () => {
-        if (!paidPhoneNumber || paidPhoneNumber.length < 10) {
-            alert('Please enter a valid phone number');
-            return;
-        }
-        try {
-            setLoading(true);
-            await axios.post(`${API_BASE_URL}/api/orders/${tempOrderId}/confirm-upi`, {
-                paidPhoneNumber
-            });
-            setShowUPIModal(false);
-            clearCart();
-            navigate(`/order-success/${tempOrderId}`);
-        } catch (error) {
-            console.error('UPI Submit Error:', error);
-            alert('Failed to submit payment details. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleUPICancel = async () => {
-        try {
-            if (tempOrderId) {
-                await axios.post(`${API_BASE_URL}/api/orders/${tempOrderId}/fail`);
-            }
-        } catch (error) {
-            console.error('Failed to cancel order', error);
-        }
-        setShowUPIModal(false);
-        navigate('/order-failure');
     };
 
     return (
@@ -858,81 +809,7 @@ const Checkout = () => {
                 </div>
             )}
 
-            {/* Premium UPI Payment Modal */}
-            {showUPIModal && (
-                <div className="upi-modal-overlay animated fadeIn">
-                    <div className="upi-modal-content">
-                        <button className="upi-modal-close" onClick={handleUPICancel}>
-                            <X size={24} />
-                        </button>
-                        <div className="text-center mb-4">
-                            <h3 className="font-headline text-primary fw-bold mb-2">Scan & Pay</h3>
-                            <p className="text-muted font-body small mb-0">Complete your payment using any UPI app</p>
-                            <div className="mt-2 d-inline-block bg-secondary bg-opacity-10 rounded-pill px-3 py-1">
-                                <span className="font-headline fw-bold text-white">₹{total.toLocaleString()}</span>
-                            </div>
-                        </div>
-                        <div className="upi-qr-container mb-3 text-center">
-                            <img src="/images/upi-qr.jpeg" alt="UPI QR Code" className="img-fluid rounded-4 shadow-sm border border-gold-subtle" style={{ maxWidth: '200px' }} />
-                        </div>
 
-                        {/* UPI ID with Copy */}
-                        <div className="upi-copy-row mb-2 p-3 bg-light rounded-3 border border-gold-subtle">
-                            <p className="font-heading fw-bold text-secondary tracking-widest mb-1" style={{ fontSize: '0.65rem' }}>UPI ID</p>
-                            <div className="d-flex align-items-center justify-content-between gap-2">
-                                <span className="font-headline text-primary fw-bold" style={{ fontSize: '0.85rem', wordBreak: 'break-all' }}>0798525a0277116.bqr@kotak</span>
-                                <button
-                                    type="button"
-                                    className="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold flex-shrink-0"
-                                    style={{ fontSize: '0.65rem', letterSpacing: '1px' }}
-                                    onClick={() => { navigator.clipboard.writeText('0798525a0277116.bqr@kotak'); alert('UPI ID Copied!'); }}
-                                >
-                                    COPY
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* GPay Number with Copy */}
-                        <div className="upi-copy-row mb-4 p-3 bg-light rounded-3 border border-gold-subtle">
-                            <p className="font-heading fw-bold text-secondary tracking-widest mb-1" style={{ fontSize: '0.65rem' }}>GPAY NUMBER</p>
-                            <div className="d-flex align-items-center justify-content-between gap-2">
-                                <span className="font-headline text-primary fw-bold" style={{ fontSize: '1.1rem' }}>9790190267</span>
-                                <button
-                                    type="button"
-                                    className="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold flex-shrink-0"
-                                    style={{ fontSize: '0.65rem', letterSpacing: '1px' }}
-                                    onClick={() => { navigator.clipboard.writeText('9790190267'); alert('Phone Number Copied!'); }}
-                                >
-                                    COPY
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="mb-4">
-                            <label className="form-label font-heading small fw-bold tracking-widest text-secondary">ENTER PHONE NUMBER PAID FROM</label>
-                            <input
-                                type="tel"
-                                className="form-control luxury-input w-100 text-center fs-5 tracking-widest font-headline"
-                                value={paidPhoneNumber}
-                                onChange={(e) => setPaidPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                                placeholder="10-digit mobile number"
-                            />
-                        </div>
-                        <div className="d-flex gap-3 mt-4 pt-3 border-top border-gold-subtle">
-                            <button className="btn btn-outline-danger flex-grow-1 rounded-pill py-3 fw-bold tracking-widest font-heading border-2" onClick={handleUPICancel}>
-                                CANCEL
-                            </button>
-                            <button
-                                className="btn-add-luxury flex-grow-1"
-                                onClick={handleUPISubmit}
-                                disabled={loading || paidPhoneNumber.length < 10}
-                            >
-                                {loading ? 'SUBMITTING...' : 'SUBMIT PAYMENT'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
