@@ -2,7 +2,7 @@ import Order from '../models/sql/Order.js';
 import User from '../models/sql/User.js';
 import Coupon from '../models/sql/Coupon.js';
 import { DataTypes } from 'sequelize';
-import { createCashfreeOrder, getCashfreeMode, getCashfreeOrder } from '../utils/cashfree.js';
+import { createCashfreeOrder, getCashfreeMode, getCashfreeOrder, getCashfreeConfigSummary } from '../utils/cashfree.js';
 import sendEmail from '../utils/sendEmail.js';
 
 // Helper to format ID for responses and parse JSON fields
@@ -193,6 +193,15 @@ export const createOrder = async (req, res) => {
                 );
             } catch (error) {
                 await order.destroy();
+                if (error.name === 'CashfreeError') {
+                    console.error('[CASHFREE CONFIG SUMMARY]:', getCashfreeConfigSummary());
+                    return res.status(error.status === 401 ? 502 : 500).json({
+                        message: error.status === 401
+                            ? 'Payment gateway authentication failed. Check Cashfree production credentials and CASHFREE_ENV.'
+                            : error.message,
+                        gatewayStatus: error.status
+                    });
+                }
                 throw error;
             }
 

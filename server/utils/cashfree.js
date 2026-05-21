@@ -1,7 +1,18 @@
 const CASHFREE_API_VERSION = process.env.CASHFREE_API_VERSION || '2025-01-01';
 
+class CashfreeError extends Error {
+    constructor(message, status, data) {
+        super(message);
+        this.name = 'CashfreeError';
+        this.status = status;
+        this.data = data;
+    }
+}
+
+const getEnvValue = (key) => String(process.env[key] || '').trim();
+
 const getCashfreeBaseUrl = () => {
-    return process.env.CASHFREE_ENV === 'production'
+    return getEnvValue('CASHFREE_ENV') === 'production'
         ? 'https://api.cashfree.com/pg'
         : 'https://sandbox.cashfree.com/pg';
 };
@@ -10,8 +21,8 @@ const getCashfreeHeaders = (idempotencyKey) => {
     const headers = {
         'Content-Type': 'application/json',
         'x-api-version': CASHFREE_API_VERSION,
-        'x-client-id': process.env.CASHFREE_CLIENT_ID,
-        'x-client-secret': process.env.CASHFREE_CLIENT_SECRET
+        'x-client-id': getEnvValue('CASHFREE_CLIENT_ID'),
+        'x-client-secret': getEnvValue('CASHFREE_CLIENT_SECRET')
     };
 
     if (idempotencyKey) {
@@ -22,8 +33,24 @@ const getCashfreeHeaders = (idempotencyKey) => {
 };
 
 export const isCashfreeConfigured = () => {
-    return Boolean(process.env.CASHFREE_CLIENT_ID && process.env.CASHFREE_CLIENT_SECRET);
+    const clientId = getEnvValue('CASHFREE_CLIENT_ID');
+    const clientSecret = getEnvValue('CASHFREE_CLIENT_SECRET');
+
+    return Boolean(
+        clientId &&
+        clientSecret &&
+        !clientId.startsWith('replace-with-') &&
+        !clientSecret.startsWith('replace-with-')
+    );
 };
+
+export const getCashfreeConfigSummary = () => ({
+    env: getEnvValue('CASHFREE_ENV') || 'sandbox',
+    baseUrl: getCashfreeBaseUrl(),
+    apiVersion: CASHFREE_API_VERSION,
+    hasClientId: Boolean(getEnvValue('CASHFREE_CLIENT_ID')),
+    hasClientSecret: Boolean(getEnvValue('CASHFREE_CLIENT_SECRET'))
+});
 
 export const createCashfreeOrder = async (payload, idempotencyKey) => {
     if (!isCashfreeConfigured()) {
@@ -40,7 +67,7 @@ export const createCashfreeOrder = async (payload, idempotencyKey) => {
 
     if (!response.ok) {
         console.error('[CASHFREE ERROR RESPONSE]:', JSON.stringify(data, null, 2));
-        throw new Error(data.message || data.error_description || 'Unable to create Cashfree order');
+        throw new CashfreeError(data.message || data.error_description || 'Unable to create Cashfree order', response.status, data);
     }
 
     return data;
@@ -59,12 +86,12 @@ export const getCashfreeOrder = async (orderId) => {
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-        throw new Error(data.message || data.error_description || 'Unable to fetch Cashfree order');
+        throw new CashfreeError(data.message || data.error_description || 'Unable to fetch Cashfree order', response.status, data);
     }
 
     return data;
 };
 
 export const getCashfreeMode = () => {
-    return process.env.CASHFREE_ENV === 'production' ? 'production' : 'sandbox';
+    return getEnvValue('CASHFREE_ENV') === 'production' ? 'production' : 'sandbox';
 };
