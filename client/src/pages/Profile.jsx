@@ -63,14 +63,17 @@ const Profile = () => {
         try {
             setLoading(true);
 
-            const [profileRes, ordersRes] = await Promise.all([
-                axios.get(`${API_BASE_URL}/api/users/profile`),
-                axios.get(`${API_BASE_URL}/api/orders/myorders`)
-            ]);
-
+            const profileRes = await axios.get(`${API_BASE_URL}/api/users/profile`);
             setUser(profileRes.data);
             setProfileForm({ name: profileRes.data.name, email: profileRes.data.email, phone: profileRes.data.phone || '', currentPassword: '', newPassword: '' });
-            setOrders(ordersRes.data);
+
+            try {
+                const ordersRes = await axios.get(`${API_BASE_URL}/api/orders/myorders`);
+                setOrders(ordersRes.data);
+            } catch (ordersError) {
+                console.error('Failed to load orders', ordersError);
+                setOrders([]);
+            }
         } catch (error) {
             console.error('Failed to load profile', error);
             if (error.response?.status === 401) {
